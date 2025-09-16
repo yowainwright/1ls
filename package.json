@@ -31,7 +31,7 @@
     "format:fix": "bunx prettier --write 'src/**/*.{ts,tsx,js,jsx,json}'"
   },
   "keywords": ["json", "cli", "javascript", "bun", "fx", "jq"],
-  "author": "Jeff Wainwright <https:jeffry.in> (yowainwright@gmail.com)",
+  "author": "Jeff Wainwright <https://jeffry.in> (yowainwright@gmail.com)",
   "license": "MIT",
   "repository": {
     "type": "git",
