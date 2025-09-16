@@ -1,0 +1,50 @@
+# Logs
+logs
+*.log
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage directory used by tools like istanbul
+coverage
+*.lcov
+
+# TypeScript cache
+*.tsbuildinfo
+
+# Dependency directories
+node_modules/
+
+# Build output
+dist/
+bin/
+
+# Environment variables
+.env
+.env.test
+.env.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Bun
+bun.lockb
+
+# Test artifacts
+*.test.js
+*.test.d.ts
+
+# Temporary files
+tmp/
+temp/
+.cache/

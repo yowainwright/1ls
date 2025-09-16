@@ -1,0 +1,107 @@
+---
+title: Recipes
+description: Common 1ls usage patterns and examples
+---
+
+# Recipes
+
+Common usage patterns and examples for 1ls.
+
+## Basic Operations
+
+### Pretty Print JSON
+```bash
+echo '{"name":"John","age":30}' | 1ls
+```
+
+### Extract a Field
+```bash
+echo '{"name":"John","age":30}' | 1ls 'x.name'
+```
+
+### Filter an Array
+```bash
+echo '[1,2,3,4,5]' | 1ls 'x.filter(n => n > 2)'
+```
+
+## Transform Data
+
+### Map Over Array
+```bash
+echo '[{"name":"John"},{"name":"Jane"}]' | 1ls 'x.map(p => p.name)'
+```
+
+### Calculate Sum
+```bash
+echo '[1,2,3,4,5]' | 1ls 'x.reduce((a,b) => a+b, 0)'
+```
+
+### Group By Property
+```bash
+echo '[{"type":"a","val":1},{"type":"b","val":2},{"type":"a","val":3}]' | \
+  1ls 'x.reduce((g,i) => ({...g,[i.type]:[...(g[i.type]||[]),i]}),{})'
+```
+
+## File Operations
+
+### Read and Transform JSON File
+```bash
+1ls 'x.users.filter(u => u.active)' < data.json
+```
+
+### Convert JSON to CSV
+```bash
+echo '[{"name":"John","age":30},{"name":"Jane","age":25}]' | \
+  1ls 'x.map(r => Object.values(r).join(",")).join("\n")'
+```
+
+## Advanced Patterns
+
+### Flatten Nested Structure
+```bash
+echo '{"a":{"b":{"c":1}}}' | 1ls 'JSON.stringify(x, null, 2)'
+```
+
+### Extract Unique Values
+```bash
+echo '[1,2,2,3,3,3]' | 1ls '[...new Set(x)]'
+```
+
+### Sort Objects by Property
+```bash
+echo '[{"name":"c"},{"name":"a"},{"name":"b"}]' | \
+  1ls 'x.sort((a,b) => a.name.localeCompare(b.name))'
+```
+
+### Merge Objects
+```bash
+echo '[{"a":1},{"b":2},{"c":3}]' | 1ls 'Object.assign({}, ...x)'
+```
+
+## Working with APIs
+
+### Parse Response Headers
+```bash
+curl -I https://api.example.com | \
+  1ls 'x.split("\n").filter(l => l).map(l => l.split(": "))'
+```
+
+### Extract Nested API Data
+```bash
+curl https://api.github.com/users/username | \
+  1ls 'x.public_repos'
+```
+
+## Debugging
+
+### Inspect Object Structure
+```bash
+echo '{"complex":{"nested":{"data":true}}}' | \
+  1ls 'Object.keys(x).map(k => ({key: k, type: typeof x[k]}))'
+```
+
+### Count Array Elements
+```bash
+echo '[1,2,2,3,3,3]' | \
+  1ls 'x.reduce((c,i) => ({...c,[i]:(c[i]||0)+1}),{})'
+```

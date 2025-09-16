@@ -1,0 +1,50 @@
+{
+  "workspaces": ["site"],
+  "name": "1ls",
+  "version": "0.0.0",
+  "description": "1 line script - Lightweight JSON CLI with JavaScript syntax",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js"
+    }
+  },
+  "bin": {
+    "1ls": "./dist/index.js"
+  },
+  "engines": {
+    "bun": ">=1.0.0"
+  },
+  "files": ["dist"],
+  "scripts": {
+    "build": "bun run clean && bun build ./src/cli/index.ts --outdir dist --target bun --minify && tsc --emitDeclarationOnly --outDir dist",
+    "clean": "rm -rf dist",
+    "dev": "bun run ./src/cli/index.ts",
+    "prepublishOnly": "bun run test && bun run build",
+    "test": "bun test",
+    "typecheck": "tsc --noEmit",
+    "lint": "bunx oxlint src/",
+    "lint:fix": "bunx oxlint src/ --fix",
+    "format": "bunx prettier --check 'src/**/*.{ts,tsx,js,jsx,json}'",
+    "format:fix": "bunx prettier --write 'src/**/*.{ts,tsx,js,jsx,json}'"
+  },
+  "keywords": ["json", "cli", "javascript", "bun", "fx", "jq"],
+  "author": "Jeff Wainwright <https:jeffry.in> (yowainwright@gmail.com)",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yowainwright/1ls.git"
+  },
+  "bugs": {
+    "url": "https://github.com/yowainwright/1ls/issues"
+  },
+  "homepage": "https://github.com/yowainwright/1ls",
+  "devDependencies": {
+    "@types/bun": "latest",
+    "turbo": "^2.3.3",
+    "typescript": "5.9.2"
+  },
+  "packageManager": "bun@1.1.38"
+}

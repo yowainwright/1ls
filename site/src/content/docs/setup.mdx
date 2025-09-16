@@ -1,0 +1,101 @@
+---
+title: Setup
+description: "Quick and easy setup guide for 1ls CLI"
+---
+
+<section>
+
+## Installation
+
+### With npm
+```bash
+npm install -g 1ls
+```
+
+### With Bun
+```bash
+bun add -g 1ls
+```
+
+### With Yarn
+```bash
+yarn global add 1ls
+```
+
+### With pnpm
+```bash
+pnpm add -g 1ls
+```
+
+## Basic Usage
+
+Once installed, you can start using 1ls immediately:
+
+```bash
+# Pretty print JSON
+echo '{"hello":"world"}' | 1ls
+
+# Process a file
+1ls 'x.version' < package.json
+
+# Use with curl
+curl -s https://api.github.com/users/github | 1ls 'x.public_repos'
+```
+
+## Shell Completion
+
+1ls supports tab completion for bash, zsh, and fish shells:
+
+```bash
+# Install completions
+1ls --install-completions
+
+# Or manually source them
+source <(1ls --completion bash)  # for bash
+source <(1ls --completion zsh)   # for zsh
+```
+
+## Command Line Options
+
+```bash
+# Show help
+1ls --help
+
+# Show version
+1ls --version
+
+# Pretty print (default when no expression given)
+echo '{"a":1}' | 1ls
+
+# Minify output
+echo '{"a":1}' | 1ls --minify
+
+# Raw output (no quotes for strings)
+echo '{"name":"Alice"}' | 1ls 'x.name' --raw
+```
+
+## Examples
+
+```bash
+# Extract a field
+echo '{"user":{"name":"Alice"}}' | 1ls 'x.user.name'
+
+# Filter an array
+echo '[1,2,3,4,5]' | 1ls 'x.filter(n => n > 3)'
+
+# Transform data
+echo '[{"price":10},{"price":20}]' | 1ls 'x.map(i => i.price * 1.1)'
+
+# Read from file
+1ls 'Object.keys(x.scripts)' < package.json
+
+# Process YAML
+cat config.yaml | 1ls 'x.database.port'
+
+# Process CSV
+cat data.csv | 1ls 'x.map(row => row.name)'
+```
+
+---
+
+</section>

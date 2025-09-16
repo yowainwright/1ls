@@ -1,0 +1,77 @@
+---
+title: Introduction to 1ls
+description: "1ls is a lightweight CLI tool for processing structured data with JavaScript"
+---
+
+<div className="flex flex-wrap gap-2 mb-8">
+  <a href="https://badge.fury.io/js/1ls" target="_blank" rel="noopener noreferrer">
+    <img src="https://badge.fury.io/js/1ls.svg" alt="npm version" />
+  </a>
+  <a href="https://github.com/yowainwright/1ls" target="_blank" rel="noopener noreferrer">
+    <img src="https://img.shields.io/github/stars/yowainwright/1ls?style=social" alt="GitHub stars" />
+  </a>
+  <a href="https://www.typescriptlang.org/" target="_blank" rel="noopener noreferrer">
+    <img src="https://img.shields.io/badge/TypeScript-Ready-blue" alt="TypeScript Ready" />
+  </a>
+  <a href="https://opensource.org/licenses/MIT" target="_blank" rel="noopener noreferrer">
+    <img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT" />
+  </a>
+</div>
+
+## What is 1ls?
+
+1ls (pronounced "one-less") is a lightweight command-line tool that processes structured data using JavaScript syntax. It automatically detects and parses various file formats including JSON, YAML, TOML, CSV, and more - then lets you transform the data using familiar JavaScript.
+
+## Why Use 1ls?
+
+### The Problem
+
+Working with different data formats on the command line often requires multiple tools:
+- `jq` for JSON
+- `yq` for YAML
+- `csvkit` for CSV
+- `tomlq` for TOML
+
+Each tool has its own syntax and quirks to learn.
+
+### The Solution
+
+1ls handles all common data formats with one tool and one syntax - JavaScript:
+
+```bash
+# JSON
+echo '{"name":"Alice"}' | 1ls 'x.name'
+
+# YAML
+cat config.yaml | 1ls 'x.database.host'
+
+# TOML
+cat Cargo.toml | 1ls 'x.dependencies'
+
+# CSV
+cat data.csv | 1ls 'x.filter(row => row.age > 21)'
+
+# Package.json
+1ls 'x.scripts' < package.json
+```
+
+## Supported Formats
+
+1ls automatically detects and parses:
+- **JSON** - JavaScript Object Notation
+- **YAML** - YAML Ain't Markup Language
+- **TOML** - Tom's Obvious, Minimal Language
+- **CSV** - Comma-Separated Values
+- **TSV** - Tab-Separated Values
+- **XML** - Extensible Markup Language
+- **INI** - Configuration files
+- **Plain text** - Line-by-line processing
+
+## Benefits
+
+- **Universal**: One tool for all data formats
+- **Familiar Syntax**: Just JavaScript, no new query language
+- **Auto-detection**: Automatically identifies file format
+- **Lightweight**: Minimal dependencies, fast execution
+- **Unix-friendly**: Works seamlessly with pipes
+- **Fast**: Built on Bun for optimal performance

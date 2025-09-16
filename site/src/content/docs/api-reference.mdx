@@ -1,0 +1,294 @@
+---
+title: API Reference
+description: Complete reference for 1ls CLI
+---
+
+1ls is a command-line tool for processing structured data with JavaScript.
+
+## CLI Usage
+
+### Basic Syntax
+
+```bash
+1ls [expression] [options]
+```
+
+The expression is JavaScript code where `x` represents your input data.
+
+### Options
+
+#### `--help, -h`
+Show help information.
+
+```bash
+1ls --help
+```
+
+#### `--version, -v`
+Show version number.
+
+```bash
+1ls --version
+```
+
+#### `--minify, -m`
+Output minified JSON (no whitespace).
+
+```bash
+echo '{"a":1}' | 1ls --minify
+# Output: {"a":1}
+```
+
+#### `--raw, -r`
+Output raw strings without quotes.
+
+```bash
+echo '{"name":"Alice"}' | 1ls 'x.name' --raw
+# Output: Alice (instead of "Alice")
+```
+
+#### `--file, -f <path>`
+Read input from a file instead of stdin.
+
+```bash
+1ls 'x.version' -f package.json
+```
+
+#### `--output, -o <path>`
+Write output to a file instead of stdout.
+
+```bash
+echo '[1,2,3]' | 1ls 'x.map(n => n * 2)' -o result.json
+```
+
+#### `--type, -t <format>`
+Specify input format (auto-detected by default).
+
+Supported formats:
+- `json` - JSON data
+- `yaml` - YAML data
+- `toml` - TOML data
+- `csv` - CSV data
+- `tsv` - TSV data
+- `xml` - XML data
+- `ini` - INI configuration
+- `text` - Plain text (line array)
+
+```bash
+1ls 'x.database' -f config.yaml -t yaml
+```
+
+## Input Variable
+
+### The `x` Variable
+
+In your JavaScript expression, `x` represents the parsed input data:
+
+```bash
+# JSON object
+echo '{"name":"Alice"}' | 1ls 'x.name'
+
+# JSON array
+echo '[1,2,3]' | 1ls 'x.length'
+
+# After parsing YAML
+cat config.yaml | 1ls 'x.server.port'
+
+# After parsing CSV (array of objects)
+cat data.csv | 1ls 'x[0]'
+```
+
+## Data Format Examples
+
+### JSON
+```bash
+echo '{"users":[{"name":"Alice"},{"name":"Bob"}]}' | \
+  1ls 'x.users.map(u => u.name)'
+```
+
+### YAML
+```yaml
+# config.yaml
+database:
+  host: localhost
+  port: 5432
+```
+```bash
+cat config.yaml | 1ls 'x.database.host'
+```
+
+### CSV
+```csv
+# data.csv
+name,age,city
+Alice,30,NYC
+Bob,25,LA
+```
+```bash
+cat data.csv | 1ls 'x.filter(r => r.age > 25)'
+```
+
+### TOML
+```toml
+# Cargo.toml
+[package]
+name = "myapp"
+version = "1.0.0"
+```
+```bash
+cat Cargo.toml | 1ls 'x.package.name'
+```
+
+### XML
+```xml
+<!-- data.xml -->
+<root>
+  <user name="Alice" age="30"/>
+</root>
+```
+```bash
+cat data.xml | 1ls 'x.root.user["@name"]'
+```
+
+### Plain Text
+```bash
+# Each line becomes an array element
+cat file.txt | 1ls 'x.filter(line => line.includes("error"))'
+```
+
+## JavaScript Features
+
+### All ES6+ Features
+```bash
+# Arrow functions
+echo '[1,2,3]' | 1ls 'x.map(n => n * 2)'
+
+# Destructuring
+echo '[{"a":1,"b":2}]' | 1ls 'x.map(({a,b}) => a + b)'
+
+# Spread operator
+echo '[[1,2],[3,4]]' | 1ls 'x.flat()'
+
+# Template literals
+echo '{"name":"Alice"}' | 1ls '`Hello ${x.name}`'
+```
+
+### Built-in Objects
+```bash
+# Math
+echo '[1,2,3]' | 1ls 'Math.max(...x)'
+
+# Date
+echo '{}' | 1ls 'new Date().toISOString()'
+
+# Set
+echo '[1,2,2,3]' | 1ls '[...new Set(x)]'
+
+# Map
+echo '[["a",1],["b",2]]' | 1ls 'Object.fromEntries(new Map(x))'
+```
+
+## Output Format
+
+By default, 1ls outputs formatted JSON:
+
+```bash
+echo '{"a":1}' | 1ls
+# {
+#   "a": 1
+# }
+```
+
+### Pretty Print
+When no expression is given, 1ls pretty prints:
+
+```bash
+echo '{"a":1,"b":2}' | 1ls
+```
+
+### Expression Results
+The result of your expression is serialized to JSON:
+
+```bash
+echo '[1,2,3]' | 1ls 'x.reduce((a,b) => a+b)'
+# 6
+
+echo '{"name":"Alice"}' | 1ls 'x.name.toUpperCase()'
+# "ALICE"
+```
+
+## Error Handling
+
+1ls provides clear error messages:
+
+```bash
+# Syntax errors
+echo '{}' | 1ls 'x..name'
+# Error: Unexpected token '.'
+
+# Runtime errors
+echo '{}' | 1ls 'x.foo.bar'
+# Error: Cannot read property 'bar' of undefined
+
+# Parse errors
+echo 'invalid json' | 1ls
+# Error: Invalid JSON input
+```
+
+## Shell Completion
+
+Install tab completion for your shell:
+
+```bash
+# Automatic installation
+1ls --install-completions
+
+# Manual installation
+# Bash
+echo 'source <(1ls --completion bash)' >> ~/.bashrc
+
+# Zsh
+echo 'source <(1ls --completion zsh)' >> ~/.zshrc
+
+# Fish
+1ls --completion fish > ~/.config/fish/completions/1ls.fish
+```
+
+## Examples
+
+### Data Extraction
+```bash
+# Get all keys
+echo '{"a":1,"b":2}' | 1ls 'Object.keys(x)'
+
+# Get all values
+echo '{"a":1,"b":2}' | 1ls 'Object.values(x)'
+
+# Nested access
+echo '{"user":{"address":{"city":"NYC"}}}' | 1ls 'x.user.address.city'
+```
+
+### Data Transformation
+```bash
+# Calculate average
+echo '[10,20,30]' | 1ls 'x.reduce((a,b)=>a+b)/x.length'
+
+# Group by property
+echo '[{"type":"a","val":1},{"type":"b","val":2}]' | \
+  1ls 'x.reduce((g,i)=>({...g,[i.type]:i.val}),{})'
+
+# Flatten nested arrays
+echo '[[1,2],[3,4]]' | 1ls 'x.flat()'
+```
+
+### Filtering and Searching
+```bash
+# Find items
+echo '[{"id":1},{"id":2}]' | 1ls 'x.find(i => i.id === 2)'
+
+# Check existence
+echo '[1,2,3]' | 1ls 'x.includes(2)'
+
+# Count occurrences
+echo '[1,2,2,3,3,3]' | 1ls 'x.filter(n => n === 3).length'
+```
