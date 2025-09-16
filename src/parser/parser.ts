@@ -344,6 +344,14 @@ export class Parser {
             property: identifier,
           } as PropertyAccessNode);
         }
+      } else if (this.current.type === TokenType.NUMBER) {
+        const value = Number(this.current.value);
+        this.advance();
+        args.push({ type: "Literal", value });
+      } else if (this.current.type === TokenType.STRING) {
+        const value = this.current.value;
+        this.advance();
+        args.push({ type: "Literal", value });
       } else {
         args.push(this.parseExpression());
       }

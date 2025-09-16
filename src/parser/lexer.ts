@@ -219,6 +219,6 @@ export class Lexer {
   }
 
   private isOperator(char: string): boolean {
-    return "+-*/<>!&|=".includes(char);
+    return "+-*/%<>!&|=".includes(char);
   }
 }
