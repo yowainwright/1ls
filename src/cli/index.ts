@@ -4,8 +4,8 @@ import { parseArgs } from "./parser";
 import { showHelp } from "./help";
 import { processInput } from "../utils/stream";
 import { readFile, listFiles, grep } from "../utils/file";
-import { Lexer } from "../parser/lexer";
-import { Parser } from "../parser/parser";
+import { Lexer } from "../lexer";
+import { Parser } from "../parser";
 import { JsonNavigator } from "../navigator/json";
 import { Formatter } from "../formatter/output";
 import { warning, info } from "../formatter/colors";
@@ -23,7 +23,8 @@ async function handleInfoCommands(options: CliOptions): Promise<boolean> {
   }
 
   if (options.version) {
-    console.log("1ls version 1.0.0");
+    const packageJson = await Bun.file("package.json").json();
+    console.log(`1ls version ${packageJson.version}`);
     process.exit(0);
   }
 

@@ -1,5 +1,17 @@
 import { Token, TokenType } from "../types";
 
+export function getContextSnippet(input: string, position: number, length = 20): string {
+  const start = Math.max(0, position - length);
+  const end = Math.min(input.length, position + length);
+  const snippet = input.slice(start, end);
+  const marker = " ".repeat(Math.min(position - start, length)) + "^";
+  return `${snippet}\n${marker}`;
+}
+
+export function createToken(type: TokenType, value: string, position: number): Token {
+  return { type, value, position };
+}
+
 export class Lexer {
   private input: string;
   private position: number = 0;
@@ -15,7 +27,6 @@ export class Lexer {
 
     while (this.position < this.input.length) {
       this.skipWhitespace();
-
       if (this.position >= this.input.length) break;
 
       const token = this.nextToken();
@@ -24,80 +35,63 @@ export class Lexer {
       }
     }
 
-    tokens.push({ type: TokenType.EOF, value: "", position: this.position });
+    tokens.push(createToken(TokenType.EOF, "", this.position));
     return tokens;
   }
 
   private nextToken(): Token | null {
     const startPos = this.position;
 
-    if (this.current === ".") {
+    // Single character tokens
+    const singleCharTokens: Record<string, TokenType> = {
+      ".": TokenType.DOT,
+      "[": TokenType.LEFT_BRACKET,
+      "]": TokenType.RIGHT_BRACKET,
+      "{": TokenType.LEFT_BRACE,
+      "}": TokenType.RIGHT_BRACE,
+      "(": TokenType.LEFT_PAREN,
+      ")": TokenType.RIGHT_PAREN,
+      ":": TokenType.COLON,
+      ",": TokenType.COMMA,
+    };
+
+    const tokenType = singleCharTokens[this.current];
+    if (tokenType) {
+      const char = this.current;
       this.advance();
-      return { type: TokenType.DOT, value: ".", position: startPos };
+      return createToken(tokenType, char, startPos);
     }
 
-    if (this.current === "[") {
+    // Arrow operator
+    const isArrow = this.current === "=" && this.peek() === ">";
+    if (isArrow) {
       this.advance();
-      return { type: TokenType.LEFT_BRACKET, value: "[", position: startPos };
+      this.advance();
+      return createToken(TokenType.ARROW, "=>", startPos);
     }
 
-    if (this.current === "]") {
-      this.advance();
-      return { type: TokenType.RIGHT_BRACKET, value: "]", position: startPos };
-    }
-
-    if (this.current === "{") {
-      this.advance();
-      return { type: TokenType.LEFT_BRACE, value: "{", position: startPos };
-    }
-
-    if (this.current === "}") {
-      this.advance();
-      return { type: TokenType.RIGHT_BRACE, value: "}", position: startPos };
-    }
-
-    if (this.current === "(") {
-      this.advance();
-      return { type: TokenType.LEFT_PAREN, value: "(", position: startPos };
-    }
-
-    if (this.current === ")") {
-      this.advance();
-      return { type: TokenType.RIGHT_PAREN, value: ")", position: startPos };
-    }
-
-    if (this.current === ":") {
-      this.advance();
-      return { type: TokenType.COLON, value: ":", position: startPos };
-    }
-
-    if (this.current === ",") {
-      this.advance();
-      return { type: TokenType.COMMA, value: ",", position: startPos };
-    }
-
-    if (this.current === "=" && this.peek() === ">") {
-      this.advance();
-      this.advance();
-      return { type: TokenType.ARROW, value: "=>", position: startPos };
-    }
-
-    if (this.current === '"' || this.current === "'") {
+    // String literals
+    const isStringStart = this.current === '"' || this.current === "'";
+    if (isStringStart) {
       return this.readString();
     }
 
-    if (
-      this.isDigit(this.current) ||
-      (this.current === "-" && this.isDigit(this.peek()))
-    ) {
+    // Numbers
+    const isNumberStart = this.isDigit(this.current) ||
+      (this.current === "-" && this.isDigit(this.peek()));
+    if (isNumberStart) {
       return this.readNumber();
     }
 
-    if (this.isIdentifierStart(this.current)) {
+    // Identifiers
+    const isIdentifierStart = this.isIdentifierStart(this.current);
+    if (isIdentifierStart) {
       return this.readIdentifier();
     }
 
-    if (this.isOperator(this.current)) {
+    // Operators
+    const isOperator = this.isOperator(this.current);
+    if (isOperator) {
       return this.readOperator();
     }
 
@@ -108,27 +102,28 @@ export class Lexer {
   private readString(): Token {
     const startPos = this.position;
     const quote = this.current;
-    let value = "";
+    const chars: string[] = [];
     this.advance();
 
     while (this.current !== quote && this.position < this.input.length) {
       if (this.current === "\\") {
         this.advance();
         if (this.position < this.input.length) {
-          value += this.current;
+          chars.push(this.current);
           this.advance();
         }
-      } else {
-        value += this.current;
-        this.advance();
+        continue;
       }
+
+      chars.push(this.current);
+      this.advance();
     }
 
     if (this.current === quote) {
       this.advance();
     }
 
-    return { type: TokenType.STRING, value, position: startPos };
+    return createToken(TokenType.STRING, chars.join(""), startPos);
   }
 
   private readNumber(): Token {
@@ -145,7 +140,8 @@ export class Lexer {
       this.advance();
     }
 
-    if (this.current === "." && this.isDigit(this.peek())) {
+    const hasDecimal = this.current === "." && this.isDigit(this.peek());
+    if (hasDecimal) {
       value += this.current;
       this.advance();
 
@@ -155,7 +151,7 @@ export class Lexer {
       }
     }
 
-    return { type: TokenType.NUMBER, value, position: startPos };
+    return createToken(TokenType.NUMBER, value, startPos);
   }
 
   private readIdentifier(): Token {
@@ -167,7 +163,7 @@ export class Lexer {
       this.advance();
     }
 
-    return { type: TokenType.IDENTIFIER, value, position: startPos };
+    return createToken(TokenType.IDENTIFIER, value, startPos);
   }
 
   private readOperator(): Token {
@@ -179,7 +175,7 @@ export class Lexer {
       this.advance();
     }
 
-    return { type: TokenType.OPERATOR, value, position: startPos };
+    return createToken(TokenType.OPERATOR, value, startPos);
   }
 
   private skipWhitespace(): void {

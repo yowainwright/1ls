@@ -23,6 +23,7 @@ export interface GrepOptions {
   maxMatches?: number;
   showLineNumbers?: boolean;
   context?: number;
+  verbose?: boolean;
 }
 
 export interface GrepResult {
@@ -35,10 +36,16 @@ export interface GrepResult {
 
 export type DataFormat =
   | "json"
+  | "json5"
   | "yaml"
   | "toml"
+  | "xml"
+  | "ini"
   | "csv"
   | "tsv"
+  | "protobuf"
+  | "javascript"
+  | "typescript"
   | "lines"
   | "text";
 

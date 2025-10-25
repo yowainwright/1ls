@@ -429,31 +429,41 @@ function parseTOMLValue(value: string): any {
   return value;
 }
 
-/**
- * Parse input based on detected or specified format
- */
 export function parseInput(input: string, format?: DataFormat): any {
-  const detectedFormat = format || detectFormat(input);
+  if (format) {
+    switch (format) {
+      case "json":
+        return JSON.parse(input);
+      case "yaml":
+        return parseYAML(input);
+      case "toml":
+        return parseTOML(input);
+      case "csv":
+        return parseCSV(input);
+      case "tsv":
+        return parseTSV(input);
+      case "lines":
+        return parseLines(input);
+      case "text":
+        return input;
+    }
+  }
+
+  const detectedFormat = detectFormat(input);
 
   switch (detectedFormat) {
     case "json":
       return JSON.parse(input);
-
     case "yaml":
       return parseYAML(input);
-
     case "toml":
       return parseTOML(input);
-
     case "csv":
       return parseCSV(input);
-
     case "tsv":
       return parseTSV(input);
-
     case "lines":
       return parseLines(input);
-
     case "text":
     default:
       return input;

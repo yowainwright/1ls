@@ -1,6 +1,6 @@
 import { test, expect } from 'bun:test';
-import { Lexer } from '../src/parser/lexer';
-import { Parser } from '../src/parser/parser';
+import { Lexer } from '../src/lexer';
+import { Parser } from '../src/parser';
 
 test('Parser: simple property access', () => {
   const lexer = new Lexer('.name');

@@ -1,13 +1,8 @@
 import { describe, test, expect } from 'bun:test';
-import {
-  detectFormat,
-  parseLines,
-  parseCSV,
-  parseTSV,
-  parseYAML,
-  parseTOML,
-  parseInput
-} from '../src/utils/parsers';
+import { detectFormat, parseLines, parseInput } from '../src/parsers';
+import { parseCSV, parseTSV } from '../src/parsers/csv';
+import { parseYAML } from '../src/parsers/yaml';
+import { parseTOML } from '../src/parsers/toml';
 
 describe('Format Detection', () => {
   test('detects JSON objects', () => {
@@ -29,6 +24,32 @@ describe('Format Detection', () => {
   test('detects TOML', () => {
     expect(detectFormat('[section]\nkey = "value"')).toBe('toml');
     expect(detectFormat('name = "test"\nage = 30')).toBe('toml');
+  });
+
+  test('detects XML', () => {
+    expect(detectFormat('<?xml version="1.0"?><root></root>')).toBe('xml');
+    expect(detectFormat('<root><child>value</child></root>')).toBe('xml');
+  });
+
+  test('detects INI', () => {
+    expect(detectFormat('[section]\nkey=value')).toBe('ini');
+    expect(detectFormat('key=value\nother=data')).toBe('ini');
+  });
+
+  test('detects JSON5', () => {
+    expect(detectFormat('{name: "test", // comment\n}')).toBe('json5');
+    expect(detectFormat('{trailing: "comma",}')).toBe('json5');
+  });
+
+  test('detects JavaScript', () => {
+    expect(detectFormat('export const data = { name: "test" };')).toBe('javascript');
+    expect(detectFormat('export default { value: 42 };')).toBe('javascript');
+  });
+
+  test('detects TypeScript', () => {
+    expect(detectFormat('interface User { name: string; }')).toBe('typescript');
+    expect(detectFormat('type Data = { value: number; }')).toBe('typescript');
+    expect(detectFormat('const users: string[] = ["Alice", "Bob"];')).toBe('typescript');
   });
 
   test('detects CSV', () => {
@@ -234,27 +255,56 @@ name = "mydb"`;
 });
 
 describe('parseInput Integration', () => {
-  test('auto-detects and parses JSON', () => {
+  test('auto-detects and parses JSON', async () => {
     const input = '{"name": "Alice", "age": 30}';
     const expected = { name: 'Alice', age: 30 };
-    expect(parseInput(input)).toEqual(expected);
+    expect(await parseInput(input)).toEqual(expected);
   });
 
-  test('auto-detects and parses YAML', () => {
+  test('auto-detects and parses YAML', async () => {
     const input = 'name: Alice\nage: 30';
     const expected = { name: 'Alice', age: 30 };
-    expect(parseInput(input)).toEqual(expected);
+    expect(await parseInput(input)).toEqual(expected);
   });
 
-  test('auto-detects and parses CSV', () => {
+  test('auto-detects and parses CSV', async () => {
     const input = 'name,age\nAlice,30';
     const expected = [{ name: 'Alice', age: 30 }];
-    expect(parseInput(input)).toEqual(expected);
+    expect(await parseInput(input)).toEqual(expected);
   });
 
-  test('uses specified format over detection', () => {
+  test('uses specified format over detection', async () => {
     const input = 'name: Alice';
-    // Would normally detect as YAML, but we force text
-    expect(parseInput(input, 'text')).toBe('name: Alice');
+    expect(await parseInput(input, 'text')).toBe('name: Alice');
+  });
+
+  test('auto-detects and parses XML', async () => {
+    const input = '<root><name>Alice</name><age>30</age></root>';
+    const expected = { root: { name: 'Alice', age: 30 } };
+    expect(await parseInput(input)).toEqual(expected);
+  });
+
+  test('auto-detects and parses INI', async () => {
+    const input = '[user]\nname=Alice\nage=30';
+    const expected = { user: { name: 'Alice', age: 30 } };
+    expect(await parseInput(input)).toEqual(expected);
+  });
+
+  test('auto-detects and parses JSON5', async () => {
+    const input = '{name: "Alice", age: 30,}';
+    const expected = { name: 'Alice', age: 30 };
+    expect(await parseInput(input)).toEqual(expected);
+  });
+
+  test('auto-detects and parses JavaScript', async () => {
+    const input = 'export default { name: "Alice", age: 30 };';
+    const expected = { name: 'Alice', age: 30 };
+    expect(await parseInput(input)).toEqual(expected);
+  });
+
+  test('auto-detects and parses TypeScript', async () => {
+    const input = 'interface User { name: string; }\nconst user: User = { name: "Alice" };\nexport default user;';
+    const expected = { name: 'Alice' };
+    expect(await parseInput(input)).toEqual(expected);
   });
 });

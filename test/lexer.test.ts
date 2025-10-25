@@ -1,5 +1,5 @@
 import { test, expect } from 'bun:test';
-import { Lexer } from '../src/parser/lexer';
+import { Lexer } from '../src/lexer';
 import { TokenType } from '../src/types';
 
 test('Lexer: simple property access', () => {

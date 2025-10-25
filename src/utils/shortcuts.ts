@@ -238,45 +238,35 @@ export const SHORTCUTS: ShortcutMapping[] = [
   },
 ];
 
-// Create reverse lookup maps for efficiency
 const shortToFull = new Map(SHORTCUTS.map((s) => [s.short, s.full]));
 const fullToShort = new Map(SHORTCUTS.map((s) => [s.full, s.short]));
 
+const EXPAND_PATTERNS = SHORTCUTS
+  .map((s) => ({
+    regex: new RegExp(`\\${s.short}(?![a-zA-Z])`, "g"),
+    replacement: s.full,
+  }))
+  .sort((a, b) => b.replacement.length - a.replacement.length);
+
+const SHORTEN_PATTERNS = SHORTCUTS
+  .map((s) => ({
+    regex: new RegExp(`\\${s.full.replace(/[{}]/g, "\\$&")}(?![a-zA-Z])`, "g"),
+    replacement: s.short,
+  }))
+  .sort((a, b) => b.regex.source.length - a.regex.source.length);
+
 export function expandShortcuts(expression: string): string {
-  let expanded = expression;
-
-  // Sort by length (longest first) to avoid partial replacements
-  const sortedShortcuts = [...SHORTCUTS].sort(
-    (a, b) => b.short.length - a.short.length,
+  return EXPAND_PATTERNS.reduce(
+    (result, { regex, replacement }) => result.replace(regex, replacement),
+    expression,
   );
-
-  for (const shortcut of sortedShortcuts) {
-    // Use regex to match whole words only
-    const regex = new RegExp(`\\${shortcut.short}(?![a-zA-Z])`, "g");
-    expanded = expanded.replace(regex, shortcut.full);
-  }
-
-  return expanded;
 }
 
 export function shortenExpression(expression: string): string {
-  let shortened = expression;
-
-  // Sort by length (longest first) to avoid partial replacements
-  const sortedShortcuts = [...SHORTCUTS].sort(
-    (a, b) => b.full.length - a.full.length,
+  return SHORTEN_PATTERNS.reduce(
+    (result, { regex, replacement }) => result.replace(regex, replacement),
+    expression,
   );
-
-  for (const shortcut of sortedShortcuts) {
-    // Use regex to match whole words only
-    const regex = new RegExp(
-      `\\${shortcut.full.replace(/[{}]/g, "\\$&")}(?![a-zA-Z])`,
-      "g",
-    );
-    shortened = shortened.replace(regex, shortcut.short);
-  }
-
-  return shortened;
 }
 
 export function getShortcutHelp(): string {
