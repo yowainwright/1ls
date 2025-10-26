@@ -1,12 +1,12 @@
 import { test, expect } from 'bun:test';
 import { Lexer } from '../../src/lexer';
-import { Parser } from '../../src/parser';
+import { ExpressionParser } from '../../src/expression';
 import { JsonNavigator } from '../../src/navigator/json';
 
 function evaluate(expression: string, data: any): any {
   const lexer = new Lexer(expression);
   const tokens = lexer.tokenize();
-  const parser = new Parser(tokens);
+  const parser = new ExpressionParser(tokens);
   const ast = parser.parse();
   const navigator = new JsonNavigator();
   return navigator.evaluate(ast, data);

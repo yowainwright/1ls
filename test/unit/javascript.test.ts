@@ -1,5 +1,5 @@
 import { describe, test, expect } from "bun:test";
-import { stripJSComments, parseJavaScript } from "../../src/parsers/javascript";
+import { stripJSComments, parseJavaScript } from "../../src/formats/javascript";
 
 describe("JavaScript Comment Stripper", () => {
   test("strips single-line comments", () => {

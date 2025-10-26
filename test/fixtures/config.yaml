@@ -1,0 +1,15 @@
+name: MyApp
+version: 2.0.0
+environment: production
+database:
+  host: db.example.com
+  port: 5432
+  name: myapp_db
+  ssl: true
+cache:
+  enabled: true
+  ttl: 3600
+features:
+  - authentication
+  - notifications
+  - analytics

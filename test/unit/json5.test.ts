@@ -1,5 +1,5 @@
 import { describe, test, expect } from "bun:test";
-import { parseJSON5, stripJSON5Comments, normalizeJSON5 } from "../../src/parsers/json5";
+import { parseJSON5, stripJSON5Comments, normalizeJSON5 } from "../../src/formats/json5";
 
 describe("JSON5 Comment Stripper", () => {
   test("strips single-line comments", () => {

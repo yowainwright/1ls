@@ -1,18 +1,20 @@
 import { YAML } from "./constants";
+import { parseBooleanValue, parseNullValue } from "./utils";
 
 export function parseYAMLValue(value: string): unknown {
-  const hasQuotes =
-    (value.startsWith('"') && value.endsWith('"')) ||
-    (value.startsWith("'") && value.endsWith("'"));
+  const hasDoubleQuotes = value.startsWith('"') && value.endsWith('"');
+  const hasSingleQuotes = value.startsWith("'") && value.endsWith("'");
+  const hasQuotes = hasDoubleQuotes || hasSingleQuotes;
 
   if (hasQuotes) {
     return value.slice(1, -1);
   }
 
-  if (value === "true" || value === "yes" || value === "on") return true;
-  if (value === "false" || value === "no" || value === "off") return false;
+  const boolValue = parseBooleanValue(value);
+  if (boolValue !== undefined) return boolValue;
 
-  if (value === "null" || value === "~" || value === "") return null;
+  const nullValue = parseNullValue(value);
+  if (nullValue !== undefined) return nullValue;
 
   const isInteger = YAML.INTEGER.test(value);
   if (isInteger) return parseInt(value, 10);
@@ -35,7 +37,8 @@ export function parseYAMLValue(value: string): unknown {
 
     pairs.forEach((pair) => {
       const [k, v] = pair.split(":").map((s) => s.trim());
-      if (k && v) {
+      const hasKeyAndValue = k && v;
+      if (hasKeyAndValue) {
         obj[k] = parseYAMLValue(v);
       }
     });
@@ -92,10 +95,12 @@ export function parseYAML(input: string): unknown {
     let line = rawLine;
 
     const commentIdx = line.indexOf("#");
-    if (commentIdx >= 0) {
+    const hasComment = commentIdx >= 0;
+    if (hasComment) {
       const beforeComment = line.substring(0, commentIdx);
       const quoteCount = (beforeComment.match(/["']/g) || []).length;
-      if (quoteCount % 2 === 0) {
+      const isBalanced = quoteCount % 2 === 0;
+      if (isBalanced) {
         line = beforeComment;
       }
     }

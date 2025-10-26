@@ -1,8 +1,8 @@
 import { describe, test, expect } from 'bun:test';
-import { detectFormat, parseLines, parseInput } from '../../src/parsers';
-import { parseCSV, parseTSV } from '../../src/parsers/csv';
-import { parseYAML } from '../../src/parsers/yaml';
-import { parseTOML } from '../../src/parsers/toml';
+import { detectFormat, parseLines, parseInput } from '../../src/formats';
+import { parseCSV, parseTSV } from '../../src/formats/csv';
+import { parseYAML } from '../../src/formats/yaml';
+import { parseTOML } from '../../src/formats/toml';
 
 describe('Format Detection', () => {
   test('detects JSON objects', () => {
@@ -71,7 +71,7 @@ describe('Format Detection', () => {
   });
 });
 
-describe('Line Parser', () => {
+describe('Lines Format', () => {
   test('parses lines correctly', () => {
     const input = 'line1\nline2\nline3';
     expect(parseLines(input)).toEqual(['line1', 'line2', 'line3']);
@@ -87,7 +87,7 @@ describe('Line Parser', () => {
   });
 });
 
-describe('CSV Parser', () => {
+describe('CSV Format', () => {
   test('parses basic CSV', () => {
     const input = 'name,age,city\nAlice,30,NYC\nBob,25,LA';
     const expected = [
@@ -125,7 +125,7 @@ describe('CSV Parser', () => {
   });
 });
 
-describe('TSV Parser', () => {
+describe('TSV Format', () => {
   test('parses TSV correctly', () => {
     const input = 'name\tage\tcity\nAlice\t30\tNYC\nBob\t25\tLA';
     const expected = [
@@ -136,7 +136,7 @@ describe('TSV Parser', () => {
   });
 });
 
-describe('YAML Parser', () => {
+describe('YAML Format', () => {
   test('parses simple key-value pairs', () => {
     const input = 'name: Alice\nage: 30\ncity: NYC';
     const expected = { name: 'Alice', age: 30, city: 'NYC' };
@@ -195,7 +195,7 @@ items:
   });
 });
 
-describe('TOML Parser', () => {
+describe('TOML Format', () => {
   test('parses simple key-value pairs', () => {
     const input = 'name = "Alice"\nage = 30\nactive = true';
     const expected = { name: 'Alice', age: 30, active: true };

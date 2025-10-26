@@ -2,8 +2,8 @@ import { readdir, stat } from "node:fs/promises";
 import { join, extname, basename } from "node:path";
 import type { FileInfo, ListOptions, GrepOptions, GrepResult } from "./types";
 import { DEFAULT_SEARCH_EXTENSIONS } from "./constants";
+import { parseInput } from "../formats";
 
-// Overloaded function signatures for readFile
 export async function readFile(path: string): Promise<unknown>;
 export async function readFile(
   path: string,
@@ -19,13 +19,13 @@ export async function readFile(
   parseJson = true,
 ): Promise<unknown> {
   const file = Bun.file(path);
+  const content = await file.text();
 
-  const shouldParseJson = parseJson && path.endsWith(".json");
-  if (shouldParseJson) {
-    return file.json();
+  if (!parseJson) {
+    return content;
   }
 
-  return file.text();
+  return parseInput(content);
 }
 
 export function serializeContent(content: unknown): string {
@@ -157,7 +157,6 @@ export async function walkDirectory(
 
   const entries = await readdir(currentDir);
 
-  // Process all entries in parallel and flatten results
   const fileArrays = await Promise.all(
     entries.map((entry) =>
       processDirectoryEntry(currentDir, entry, depth, options),
@@ -274,7 +273,6 @@ export async function searchFileContent(
       ),
     );
 
-    // Apply max matches limit while maintaining immutability
     const maxMatches = options.maxMatches ?? Infinity;
     return allResults.slice(0, maxMatches);
   } catch (error: unknown) {
@@ -302,7 +300,6 @@ export async function searchInDirectory(
   return fileResults.flat();
 }
 
-// Overloaded grep signatures
 export async function grep(
   pattern: string,
   path: string,

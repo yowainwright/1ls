@@ -11,8 +11,8 @@ import {
   ArraySpreadNode,
   ArrowFunctionNode,
   RootNode,
-  LiteralNode,
 } from "../types";
+import { createLiteralNode, tryParseLiteralIdentifier } from "./utils";
 
 export function createErrorMessage(token: Token, message: string): string {
   return `${message} at position ${token.position} (got ${token.type}: "${token.value}")`;
@@ -59,12 +59,6 @@ export function createArraySpreadNode(object?: ASTNode): ArraySpreadNode {
   return { type: "ArraySpread", object };
 }
 
-export function createLiteralNode(
-  value: string | number | boolean | null,
-): LiteralNode {
-  return { type: "Literal", value };
-}
-
 export function createArrowFunctionNode(
   params: string[],
   body: ASTNode,
@@ -89,7 +83,7 @@ export function isValidObjectOperation(
   return VALID_OBJECT_OPERATIONS.includes(value as ObjectOperationType);
 }
 
-export class Parser {
+export class ExpressionParser {
   private tokens: readonly Token[];
   private position: number = 0;
   private current: Token;
@@ -177,16 +171,14 @@ export class Parser {
   }
 
   private parseBracketAccess(object?: ASTNode): ASTNode {
-    this.advance(); // consume [
+    this.advance();
 
-    // Handle array spread []
     const isSpread = this.current.type === TokenType.RIGHT_BRACKET;
     if (isSpread) {
       this.advance();
       return createArraySpreadNode(object);
     }
 
-    // Handle string property access ["key"]
     const isStringProperty = this.current.type === TokenType.STRING;
     if (isStringProperty) {
       const property = this.current.value;
@@ -195,11 +187,10 @@ export class Parser {
       return createPropertyAccessNode(property, object);
     }
 
-    // Handle numeric index or slice
-    const isNumericOrSlice =
-      this.current.type === TokenType.NUMBER ||
-      (this.current.type === TokenType.OPERATOR && this.current.value === "-") ||
-      this.current.type === TokenType.COLON;
+    const isNumber = this.current.type === TokenType.NUMBER;
+    const isNegativeOperator = this.current.type === TokenType.OPERATOR && this.current.value === "-";
+    const isColon = this.current.type === TokenType.COLON;
+    const isNumericOrSlice = isNumber || isNegativeOperator || isColon;
 
     if (isNumericOrSlice) {
       return this.parseNumericIndexOrSlice(object);
@@ -211,23 +202,19 @@ export class Parser {
   }
 
   private parseNumericIndexOrSlice(object?: ASTNode): ASTNode {
-    // Check if this is a slice starting with colon [:5]
     const startsWithColon = this.current.type === TokenType.COLON;
     if (startsWithColon) {
       return this.parseSliceFromColon(undefined, object);
     }
 
-    // Parse the first number
     const index = this.parseNumber();
     this.advance();
 
-    // Check if this is a slice [1:5]
     const isSlice = this.current.type === TokenType.COLON;
     if (isSlice) {
       return this.parseSliceFromColon(index, object);
     }
 
-    // It's a simple index access [1]
     this.expect(TokenType.RIGHT_BRACKET);
     return createIndexAccessNode(index, object);
   }
@@ -236,11 +223,11 @@ export class Parser {
     start: number | undefined,
     object?: ASTNode,
   ): SliceAccessNode {
-    this.advance(); // consume colon
+    this.advance();
 
-    const hasEndNumber =
-      this.current.type === TokenType.NUMBER ||
-      (this.current.type === TokenType.OPERATOR && this.current.value === "-");
+    const isNumber = this.current.type === TokenType.NUMBER;
+    const isNegativeOperator = this.current.type === TokenType.OPERATOR && this.current.value === "-";
+    const hasEndNumber = isNumber || isNegativeOperator;
 
     const end = hasEndNumber ? this.parseNumber() : undefined;
 
@@ -257,7 +244,7 @@ export class Parser {
   }
 
   private parseObjectOperation(object?: ASTNode): ObjectOperationNode {
-    this.advance(); // consume {
+    this.advance();
 
     const isValidToken = this.current.type === TokenType.IDENTIFIER;
     if (!isValidToken) {
@@ -293,6 +280,9 @@ export class Parser {
       return this.parseArrowFunction([identifier]);
     }
 
+    const literalNode = tryParseLiteralIdentifier(identifier);
+    if (literalNode) return literalNode;
+
     return createPropertyAccessNode(identifier);
   }
 
@@ -323,7 +313,6 @@ export class Parser {
       this.advance();
       const right = this.parseFunctionTerm();
 
-      // Create synthetic method call for operators
       left = createMethodCallNode(`__operator_${operator}__`, [right], left);
     }
 
@@ -364,6 +353,9 @@ export class Parser {
   private parseIdentifierChain(): ASTNode {
     const identifier = this.current.value;
     this.advance();
+
+    const literalNode = tryParseLiteralIdentifier(identifier);
+    if (literalNode) return literalNode;
 
     let node: ASTNode = createPropertyAccessNode(identifier);
 
@@ -412,13 +404,11 @@ export class Parser {
   private parseMethodArgument(): ASTNode {
     const currentType = this.current.type;
 
-    // Arrow function with parentheses: (x, y) => x + y
     if (currentType === TokenType.LEFT_PAREN) {
       const params = this.parseFunctionParams();
       return this.parseArrowFunction(params);
     }
 
-    // Simple arrow function: x => x * 2
     if (currentType === TokenType.IDENTIFIER) {
       const identifier = this.current.value;
       this.advance();
@@ -431,14 +421,12 @@ export class Parser {
       return createPropertyAccessNode(identifier);
     }
 
-    // Number literal
     if (currentType === TokenType.NUMBER) {
       const value = Number(this.current.value);
       this.advance();
       return createLiteralNode(value);
     }
 
-    // String literal
     if (currentType === TokenType.STRING) {
       const value = this.current.value;
       this.advance();
@@ -505,7 +493,7 @@ export class Parser {
   }
 
   private parsePostfixDot(node: ASTNode): ASTNode {
-    this.advance(); // consume dot
+    this.advance();
 
     const currentType = this.current.type;
 

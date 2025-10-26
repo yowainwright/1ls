@@ -1,11 +1,11 @@
 import { test, expect } from 'bun:test';
 import { Lexer } from '../../src/lexer';
-import { Parser } from '../../src/parser';
+import { ExpressionParser } from '../../src/expression';
 
-test('Parser: simple property access', () => {
+test('Expression: simple property access', () => {
   const lexer = new Lexer('.name');
   const tokens = lexer.tokenize();
-  const parser = new Parser(tokens);
+  const parser = new ExpressionParser(tokens);
   const ast = parser.parse();
 
   expect(ast.type).toBe('Root');
@@ -13,10 +13,10 @@ test('Parser: simple property access', () => {
   expect((ast.expression as any).property).toBe('name');
 });
 
-test('Parser: nested property access', () => {
+test('Expression: nested property access', () => {
   const lexer = new Lexer('.user.email');
   const tokens = lexer.tokenize();
-  const parser = new Parser(tokens);
+  const parser = new ExpressionParser(tokens);
   const ast = parser.parse();
 
   expect(ast.expression?.type).toBe('PropertyAccess');
@@ -25,10 +25,10 @@ test('Parser: nested property access', () => {
   expect((ast.expression as any).object?.property).toBe('user');
 });
 
-test('Parser: array index', () => {
+test('Expression: array index', () => {
   const lexer = new Lexer('.users[0]');
   const tokens = lexer.tokenize();
-  const parser = new Parser(tokens);
+  const parser = new ExpressionParser(tokens);
   const ast = parser.parse();
 
   expect(ast.expression?.type).toBe('IndexAccess');
@@ -36,10 +36,10 @@ test('Parser: array index', () => {
   expect((ast.expression as any).object?.type).toBe('PropertyAccess');
 });
 
-test('Parser: array slice', () => {
+test('Expression: array slice', () => {
   const lexer = new Lexer('[0:5]');
   const tokens = lexer.tokenize();
-  const parser = new Parser(tokens);
+  const parser = new ExpressionParser(tokens);
   const ast = parser.parse();
 
   expect(ast.expression?.type).toBe('SliceAccess');
@@ -47,30 +47,30 @@ test('Parser: array slice', () => {
   expect((ast.expression as any).end).toBe(5);
 });
 
-test('Parser: array spread', () => {
+test('Expression: array spread', () => {
   const lexer = new Lexer('.users[]');
   const tokens = lexer.tokenize();
-  const parser = new Parser(tokens);
+  const parser = new ExpressionParser(tokens);
   const ast = parser.parse();
 
   expect(ast.expression?.type).toBe('ArraySpread');
   expect((ast.expression as any).object?.type).toBe('PropertyAccess');
 });
 
-test('Parser: object operation', () => {
+test('Expression: object operation', () => {
   const lexer = new Lexer('.obj.{keys}');
   const tokens = lexer.tokenize();
-  const parser = new Parser(tokens);
+  const parser = new ExpressionParser(tokens);
   const ast = parser.parse();
 
   expect(ast.expression?.type).toBe('ObjectOperation');
   expect((ast.expression as any).operation).toBe('keys');
 });
 
-test('Parser: method call with arrow function', () => {
+test('Expression: method call with arrow function', () => {
   const lexer = new Lexer('.map(x => x * 2)');
   const tokens = lexer.tokenize();
-  const parser = new Parser(tokens);
+  const parser = new ExpressionParser(tokens);
   const ast = parser.parse();
 
   expect(ast.expression?.type).toBe('MethodCall');

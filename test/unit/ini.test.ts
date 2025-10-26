@@ -1,5 +1,5 @@
 import { describe, test, expect } from "bun:test";
-import { parseINI, parseINIValue } from "../../src/parsers/ini";
+import { parseINI, parseINIValue } from "../../src/formats/ini";
 
 describe("INI Value Parser", () => {
   test("parses string values", () => {

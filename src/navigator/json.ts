@@ -1,7 +1,5 @@
 import { ASTNode, ArrowFunctionNode, MethodCallNode } from "../types";
-
-type EvaluationContext = Record<string, unknown>;
-type OperatorFunction = (left: unknown, right: unknown) => unknown;
+import { EvaluationContext, OperatorFunction } from "./types";
 
 export const OPERATORS: Readonly<Record<string, OperatorFunction>> = {
   "+": (left: unknown, right: unknown) => (left as number) + (right as number),

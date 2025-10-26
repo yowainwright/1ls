@@ -1,5 +1,5 @@
 import { describe, test, expect } from "bun:test";
-import { parseTypeScript } from "../../src/parsers/typescript";
+import { parseTypeScript } from "../../src/formats/typescript";
 
 describe("TypeScript Parser", () => {
   test("parses TypeScript with type annotations", () => {

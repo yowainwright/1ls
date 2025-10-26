@@ -1,4 +1,4 @@
-import { parseInput } from "../parsers";
+import { parseInput } from "../formats";
 import type { DataFormat } from "./types";
 
 export async function processInput(format?: DataFormat): Promise<unknown> {

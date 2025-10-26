@@ -1,5 +1,5 @@
 import { describe, test, expect } from "bun:test";
-import { parseNDJSON } from "../../src/parsers/ndjson";
+import { parseNDJSON } from "../../src/formats/ndjson";
 
 describe("parseNDJSON", () => {
   test("parses newline-delimited JSON objects", () => {

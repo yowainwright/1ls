@@ -1,4 +1,5 @@
 import { Token, TokenType } from "../types";
+import { SINGLE_CHAR_TOKENS, OPERATOR_CHARS, WHITESPACE_CHARS } from "./constants";
 
 export function getContextSnippet(input: string, position: number, length = 20): string {
   const start = Math.max(0, position - length);
@@ -42,27 +43,13 @@ export class Lexer {
   private nextToken(): Token | null {
     const startPos = this.position;
 
-    // Single character tokens
-    const singleCharTokens: Record<string, TokenType> = {
-      ".": TokenType.DOT,
-      "[": TokenType.LEFT_BRACKET,
-      "]": TokenType.RIGHT_BRACKET,
-      "{": TokenType.LEFT_BRACE,
-      "}": TokenType.RIGHT_BRACE,
-      "(": TokenType.LEFT_PAREN,
-      ")": TokenType.RIGHT_PAREN,
-      ":": TokenType.COLON,
-      ",": TokenType.COMMA,
-    };
-
-    const tokenType = singleCharTokens[this.current];
+    const tokenType = SINGLE_CHAR_TOKENS[this.current];
     if (tokenType) {
       const char = this.current;
       this.advance();
       return createToken(tokenType, char, startPos);
     }
 
-    // Arrow operator
     const isArrow = this.current === "=" && this.peek() === ">";
     if (isArrow) {
       this.advance();
@@ -70,26 +57,23 @@ export class Lexer {
       return createToken(TokenType.ARROW, "=>", startPos);
     }
 
-    // String literals
     const isStringStart = this.current === '"' || this.current === "'";
     if (isStringStart) {
       return this.readString();
     }
 
-    // Numbers
-    const isNumberStart = this.isDigit(this.current) ||
-      (this.current === "-" && this.isDigit(this.peek()));
+    const isDigit = this.isDigit(this.current);
+    const isNegativeNumber = this.current === "-" && this.isDigit(this.peek());
+    const isNumberStart = isDigit || isNegativeNumber;
     if (isNumberStart) {
       return this.readNumber();
     }
 
-    // Identifiers
     const isIdentifierStart = this.isIdentifierStart(this.current);
     if (isIdentifierStart) {
       return this.readIdentifier();
     }
 
-    // Operators
     const isOperator = this.isOperator(this.current);
     if (isOperator) {
       return this.readOperator();
@@ -194,7 +178,7 @@ export class Lexer {
   }
 
   private isWhitespace(char: string): boolean {
-    return char === " " || char === "\t" || char === "\n" || char === "\r";
+    return WHITESPACE_CHARS.includes(char as any);
   }
 
   private isDigit(char: string): boolean {
@@ -202,12 +186,11 @@ export class Lexer {
   }
 
   private isIdentifierStart(char: string): boolean {
-    return (
-      (char >= "a" && char <= "z") ||
-      (char >= "A" && char <= "Z") ||
-      char === "_" ||
-      char === "$"
-    );
+    const isLowercase = char >= "a" && char <= "z";
+    const isUppercase = char >= "A" && char <= "Z";
+    const isUnderscore = char === "_";
+    const isDollar = char === "$";
+    return isLowercase || isUppercase || isUnderscore || isDollar;
   }
 
   private isIdentifierChar(char: string): boolean {
@@ -215,6 +198,6 @@ export class Lexer {
   }
 
   private isOperator(char: string): boolean {
-    return "+-*/%<>!&|=".includes(char);
+    return OPERATOR_CHARS.includes(char);
   }
 }

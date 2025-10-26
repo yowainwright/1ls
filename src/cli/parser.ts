@@ -1,5 +1,6 @@
 import { CliOptions } from "../types";
 import { DataFormat } from "../utils/types";
+import { VALID_OUTPUT_FORMATS, VALID_INPUT_FORMATS } from "./constants";
 
 const DEFAULT_OPTIONS: CliOptions = {
   format: "json",
@@ -55,9 +56,9 @@ export function parseArgs(args: string[]): CliOptions {
         i++;
         if (i < args.length) {
           const format = args[i];
-          const validFormats = ["json", "yaml", "csv", "table"] as const;
-          const isValidFormat = validFormats.includes(format as any);
-          if (format && isValidFormat) {
+          const isValidFormat = VALID_OUTPUT_FORMATS.includes(format as any);
+          const hasFormat = format && isValidFormat;
+          if (hasFormat) {
             options.format = format as CliOptions["format"];
           }
         }
@@ -68,16 +69,8 @@ export function parseArgs(args: string[]): CliOptions {
         i++;
         if (i < args.length) {
           const inputFormat = args[i] as DataFormat;
-          const validInputFormats: DataFormat[] = [
-            "json",
-            "yaml",
-            "toml",
-            "csv",
-            "tsv",
-            "lines",
-            "text",
-          ];
-          if (validInputFormats.includes(inputFormat)) {
+          const isValidInputFormat = VALID_INPUT_FORMATS.includes(inputFormat);
+          if (isValidInputFormat) {
             options.inputFormat = inputFormat;
           }
         }
@@ -85,7 +78,7 @@ export function parseArgs(args: string[]): CliOptions {
 
       case "readFile":
         options.readFile = true;
-        i += 2; // Skip filename and expression
+        i += 2;
         break;
 
       case "--find":

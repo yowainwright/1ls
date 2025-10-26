@@ -1,5 +1,5 @@
 import { describe, test, expect } from "bun:test";
-import { parseENV, parseENVValue } from "../../src/parsers/env";
+import { parseENV, parseENVValue } from "../../src/formats/env";
 
 describe("parseENVValue", () => {
   test("parses quoted strings", () => {

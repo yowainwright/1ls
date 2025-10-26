@@ -1,4 +1,4 @@
-import { CSV } from "./constants";
+import { parseBooleanValue, parseNullValue, tryParseNumber } from "./utils";
 
 export function parseCSVLine(line: string, delimiter: string): string[] {
   const result = [];
@@ -9,7 +9,8 @@ export function parseCSVLine(line: string, delimiter: string): string[] {
   chars.forEach((char, i) => {
     const nextChar = chars[i + 1];
 
-    if (char === '"') {
+    const isQuote = char === '"';
+    if (isQuote) {
       const isEscapedQuote = inQuotes && nextChar === '"';
       if (isEscapedQuote) {
         current += '"';
@@ -20,8 +21,8 @@ export function parseCSVLine(line: string, delimiter: string): string[] {
       return;
     }
 
-    const isDelimiter = char === delimiter && !inQuotes;
-    if (isDelimiter) {
+    const isUnquotedDelimiter = char === delimiter && !inQuotes;
+    if (isUnquotedDelimiter) {
       result.push(current);
       current = "";
       return;
@@ -42,17 +43,15 @@ export function parseCSVValue(value: string): unknown {
     return trimmed.slice(1, -1).replace(/""/g, '"');
   }
 
-  const isNumber = CSV.NUMBER.test(trimmed);
-  if (isNumber) {
-    return parseFloat(trimmed);
-  }
+  const numberValue = tryParseNumber(trimmed);
+  if (numberValue !== undefined) return numberValue;
 
   const lowerValue = trimmed.toLowerCase();
-  if (lowerValue === "true") return true;
-  if (lowerValue === "false") return false;
+  const boolValue = parseBooleanValue(lowerValue);
+  if (boolValue !== undefined) return boolValue;
 
-  const isEmpty = trimmed === "" || lowerValue === "null";
-  if (isEmpty) return null;
+  const nullValue = parseNullValue(lowerValue);
+  if (nullValue !== undefined) return nullValue;
 
   return trimmed;
 }
