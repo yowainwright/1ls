@@ -1,7 +1,4 @@
 {
-  "workspaces": [
-    "site"
-  ],
   "name": "1ls",
   "version": "0.0.1",
   "description": "1 line script - Lightweight JSON CLI with JavaScript syntax",
@@ -28,6 +25,10 @@
     "dev": "bun run ./src/cli/index.ts",
     "prepublishOnly": "bun run test && bun run build",
     "test": "bun test",
+    "test:unit": "bun test test/unit/",
+    "test:integration": "bun test test/integration/",
+    "test:integration:docker": "cd test/integration && docker-compose up --build --abort-on-container-exit",
+    "test:integration:docker:clean": "cd test/integration && docker-compose down -v",
     "typecheck": "tsc --noEmit",
     "lint": "bunx oxlint src/",
     "lint:fix": "bunx oxlint src/ --fix",

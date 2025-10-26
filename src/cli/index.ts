@@ -4,8 +4,8 @@ import { parseArgs } from "./parser";
 import { showHelp } from "./help";
 import { processInput } from "../utils/stream";
 import { readFile, listFiles, grep } from "../utils/file";
-import { Lexer } from "../parser/lexer";
-import { Parser } from "../parser/parser";
+import { Lexer } from "../lexer";
+import { ExpressionParser } from "../expression";
 import { JsonNavigator } from "../navigator/json";
 import { Formatter } from "../formatter/output";
 import { warning, info } from "../formatter/colors";
@@ -23,7 +23,8 @@ async function handleInfoCommands(options: CliOptions): Promise<boolean> {
   }
 
   if (options.version) {
-    console.log("1ls version 1.0.0");
+    const packageJson = await Bun.file("package.json").json();
+    console.log(`1ls version ${packageJson.version}`);
     process.exit(0);
   }
 
@@ -63,7 +64,8 @@ async function handleFileOperations(options: CliOptions): Promise<boolean> {
     return true;
   }
 
-  if (options.grep && options.find) {
+  const hasGrepOperation = options.grep && options.find;
+  if (hasGrepOperation) {
     await handleGrepOperation(options);
     return true;
   }
@@ -102,8 +104,9 @@ async function loadData(options: CliOptions, args: string[]): Promise<any> {
 
   const isStdinAvailable = !process.stdin.isTTY;
   const hasFileOperations = options.list || options.grep;
+  const hasNoInput = !isStdinAvailable && !hasFileOperations;
 
-  if (!isStdinAvailable && !hasFileOperations) {
+  if (hasNoInput) {
     showHelp();
     process.exit(1);
   }
@@ -130,7 +133,7 @@ async function processExpression(
     const lexer = new Lexer(expandedExpression);
     const tokens = lexer.tokenize();
 
-    const parser = new Parser(tokens);
+    const parser = new ExpressionParser(tokens);
     const ast = parser.parse();
 
     const navigator = new JsonNavigator();
@@ -157,7 +160,6 @@ export async function main(args: string[]): Promise<void> {
   await processExpression(options, jsonData);
 }
 
-// Run if executed directly
 if (import.meta.main) {
   main(process.argv.slice(2)).catch((err) => {
     console.error("Error:", err.message);

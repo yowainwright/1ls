@@ -2,8 +2,6 @@ const COLORS = {
   reset: "\x1b[0m",
   bright: "\x1b[1m",
   dim: "\x1b[2m",
-
-  // Foreground colors
   black: "\x1b[30m",
   red: "\x1b[31m",
   green: "\x1b[32m",
@@ -15,26 +13,22 @@ const COLORS = {
   gray: "\x1b[90m",
 };
 
-export function colorize(json: string): string {
-  if (process.env.NO_COLOR) {
-    return json;
-  }
+const COLOR_PATTERNS = [
+  { regex: /"([^"]+)":/g, replacement: `${COLORS.cyan}"$1"${COLORS.reset}:` },
+  { regex: /: "([^"]*)"/g, replacement: `: ${COLORS.green}"$1"${COLORS.reset}` },
+  { regex: /: (-?\d+\.?\d*)/g, replacement: `: ${COLORS.yellow}$1${COLORS.reset}` },
+  { regex: /: (true|false)/g, replacement: `: ${COLORS.magenta}$1${COLORS.reset}` },
+  { regex: /: (null)/g, replacement: `: ${COLORS.gray}$1${COLORS.reset}` },
+  { regex: /([{[])/g, replacement: `${COLORS.gray}$1${COLORS.reset}` },
+  { regex: /([}\]])/g, replacement: `${COLORS.gray}$1${COLORS.reset}` },
+];
 
-  return (
-    json
-      // Keys (property names)
-      .replace(/"([^"]+)":/g, `${COLORS.cyan}"$1"${COLORS.reset}:`)
-      // String values
-      .replace(/: "([^"]*)"/g, `: ${COLORS.green}"$1"${COLORS.reset}`)
-      // Numbers
-      .replace(/: (-?\d+\.?\d*)/g, `: ${COLORS.yellow}$1${COLORS.reset}`)
-      // Booleans
-      .replace(/: (true|false)/g, `: ${COLORS.magenta}$1${COLORS.reset}`)
-      // Null
-      .replace(/: (null)/g, `: ${COLORS.gray}$1${COLORS.reset}`)
-      // Array/Object brackets
-      .replace(/([{[])/g, `${COLORS.gray}$1${COLORS.reset}`)
-      .replace(/([}\]])/g, `${COLORS.gray}$1${COLORS.reset}`)
+export function colorize(json: string): string {
+  if (process.env.NO_COLOR) return json;
+
+  return COLOR_PATTERNS.reduce(
+    (result, { regex, replacement }) => result.replace(regex, replacement),
+    json,
   );
 }
 

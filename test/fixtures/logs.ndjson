@@ -1,0 +1,6 @@
+{"timestamp":"2024-01-15T10:30:00Z","level":"info","message":"Application started","service":"api"}
+{"timestamp":"2024-01-15T10:30:15Z","level":"error","message":"Database connection failed","service":"api","error":"ECONNREFUSED"}
+{"timestamp":"2024-01-15T10:30:30Z","level":"warn","message":"High memory usage","service":"worker","memory":512}
+{"timestamp":"2024-01-15T10:31:00Z","level":"info","message":"Request processed","service":"api","duration":45}
+{"timestamp":"2024-01-15T10:31:15Z","level":"error","message":"Timeout error","service":"api","error":"ETIMEDOUT"}
+{"timestamp":"2024-01-15T10:31:30Z","level":"info","message":"Cache cleared","service":"worker"}

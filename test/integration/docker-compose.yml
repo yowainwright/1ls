@@ -1,0 +1,14 @@
+version: '3.8'
+
+services:
+  e2e-tests:
+    build:
+      context: ../..
+      dockerfile: test/integration/Dockerfile
+    volumes:
+      - ./:/app/test/integration
+      - ../fixtures:/app/test/fixtures
+    environment:
+      - NODE_ENV=test
+      - NO_COLOR=1
+    command: bun test test/integration/

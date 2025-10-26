@@ -36,3 +36,5 @@ export const VALID_OBJECT_OPERATIONS = [
   "entries",
   "length",
 ] as const;
+
+export const REGEX_SPECIAL_CHARS = /[.*+?^${}()|[\]\\]/g;

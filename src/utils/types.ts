@@ -23,6 +23,7 @@ export interface GrepOptions {
   maxMatches?: number;
   showLineNumbers?: boolean;
   context?: number;
+  verbose?: boolean;
 }
 
 export interface GrepResult {
@@ -35,10 +36,18 @@ export interface GrepResult {
 
 export type DataFormat =
   | "json"
+  | "json5"
   | "yaml"
   | "toml"
+  | "xml"
+  | "ini"
   | "csv"
   | "tsv"
+  | "protobuf"
+  | "javascript"
+  | "typescript"
+  | "env"
+  | "ndjson"
   | "lines"
   | "text";
 
@@ -47,4 +56,17 @@ export interface ShortcutMapping {
   full: string;
   description: string;
   type: "array" | "object" | "string" | "any";
+}
+
+export const LogLevel = {
+  ERROR: 0,
+  WARN: 1,
+  INFO: 2,
+  DEBUG: 3,
+} as const;
+
+export type LogLevelType = (typeof LogLevel)[keyof typeof LogLevel];
+
+export interface LogData {
+  [key: string]: unknown;
 }
