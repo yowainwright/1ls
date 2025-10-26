@@ -12,13 +12,13 @@ const COMPLETE_TAGS = /<\/\w+>$/;
 const XML_DECLARATION = /^<\?xml[^>]+\?>\s*/;
 
 const TRAILING_COMMA = /,(\s*[}\]])/g;
-const UNQUOTED_KEY = /(['\"])?([a-zA-Z_$][a-zA-Z0-9_$]*)\1?\s*:/g;
+const UNQUOTED_KEY = /(['"])?([a-zA-Z_$][a-zA-Z0-9_$]*)\1?\s*:/g;
 
-const JSON5_FEATURES = /\/\/|\/\*|\,\s*[}\]]/;
+const JSON5_FEATURES = /\/\/|\/\*|,\s*[}\]]/;
 const SECTION_HEADER = /^\[[\w.\s]+\]$/m;
 const TOML_SECTION = /^\[[\w.]+\]$/m;
 const TOML_QUOTED_VALUES = /^\w+\s*=\s*"[^"]*"$/m;
-const TOML_SYNTAX = /=\s*["\[{]/m;
+const TOML_SYNTAX = /=\s*["[{]/m;
 const INI_SYNTAX = /^\w+\s*=\s*.+$/m;
 
 export const CSV = {

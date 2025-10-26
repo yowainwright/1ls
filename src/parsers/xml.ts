@@ -1,5 +1,5 @@
 import { XML } from "./constants";
-import { XMLParseState, XMLElementState } from "./types";
+import { XMLElementState } from "./types";
 
 export function parseXMLValue(value: string): unknown {
   const trimmed = value.trim();
@@ -163,7 +163,7 @@ function splitXMLElements(content: string): string[] {
         skip: 0,
       };
     },
-    { elements: [], buffer: [], depth: 0, skip: 0 } as XMLElementState & { skip: number }
+    { elements: [], buffer: [], depth: 0, skip: 0 } as XMLElementState
   );
 
   const finalContent = finalState.buffer.join("").trim();

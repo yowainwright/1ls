@@ -36,6 +36,7 @@ export interface XMLElementState {
   elements: string[];
   buffer: string[];
   depth: number;
+  skip: number;
 }
 
 export interface INIParseState {

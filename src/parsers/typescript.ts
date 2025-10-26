@@ -6,7 +6,7 @@ function getTranspiler(): Bun.Transpiler {
   const hasInstance = transpilerInstance !== null;
 
   if (hasInstance) {
-    return transpilerInstance;
+    return transpilerInstance as Bun.Transpiler;
   }
 
   transpilerInstance = new Bun.Transpiler({

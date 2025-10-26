@@ -1,7 +1,4 @@
 {
-  "workspaces": [
-    "site"
-  ],
   "name": "1ls",
   "version": "0.0.1",
   "description": "1 line script - Lightweight JSON CLI with JavaScript syntax",
