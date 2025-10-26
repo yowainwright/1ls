@@ -244,7 +244,7 @@ const fullToShort = new Map(SHORTCUTS.map((s) => [s.full, s.short]));
 
 const EXPAND_PATTERNS = SHORTCUTS
   .map((s) => ({
-    regex: new RegExp(`\\${s.short}(?![a-zA-Z])`, "g"),
+    regex: new RegExp(`${escapeRegExp(s.short)}(?![a-zA-Z])`, "g"),
     replacement: s.full,
   }))
   .sort((a, b) => b.replacement.length - a.replacement.length);
