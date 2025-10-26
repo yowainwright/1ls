@@ -38,7 +38,8 @@
     "lint:fix": "bunx oxlint src/ --fix",
     "format": "bunx prettier --check 'src/**/*.{ts,tsx,js,jsx,json}'",
     "format:fix": "bunx prettier --write 'src/**/*.{ts,tsx,js,jsx,json}'",
-    "release": "release-it"
+    "release": "release-it",
+    "prepare": "husky"
   },
   "keywords": [
     "json",
@@ -61,6 +62,7 @@
   "devDependencies": {
     "@release-it/conventional-changelog": "^10.0.1",
     "@types/bun": "latest",
+    "husky": "^9.1.7",
     "release-it": "^19.0.5",
     "turbo": "^2.3.3",
     "typescript": "5.9.2"
