@@ -1,11 +1,11 @@
 # 1ls - One Line Script
 
-A lightweight, fast JSON/YAML/CSV processor with JavaScript syntax. Built with Bun for blazing performance.
+A lightweight, fast data processor with JavaScript syntax. Built with Bun for blazing performance.
 
 ## Why 1ls?
 
 - **JavaScript Syntax**: Use familiar JavaScript array methods and syntax instead of learning jq's DSL
-- **Multi-format**: Works with JSON, YAML, TOML, CSV, TSV out of the box
+- **Multi-format**: Works with JSON, JSON5, YAML, TOML, XML, INI, CSV, TSV, ENV, NDJSON, JavaScript, TypeScript, and more
 - **Fast**: Built with Bun for exceptional performance
 - **Intuitive**: Property access with dot notation, just like JavaScript
 - **Powerful**: Full support for array methods, arrow functions, and object operations
@@ -110,10 +110,33 @@ John,30
 Jane,25' | 1ls '.map(x => x.name)'
 # Output: ["John", "Jane"]
 
+# ENV file input
+echo 'DATABASE_URL=postgres://localhost/db
+PORT=3000
+DEBUG=true' | 1ls '.PORT'
+# Output: 3000
+
+# NDJSON (Newline-Delimited JSON) - great for logs
+echo '{"level":"error","msg":"Failed"}
+{"level":"info","msg":"Started"}
+{"level":"error","msg":"Timeout"}' | 1ls '.filter(x => x.level === "error")'
+# Output: [{"level":"error","msg":"Failed"}, {"level":"error","msg":"Timeout"}]
+
 # Specify input format explicitly
 cat data.yaml | 1ls --input-format yaml '.users[0].name'
 cat data.csv | 1ls --input-format csv '.filter(x => x.age > 25)'
+cat app.env | 1ls --input-format env '.DATABASE_URL'
+cat logs.ndjson | 1ls --input-format ndjson '.filter(x => x.level === "error")'
 ```
+
+**Supported Formats:**
+- JSON, JSON5 (JSON with comments/trailing commas)
+- YAML, TOML, XML, INI
+- CSV, TSV
+- ENV files (.env)
+- NDJSON (Newline-Delimited JSON for logs)
+- JavaScript, TypeScript (with `export default`)
+- Plain text, line-by-line
 
 ### File Operations
 

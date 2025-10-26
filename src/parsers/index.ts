@@ -64,6 +64,16 @@ export async function parseInput(input: string, format?: DataFormat): Promise<un
         return parseTypeScript(input);
       }
 
+      case "env": {
+        const { parseENV } = await import("./env");
+        return parseENV(input);
+      }
+
+      case "ndjson": {
+        const { parseNDJSON } = await import("./ndjson");
+        return parseNDJSON(input);
+      }
+
       case "lines":
         return parseLines(input);
 
@@ -128,6 +138,16 @@ export async function parseInput(input: string, format?: DataFormat): Promise<un
       return parseTypeScript(input);
     }
 
+    case "env": {
+      const { parseENV } = await import("./env");
+      return parseENV(input);
+    }
+
+    case "ndjson": {
+      const { parseNDJSON } = await import("./ndjson");
+      return parseNDJSON(input);
+    }
+
     case "lines":
       return parseLines(input);
 
@@ -181,6 +201,11 @@ export function detectFormat(input: string): DataFormat {
 
   const hasEqualsSign = trimmed.includes("=");
   if (hasEqualsSign) {
+    const hasENVFeatures = DETECTION.ENV_FEATURES.test(trimmed);
+    if (hasENVFeatures) {
+      return "env";
+    }
+
     const hasTOMLStyleQuotedValues = trimmed.match(DETECTION.TOML_QUOTED_VALUES);
     if (hasTOMLStyleQuotedValues) {
       return "toml";
@@ -218,6 +243,22 @@ export function detectFormat(input: string): DataFormat {
   const hasMultipleLines = lines.length > 1;
 
   if (hasMultipleLines) {
+    const hasNDJSONFeatures = DETECTION.NDJSON_FEATURES.test(trimmed);
+    const allLinesAreJSON = lines.every(line => {
+      const trimmedLine = line.trim();
+      if (!trimmedLine) return true;
+      try {
+        JSON.parse(trimmedLine);
+        return true;
+      } catch {
+        return false;
+      }
+    });
+
+    if (hasNDJSONFeatures && allLinesAreJSON) {
+      return "ndjson";
+    }
+
     const firstLine = lines[0];
     const commaCount = (firstLine.match(/,/g) || []).length;
     const tabCount = (firstLine.match(/\t/g) || []).length;

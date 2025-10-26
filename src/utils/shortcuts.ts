@@ -1,4 +1,5 @@
 import type { ShortcutMapping } from "./types";
+import { escapeRegExp } from "./index";
 
 // Memorable shortcuts for common operations
 export const SHORTCUTS: ShortcutMapping[] = [
@@ -250,7 +251,7 @@ const EXPAND_PATTERNS = SHORTCUTS
 
 const SHORTEN_PATTERNS = SHORTCUTS
   .map((s) => ({
-    regex: new RegExp(`\\${s.full.replace(/[{}]/g, "\\$&")}(?![a-zA-Z])`, "g"),
+    regex: new RegExp(`${escapeRegExp(s.full)}(?![a-zA-Z])`, "g"),
     replacement: s.short,
   }))
   .sort((a, b) => b.regex.source.length - a.regex.source.length);

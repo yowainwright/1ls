@@ -1,22 +1,36 @@
 import { stripJSComments } from "./javascript";
 
-export function parseTypeScript(input: string): unknown {
-  const withoutComments = stripJSComments(input);
+let transpilerInstance: Bun.Transpiler | null = null;
 
-  const transpiler = new Bun.Transpiler({
+function getTranspiler(): Bun.Transpiler {
+  const hasInstance = transpilerInstance !== null;
+
+  if (hasInstance) {
+    return transpilerInstance;
+  }
+
+  transpilerInstance = new Bun.Transpiler({
     loader: "ts",
   });
 
+  return transpilerInstance;
+}
+
+export function parseTypeScript(input: string): unknown {
+  const withoutComments = stripJSComments(input);
+  const transpiler = getTranspiler();
   const transpiled = transpiler.transformSync(withoutComments);
 
   const exportMatch = transpiled.match(/export\s+default\s+(.+?)(?:;|\n|$)/);
   const exportedValue = exportMatch ? exportMatch[1] : null;
+  const hasExport = exportedValue !== null;
 
-  if (!exportedValue) {
+  if (!hasExport) {
     return null;
   }
 
-  const codeBeforeExport = transpiled.substring(0, transpiled.indexOf("export default"));
+  const exportIndex = transpiled.indexOf("export default");
+  const codeBeforeExport = transpiled.substring(0, exportIndex);
   const fullCode = `${codeBeforeExport}\n(${exportedValue})`;
 
   return eval(fullCode);

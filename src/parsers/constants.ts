@@ -72,6 +72,9 @@ export const TS = {
   EXPORT: JS_EXPORT,
 } as const;
 
+const ENV_FEATURES = /^[A-Z_][A-Z0-9_]*\s*=/m;
+const NDJSON_FEATURES = /^\{.*\}\s*$/m;
+
 export const DETECTION = {
   JSON5_FEATURES,
   SECTION_HEADER,
@@ -83,4 +86,6 @@ export const DETECTION = {
   TS_TYPE_ANNOTATION,
   TS_INTERFACE,
   TS_TYPE_ALIAS,
+  ENV_FEATURES,
+  NDJSON_FEATURES,
 } as const;

@@ -46,6 +46,8 @@ export type DataFormat =
   | "protobuf"
   | "javascript"
   | "typescript"
+  | "env"
+  | "ndjson"
   | "lines"
   | "text";
 
@@ -54,4 +56,17 @@ export interface ShortcutMapping {
   full: string;
   description: string;
   type: "array" | "object" | "string" | "any";
+}
+
+export const LogLevel = {
+  ERROR: 0,
+  WARN: 1,
+  INFO: 2,
+  DEBUG: 3,
+} as const;
+
+export type LogLevelType = (typeof LogLevel)[keyof typeof LogLevel];
+
+export interface LogData {
+  [key: string]: unknown;
 }

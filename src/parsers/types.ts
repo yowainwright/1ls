@@ -18,3 +18,31 @@ export interface XMLAttributes {
   _text?: unknown;
   [key: string]: unknown;
 }
+
+export interface ParseState {
+  result: string[];
+  inString: boolean;
+  delimiter: string;
+  skip: number;
+}
+
+export interface XMLParseState {
+  buffer: string[];
+  depth: number;
+  skip: number;
+}
+
+export interface XMLElementState {
+  elements: string[];
+  buffer: string[];
+  depth: number;
+}
+
+export interface INIParseState {
+  result: Record<string, unknown>;
+  currentSection: string;
+}
+
+export interface ENVParseState {
+  result: Record<string, unknown>;
+}
