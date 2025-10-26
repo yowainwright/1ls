@@ -1,6 +1,6 @@
 # 1ls - One Line Script
 
-A 0 dependency, lightweight, fast data processor with family JavaScript syntax. 
+A 0 dependency, lightweight, fast data processor with familiar JavaScript syntax. 
 
 ## Why 1ls?
 
