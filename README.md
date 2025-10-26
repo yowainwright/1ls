@@ -14,11 +14,11 @@ A 0 dependency, lightweight, fast data processor with family JavaScript syntax.
 ## Installation
 
 ```bash
-# Using Bun
-bun install -g 1ls
-
-# Using npm
+# Using npm (or bun)
 npm install -g 1ls
+
+# Using Homebrew (macOS/Linux)
+brew install yowainwright/tap/1ls
 
 # Using curl
 curl -fsSL https://raw.githubusercontent.com/yowainwright/1ls/main/install.sh | bash
@@ -316,6 +316,26 @@ done
 - Minimal overhead for expression evaluation
 - Efficient streaming for large files
 - Native binary compilation
+
+## Development
+
+```bash
+# Clone the repository
+git clone https://github.com/yowainwright/1ls.git
+cd 1ls
+
+# Install dependencies
+bun install
+
+# Run tests
+bun test
+
+# Build
+bun run build
+
+# Build binaries
+bun run build:binary:all
+```
 
 ## Contributing
 

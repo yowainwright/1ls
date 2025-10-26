@@ -21,7 +21,11 @@
   ],
   "scripts": {
     "build": "bun run clean && bun build ./src/cli/index.ts --outdir dist --target bun --minify && tsc --emitDeclarationOnly --outDir dist",
-    "clean": "rm -rf dist",
+    "build:binary": "bun run clean && mkdir -p bin && bun build ./src/cli/index.ts --compile --minify --outfile bin/1ls",
+    "build:binary:macos": "bun run clean && mkdir -p bin && bun build ./src/cli/index.ts --compile --minify --target=bun-darwin-arm64 --outfile bin/1ls-darwin-arm64 && bun build ./src/cli/index.ts --compile --minify --target=bun-darwin-x64 --outfile bin/1ls-darwin-x64",
+    "build:binary:linux": "bun run clean && mkdir -p bin && bun build ./src/cli/index.ts --compile --minify --target=bun-linux-x64 --outfile bin/1ls-linux-x64 && bun build ./src/cli/index.ts --compile --minify --target=bun-linux-arm64 --outfile bin/1ls-linux-arm64",
+    "build:binary:all": "bun run build:binary:macos && bun run build:binary:linux",
+    "clean": "rm -rf dist bin",
     "dev": "bun run ./src/cli/index.ts",
     "prepublishOnly": "bun run test && bun run build",
     "test": "bun test",
@@ -33,7 +37,8 @@
     "lint": "bunx oxlint src/",
     "lint:fix": "bunx oxlint src/ --fix",
     "format": "bunx prettier --check 'src/**/*.{ts,tsx,js,jsx,json}'",
-    "format:fix": "bunx prettier --write 'src/**/*.{ts,tsx,js,jsx,json}'"
+    "format:fix": "bunx prettier --write 'src/**/*.{ts,tsx,js,jsx,json}'",
+    "release": "release-it"
   },
   "keywords": [
     "json",
@@ -54,7 +59,9 @@
   },
   "homepage": "https://github.com/yowainwright/1ls",
   "devDependencies": {
+    "@release-it/conventional-changelog": "^10.0.1",
     "@types/bun": "latest",
+    "release-it": "^19.0.5",
     "turbo": "^2.3.3",
     "typescript": "5.9.2"
   },
