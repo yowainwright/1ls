@@ -39,7 +39,7 @@ describe("1ls Integration - File Reading", () => {
   });
 
   test("reads ENV files", async () => {
-    const result = await runCLI(["--compact", "readFile", join(FIXTURES_PATH, ".env"), ".PORT"]);
+    const result = await runCLI(["--compact", "readFile", join(FIXTURES_PATH, ".env_test"), ".PORT"]);
     expect(result.exitCode).toBe(0);
     expect(result.stdout.trim()).toBe("8080");
   });
