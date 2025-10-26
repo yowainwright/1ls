@@ -1,22 +1,25 @@
 import { ENVParseState } from "./types";
+import { parseBooleanValue, parseNullValue, tryParseNumber } from "./utils";
 
 export function parseENVValue(value: string): unknown {
   const trimmed = value.trim();
 
-  const hasQuotes =
-    (trimmed.startsWith('"') && trimmed.endsWith('"')) ||
-    (trimmed.startsWith("'") && trimmed.endsWith("'"));
+  const hasDoubleQuotes = trimmed.startsWith('"') && trimmed.endsWith('"');
+  const hasSingleQuotes = trimmed.startsWith("'") && trimmed.endsWith("'");
+  const hasQuotes = hasDoubleQuotes || hasSingleQuotes;
 
   if (hasQuotes) {
     return trimmed.slice(1, -1);
   }
 
-  if (trimmed === "true") return true;
-  if (trimmed === "false") return false;
-  if (trimmed === "null") return null;
+  const boolValue = parseBooleanValue(trimmed);
+  if (boolValue !== undefined) return boolValue;
 
-  const isNumber = /^-?\d+(\.\d+)?$/.test(trimmed);
-  if (isNumber) return parseFloat(trimmed);
+  const nullValue = parseNullValue(trimmed);
+  if (nullValue !== undefined) return nullValue;
+
+  const numberValue = tryParseNumber(trimmed);
+  if (numberValue !== undefined) return numberValue;
 
   return trimmed;
 }
@@ -29,8 +32,9 @@ function stripENVComments(line: string): string {
 
   const beforeComment = line.substring(0, commentIdx);
   const insideQuotes = beforeComment.match(/["'].*["']/);
+  const hasQuotedContent = insideQuotes !== null;
 
-  if (insideQuotes) {
+  if (hasQuotedContent) {
     const quoteCount = (beforeComment.match(/["']/g) || []).length;
     const isInsideQuote = quoteCount % 2 !== 0;
 
