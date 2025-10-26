@@ -1,6 +1,6 @@
 # 1ls - One Line Script
 
-A lightweight, fast data processor with JavaScript syntax. Built with Bun for blazing performance.
+A 0 dependency, lightweight, fast data processor with family JavaScript syntax. 
 
 ## Why 1ls?
 
