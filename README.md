@@ -6,7 +6,7 @@ A 0 dependency, lightweight, fast data processor with family JavaScript syntax.
 
 - **JavaScript Syntax**: Use familiar JavaScript array methods and syntax instead of learning jq's DSL
 - **Multi-format**: Works with JSON, JSON5, YAML, TOML, XML, INI, CSV, TSV, ENV, NDJSON, JavaScript, TypeScript, and more
-- **Fast**: Built with Bun for exceptional performance
+- **Fast**: Built for speed; no deps, compiled by Bun
 - **Intuitive**: Property access with dot notation, just like JavaScript
 - **Powerful**: Full support for array methods, arrow functions, and object operations
 - **Shortcuts**: Built-in shortcuts for common operations (e.g., `.mp` for `.map`)
@@ -338,10 +338,6 @@ MIT © Jeff Wainwright
 | File Operations | ✅ | ❌ | ❌ |
 
 ## Troubleshooting
-
-### Installation Issues
-- Ensure Bun is installed: `curl -fsSL https://bun.sh/install | bash`
-- Check PATH includes Bun location
 
 ### Expression Errors
 - Wrap expressions in quotes to prevent shell interpretation
