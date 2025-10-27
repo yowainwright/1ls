@@ -19,14 +19,20 @@
   "files": [
     "dist"
   ],
+  "workspaces": [
+    "app"
+  ],
   "scripts": {
+    "dev": "bun --cwd app dev",
     "build": "bun run clean && bun build ./src/cli/index.ts --outdir dist --target bun --minify && tsc --emitDeclarationOnly --outDir dist",
+    "build:app": "bun --cwd app run build",
     "build:binary": "bun run clean && mkdir -p bin && bun build ./src/cli/index.ts --compile --minify --outfile bin/1ls",
     "build:binary:macos": "bun run clean && mkdir -p bin && bun build ./src/cli/index.ts --compile --minify --target=bun-darwin-arm64 --outfile bin/1ls-darwin-arm64 && bun build ./src/cli/index.ts --compile --minify --target=bun-darwin-x64 --outfile bin/1ls-darwin-x64",
     "build:binary:linux": "bun run clean && mkdir -p bin && bun build ./src/cli/index.ts --compile --minify --target=bun-linux-x64 --outfile bin/1ls-linux-x64 && bun build ./src/cli/index.ts --compile --minify --target=bun-linux-arm64 --outfile bin/1ls-linux-arm64",
     "build:binary:all": "bun run build:binary:macos && bun run build:binary:linux",
     "clean": "rm -rf dist bin",
-    "dev": "bun run ./src/cli/index.ts",
+    "dev:cli": "bun run ./src/cli/index.ts",
+    "deploy:app": "bun --cwd app run deploy",
     "prepublishOnly": "bun run test && bun run build",
     "test": "bun test",
     "test:unit": "bun test test/unit/",
@@ -34,6 +40,7 @@
     "test:integration:docker": "cd test/integration && docker-compose up --build --abort-on-container-exit",
     "test:integration:docker:clean": "cd test/integration && docker-compose down -v",
     "typecheck": "tsc --noEmit",
+    "typecheck:app": "bun --cwd app run tsc --noEmit",
     "lint": "bunx oxlint src/",
     "lint:fix": "bunx oxlint src/ --fix",
     "format": "bunx prettier --check 'src/**/*.{ts,tsx,js,jsx,json}'",
