@@ -1,0 +1,5 @@
+export { Code, highlightCode } from "./code"
+export { Spotlight } from "./spotlight"
+export { lineNumbers, mark, focus, diff } from "./annotations"
+export { THEMES, MAX_TRANSITION_DURATION, ANNOTATION_CLASSES, COMPONENT_CLASSES } from "./constants"
+export type { CodeHikeProps, CodeProps, RawCode, Step, SpotlightProps, AnnotationHandler, HighlightedCode } from "./types"
