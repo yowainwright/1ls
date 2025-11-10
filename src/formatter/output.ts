@@ -8,7 +8,7 @@ export class Formatter {
     this.options = options;
   }
 
-  format(data: any): string {
+  format(data: unknown): string {
     if (this.options.raw) {
       return this.formatRaw(data);
     }
@@ -29,7 +29,7 @@ export class Formatter {
     }
   }
 
-  private formatRaw(data: any): string {
+  private formatRaw(data: unknown): string {
     if (typeof data === "string") {
       return data;
     }
@@ -45,7 +45,7 @@ export class Formatter {
     return String(data);
   }
 
-  private formatJson(data: any): string {
+  private formatJson(data: unknown): string {
     if (data === undefined) {
       return "undefined";
     }
@@ -62,18 +62,17 @@ export class Formatter {
     return JSON.stringify(data, null, 2);
   }
 
-  private formatWithType(data: any): string {
+  private formatWithType(data: unknown): string {
     const type = Array.isArray(data) ? "array" : typeof data;
     const value = this.formatJson(data);
     return `[${type}] ${value}`;
   }
 
-  private formatYaml(data: any): string {
-    // Simple YAML formatter (basic implementation)
+  private formatYaml(data: unknown): string {
     return this.toYaml(data, 0);
   }
 
-  private toYaml(data: any, indent: number): string {
+  private toYaml(data: unknown, indent: number): string {
     const spaces = " ".repeat(indent);
 
     if (data === null || data === undefined) {
@@ -114,7 +113,7 @@ export class Formatter {
     return String(data);
   }
 
-  private formatCsv(data: any): string {
+  private formatCsv(data: unknown): string {
     if (!Array.isArray(data)) {
       return this.formatJson(data);
     }
@@ -141,7 +140,7 @@ export class Formatter {
     return data.map((item) => this.escapeCsvValue(item)).join("\n");
   }
 
-  private escapeCsvValue(value: any): string {
+  private escapeCsvValue(value: unknown): string {
     if (value === null || value === undefined) {
       return "";
     }
@@ -152,7 +151,7 @@ export class Formatter {
     return str;
   }
 
-  private formatTable(data: any): string {
+  private formatTable(data: unknown): string {
     if (!Array.isArray(data)) {
       return this.formatJson(data);
     }
@@ -176,7 +175,7 @@ export class Formatter {
       .join("\n");
   }
 
-  private formatObjectTable(data: any[]): string {
+  private formatObjectTable(data: Record<string, unknown>[]): string {
     const keys = [...new Set(data.flatMap((item) => Object.keys(item)))];
 
     // Calculate column widths

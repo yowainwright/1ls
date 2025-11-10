@@ -178,7 +178,7 @@ export class Lexer {
   }
 
   private isWhitespace(char: string): boolean {
-    return WHITESPACE_CHARS.includes(char as any);
+    return (WHITESPACE_CHARS as readonly string[]).includes(char);
   }
 
   private isDigit(char: string): boolean {

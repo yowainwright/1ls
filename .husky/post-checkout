@@ -1,6 +1,0 @@
-#!/bin/sh
-# Check if current branch has a remote tracking branch
-if git rev-parse --abbrev-ref @{upstream} >/dev/null 2>&1; then
-  git pull
-fi
-bun install

@@ -2,14 +2,14 @@ export const TRUTHY_VALUES = ["true", "yes", "on"] as const;
 export const FALSY_VALUES = ["false", "no", "off"] as const;
 export const NULL_VALUES = ["null", "~", ""] as const;
 
-export const isTruthyValue = (value: string): boolean =>
-  TRUTHY_VALUES.includes(value as any);
+export const isTruthyValue = (value: string): value is typeof TRUTHY_VALUES[number] =>
+  (TRUTHY_VALUES as readonly string[]).includes(value);
 
-export const isFalsyValue = (value: string): boolean =>
-  FALSY_VALUES.includes(value as any);
+export const isFalsyValue = (value: string): value is typeof FALSY_VALUES[number] =>
+  (FALSY_VALUES as readonly string[]).includes(value);
 
-export const isNullValue = (value: string): boolean =>
-  NULL_VALUES.includes(value as any);
+export const isNullValue = (value: string): value is typeof NULL_VALUES[number] =>
+  (NULL_VALUES as readonly string[]).includes(value);
 
 export const parseBooleanValue = (value: string): boolean | undefined => {
   if (isTruthyValue(value)) return true;

@@ -56,9 +56,8 @@ export function parseArgs(args: string[]): CliOptions {
         i++;
         if (i < args.length) {
           const format = args[i];
-          const isValidFormat = VALID_OUTPUT_FORMATS.includes(format as any);
-          const hasFormat = format && isValidFormat;
-          if (hasFormat) {
+          const isValidFormat = (VALID_OUTPUT_FORMATS as readonly string[]).includes(format);
+          if (format && isValidFormat) {
             options.format = format as CliOptions["format"];
           }
         }
