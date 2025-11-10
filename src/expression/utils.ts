@@ -1,8 +1,8 @@
 import { LiteralNode } from "../types";
 import { BOOLEAN_LITERALS } from "./constants";
 
-export const isBooleanLiteral = (value: string): boolean =>
-  BOOLEAN_LITERALS.includes(value as any);
+export const isBooleanLiteral = (value: string): value is typeof BOOLEAN_LITERALS[number] =>
+  (BOOLEAN_LITERALS as readonly string[]).includes(value);
 
 export const createLiteralNode = (
   value: string | number | boolean | null,

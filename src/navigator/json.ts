@@ -7,16 +7,16 @@ export const OPERATORS: Readonly<Record<string, OperatorFunction>> = {
   "*": (left: unknown, right: unknown) => (left as number) * (right as number),
   "/": (left: unknown, right: unknown) => (left as number) / (right as number),
   "%": (left: unknown, right: unknown) => (left as number) % (right as number),
-  ">": (left: unknown, right: unknown) => (left as any) > (right as any),
-  "<": (left: unknown, right: unknown) => (left as any) < (right as any),
-  ">=": (left: unknown, right: unknown) => (left as any) >= (right as any),
-  "<=": (left: unknown, right: unknown) => (left as any) <= (right as any),
+  ">": (left: unknown, right: unknown) => (left as number | string) > (right as number | string),
+  "<": (left: unknown, right: unknown) => (left as number | string) < (right as number | string),
+  ">=": (left: unknown, right: unknown) => (left as number | string) >= (right as number | string),
+  "<=": (left: unknown, right: unknown) => (left as number | string) <= (right as number | string),
   "==": (left: unknown, right: unknown) => left == right,
   "===": (left: unknown, right: unknown) => left === right,
   "!=": (left: unknown, right: unknown) => left != right,
   "!==": (left: unknown, right: unknown) => left !== right,
-  "&&": (left: unknown, right: unknown) => (left as any) && (right as any),
-  "||": (left: unknown, right: unknown) => (left as any) || (right as any),
+  "&&": (left: unknown, right: unknown) => left && right,
+  "||": (left: unknown, right: unknown) => left || right,
 };
 
 export function isOperatorMethod(method: string): boolean {
@@ -119,13 +119,14 @@ export function callMethod(
   method: string,
   args: readonly unknown[],
 ): unknown {
-  const hasMethod = target !== null && target !== undefined && typeof (target as any)[method] === "function";
+  const targetObj = target as Record<string, unknown>;
+  const hasMethod = target !== null && target !== undefined && typeof targetObj[method] === "function";
   if (!hasMethod) {
     throw new Error(`Method ${method} does not exist on ${typeof target}`);
   }
 
   try {
-    const methodFn = (target as any)[method];
+    const methodFn = targetObj[method] as (...args: unknown[]) => unknown;
     return methodFn.call(target, ...args);
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : String(error);

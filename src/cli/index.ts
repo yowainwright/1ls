@@ -16,63 +16,6 @@ import {
 } from "../utils/shortcuts";
 import { CliOptions } from "../types";
 
-async function handleInfoCommands(options: CliOptions): Promise<boolean> {
-  if (options.help) {
-    showHelp();
-    process.exit(0);
-  }
-
-  if (options.version) {
-    const packageJson = await Bun.file("package.json").json();
-    console.log(`1ls version ${packageJson.version}`);
-    process.exit(0);
-  }
-
-  return false;
-}
-
-async function handleShortcutCommands(options: CliOptions): Promise<boolean> {
-  if (options.shortcuts) {
-    console.log(getShortcutHelp());
-    process.exit(0);
-  }
-
-  if (options.shorten) {
-    const shortened = shortenExpression(options.shorten);
-    console.log(shortened);
-    process.exit(0);
-  }
-
-  if (options.expand) {
-    const expanded = expandShortcuts(options.expand);
-    console.log(expanded);
-    process.exit(0);
-  }
-
-  return false;
-}
-
-async function handleFileOperations(options: CliOptions): Promise<boolean> {
-  if (options.list) {
-    const files = await listFiles(options.list, {
-      recursive: options.recursive,
-      extensions: options.extensions,
-      maxDepth: options.maxDepth,
-    });
-    const formatter = new Formatter(options);
-    console.log(formatter.format(files));
-    return true;
-  }
-
-  const hasGrepOperation = options.grep && options.find;
-  if (hasGrepOperation) {
-    await handleGrepOperation(options);
-    return true;
-  }
-
-  return false;
-}
-
 async function handleGrepOperation(options: CliOptions): Promise<void> {
   const results = await grep(options.grep!, options.find!, {
     recursive: options.recursive,
@@ -94,7 +37,7 @@ async function handleGrepOperation(options: CliOptions): Promise<void> {
   }
 }
 
-async function loadData(options: CliOptions, args: string[]): Promise<any> {
+async function loadData(options: CliOptions, args: string[]): Promise<unknown> {
   if (options.readFile) {
     const filePath = args[args.indexOf("readFile") + 1];
     const data = await readFile(filePath);
@@ -120,7 +63,7 @@ async function loadData(options: CliOptions, args: string[]): Promise<any> {
 
 async function processExpression(
   options: CliOptions,
-  jsonData: any,
+  jsonData: unknown,
 ): Promise<void> {
   if (!options.expression) {
     const formatter = new Formatter(options);
@@ -141,8 +84,9 @@ async function processExpression(
 
     const formatter = new Formatter(options);
     console.log(formatter.format(result));
-  } catch (error: any) {
-    console.error("Error:", error.message);
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
+    console.error("Error:", message);
     process.exit(1);
   }
 }
@@ -150,11 +94,46 @@ async function processExpression(
 export async function main(args: string[]): Promise<void> {
   const options = parseArgs(args);
 
-  await handleInfoCommands(options);
-  await handleShortcutCommands(options);
+  if (options.help) {
+    showHelp();
+    process.exit(0);
+  }
 
-  const fileHandled = await handleFileOperations(options);
-  if (fileHandled) return;
+  if (options.version) {
+    const packageJson = await Bun.file("package.json").json();
+    console.log(`1ls version ${packageJson.version}`);
+    process.exit(0);
+  }
+
+  if (options.shortcuts) {
+    console.log(getShortcutHelp());
+    process.exit(0);
+  }
+
+  if (options.shorten) {
+    console.log(shortenExpression(options.shorten));
+    process.exit(0);
+  }
+
+  if (options.expand) {
+    console.log(expandShortcuts(options.expand));
+    process.exit(0);
+  }
+
+  if (options.list) {
+    const files = await listFiles(options.list, {
+      recursive: options.recursive,
+      extensions: options.extensions,
+      maxDepth: options.maxDepth,
+    });
+    console.log(new Formatter(options).format(files));
+    return;
+  }
+
+  if (options.grep && options.find) {
+    await handleGrepOperation(options);
+    return;
+  }
 
   const jsonData = await loadData(options, args);
   await processExpression(options, jsonData);

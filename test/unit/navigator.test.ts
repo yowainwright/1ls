@@ -3,7 +3,7 @@ import { Lexer } from '../../src/lexer';
 import { ExpressionParser } from '../../src/expression';
 import { JsonNavigator } from '../../src/navigator/json';
 
-function evaluate(expression: string, data: any): any {
+function evaluate(expression: string, data: unknown): unknown {
   const lexer = new Lexer(expression);
   const tokens = lexer.tokenize();
   const parser = new ExpressionParser(tokens);

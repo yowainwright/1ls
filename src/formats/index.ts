@@ -9,148 +9,61 @@ export function parseLines(input: string): string[] {
 }
 
 export async function parseInput(input: string, format?: DataFormat): Promise<unknown> {
-  if (format) {
-    switch (format) {
-      case "json":
-        return JSON.parse(input);
+  const actualFormat = format ?? detectFormat(input);
 
-      case "json5": {
-        const { parseJSON5 } = await import("./json5");
-        return parseJSON5(input);
-      }
-
-      case "yaml": {
-        const { parseYAML } = await import("./yaml");
-        return parseYAML(input);
-      }
-
-      case "toml": {
-        const { parseTOML } = await import("./toml");
-        return parseTOML(input);
-      }
-
-      case "xml": {
-        const { parseXML } = await import("./xml");
-        return parseXML(input);
-      }
-
-      case "ini": {
-        const { parseINI } = await import("./ini");
-        return parseINI(input);
-      }
-
-      case "csv": {
-        const { parseCSV } = await import("./csv");
-        return parseCSV(input);
-      }
-
-      case "tsv": {
-        const { parseTSV } = await import("./csv");
-        return parseTSV(input);
-      }
-
-      case "protobuf": {
-        const { parseProtobuf } = await import("./protobuf");
-        return parseProtobuf(input);
-      }
-
-      case "javascript": {
-        const { parseJavaScript } = await import("./javascript");
-        return parseJavaScript(input);
-      }
-
-      case "typescript": {
-        const { parseTypeScript } = await import("./typescript");
-        return parseTypeScript(input);
-      }
-
-      case "env": {
-        const { parseENV } = await import("./env");
-        return parseENV(input);
-      }
-
-      case "ndjson": {
-        const { parseNDJSON } = await import("./ndjson");
-        return parseNDJSON(input);
-      }
-
-      case "lines":
-        return parseLines(input);
-
-      case "text":
-        return input;
-    }
-  }
-
-  const detectedFormat = detectFormat(input);
-
-  switch (detectedFormat) {
+  switch (actualFormat) {
     case "json":
       return JSON.parse(input);
-
     case "json5": {
       const { parseJSON5 } = await import("./json5");
       return parseJSON5(input);
     }
-
     case "yaml": {
       const { parseYAML } = await import("./yaml");
       return parseYAML(input);
     }
-
     case "toml": {
       const { parseTOML } = await import("./toml");
       return parseTOML(input);
     }
-
     case "xml": {
       const { parseXML } = await import("./xml");
       return parseXML(input);
     }
-
     case "ini": {
       const { parseINI } = await import("./ini");
       return parseINI(input);
     }
-
     case "csv": {
       const { parseCSV } = await import("./csv");
       return parseCSV(input);
     }
-
     case "tsv": {
       const { parseTSV } = await import("./csv");
       return parseTSV(input);
     }
-
     case "protobuf": {
       const { parseProtobuf } = await import("./protobuf");
       return parseProtobuf(input);
     }
-
     case "javascript": {
       const { parseJavaScript } = await import("./javascript");
       return parseJavaScript(input);
     }
-
     case "typescript": {
       const { parseTypeScript } = await import("./typescript");
       return parseTypeScript(input);
     }
-
     case "env": {
       const { parseENV } = await import("./env");
       return parseENV(input);
     }
-
     case "ndjson": {
       const { parseNDJSON } = await import("./ndjson");
       return parseNDJSON(input);
     }
-
     case "lines":
       return parseLines(input);
-
     case "text":
     default:
       return input;
@@ -199,35 +112,14 @@ export function detectFormat(input: string): DataFormat {
     }
   }
 
-  const hasEqualsSign = trimmed.includes("=");
-  if (hasEqualsSign) {
-    const hasENVFeatures = DETECTION.ENV_FEATURES.test(trimmed);
-    if (hasENVFeatures) {
-      return "env";
+  if (trimmed.includes("=")) {
+    if (DETECTION.ENV_FEATURES.test(trimmed)) return "env";
+    if (trimmed.match(DETECTION.TOML_QUOTED_VALUES)) return "toml";
+    if (trimmed.match(DETECTION.SECTION_HEADER)) {
+      if (trimmed.match(DETECTION.TOML_SECTION) && trimmed.match(DETECTION.TOML_SYNTAX)) return "toml";
+      if (trimmed.match(DETECTION.INI_SYNTAX)) return "ini";
     }
-
-    const hasTOMLStyleQuotedValues = trimmed.match(DETECTION.TOML_QUOTED_VALUES);
-    if (hasTOMLStyleQuotedValues) {
-      return "toml";
-    }
-
-    const hasSectionHeader = trimmed.match(DETECTION.SECTION_HEADER);
-    if (hasSectionHeader) {
-      const hasTOMLSyntax = trimmed.match(DETECTION.TOML_SECTION) && trimmed.match(DETECTION.TOML_SYNTAX);
-      if (hasTOMLSyntax) {
-        return "toml";
-      }
-
-      const hasINISyntax = trimmed.match(DETECTION.INI_SYNTAX);
-      if (hasINISyntax) {
-        return "ini";
-      }
-    }
-
-    const hasINISyntax = trimmed.match(DETECTION.INI_SYNTAX);
-    if (hasINISyntax) {
-      return "ini";
-    }
+    if (trimmed.match(DETECTION.INI_SYNTAX)) return "ini";
   }
 
   const hasYAMLIndicators =
