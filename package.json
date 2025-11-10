@@ -30,6 +30,7 @@
     "prepublishOnly": "bun test && bun run build",
     "test": "bun test",
     "test:coverage": "bun test --coverage --coverage-reporter=lcov",
+    "test:integration": "bun test test/integration/",
     "lint": "bunx oxlint src/",
     "typecheck": "tsc --noEmit",
     "release": "release-it",
