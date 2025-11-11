@@ -352,10 +352,10 @@ MIT © Jeff Wainwright
 | Syntax | JavaScript | DSL | JavaScript |
 | Performance | ⚡ Fast (Bun) | ⚡ Fast | 🚀 Good |
 | Learning Curve | Easy | Steep | Easy |
-| Multi-format | ✅ | ❌ | ❌ |
-| Shortcuts | ✅ | ❌ | ❌ |
-| Arrow Functions | ✅ | ❌ | ✅ |
-| File Operations | ✅ | ❌ | ❌ |
+| Multi-format | ✓ | x | x |
+| Shortcuts | ✓ | x | x |
+| Arrow Functions | ✓ | x | ✓ |
+| File Operations | ✓ | x | x |
 
 ## Troubleshooting
 

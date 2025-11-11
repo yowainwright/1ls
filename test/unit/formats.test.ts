@@ -193,6 +193,46 @@ items:
     const expected = { name: 'Alice', age: 30 };
     expect(parseYAML(input)).toEqual(expected);
   });
+
+  test('parses single-quoted strings', () => {
+    const input = "name: 'Alice'\ncity: 'New York'";
+    const expected = { name: 'Alice', city: 'New York' };
+    expect(parseYAML(input)).toEqual(expected);
+  });
+
+  test('parses inline objects', () => {
+    const input = 'user: { name: Alice, age: 30 }';
+    const expected = { user: { name: 'Alice', age: 30 } };
+    expect(parseYAML(input)).toEqual(expected);
+  });
+
+  test('handles document separators', () => {
+    const input = '---\nname: Alice\nage: 30\n...';
+    const expected = { name: 'Alice', age: 30 };
+    expect(parseYAML(input)).toEqual(expected);
+  });
+
+  test('parses nested lists in objects', () => {
+    const input = `
+user:
+  name: Alice
+  tags:
+    - developer
+    - javascript`;
+    const expected = {
+      user: {
+        name: 'Alice',
+        tags: ['developer', 'javascript']
+      }
+    };
+    expect(parseYAML(input)).toEqual(expected);
+  });
+
+  test('parses floating point numbers', () => {
+    const input = 'pi: 3.14\ntemp: -0.5';
+    const expected = { pi: 3.14, temp: -0.5 };
+    expect(parseYAML(input)).toEqual(expected);
+  });
 });
 
 describe('TOML Format', () => {
@@ -250,6 +290,24 @@ name = "mydb"`;
   test('ignores comments', () => {
     const input = '# Comment\nname = "Alice" # inline comment\n# Another comment\nage = 30';
     const expected = { name: 'Alice', age: 30 };
+    expect(parseTOML(input)).toEqual(expected);
+  });
+
+  test('parses single-quoted strings', () => {
+    const input = "name = 'Alice'\ncity = 'New York'";
+    const expected = { name: 'Alice', city: 'New York' };
+    expect(parseTOML(input)).toEqual(expected);
+  });
+
+  test('parses inline tables', () => {
+    const input = 'user = { name = "Alice", age = 30 }';
+    const expected = { user: { name: 'Alice', age: 30 } };
+    expect(parseTOML(input)).toEqual(expected);
+  });
+
+  test('parses floating point numbers', () => {
+    const input = 'pi = 3.14\ntemp = -0.5';
+    const expected = { pi: 3.14, temp: -0.5 };
     expect(parseTOML(input)).toEqual(expected);
   });
 });

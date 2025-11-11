@@ -81,3 +81,20 @@ test('Navigator: string methods', () => {
   expect(evaluate('.name.includes("John")', data)).toBe(true);
   expect(evaluate('.name.includes("Jane")', data)).toBe(false);
 });
+
+test('Navigator: arithmetic operators', () => {
+  const data = [10, 20, 30];
+  expect(evaluate('.map(x => x + 5)', data)).toEqual([15, 25, 35]);
+  expect(evaluate('.map(x => x * 2)', data)).toEqual([20, 40, 60]);
+});
+
+test('Navigator: comparison operators', () => {
+  const data = [1, 2, 3, 4, 5];
+  expect(evaluate('.filter(x => x > 2)', data)).toEqual([3, 4, 5]);
+  expect(evaluate('.filter(x => x >= 3)', data)).toEqual([3, 4, 5]);
+});
+
+test('Navigator: object operation on arrays', () => {
+  const data = [1, 2, 3, 4, 5];
+  expect(evaluate('.{length}', data)).toBe(5);
+});
