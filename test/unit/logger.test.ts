@@ -150,6 +150,13 @@ describe("Logger", () => {
       expect(consoleLogSpy).toHaveBeenCalledTimes(1);
     });
 
+    test("logs data when explicitly passed as empty object", () => {
+      const logger = new Logger("test", LogLevel.DEBUG);
+      logger.debug("debug message", {});
+
+      expect(consoleLogSpy).toHaveBeenCalledTimes(2);
+    });
+
     test("does not log when level is too low", () => {
       const logger = new Logger("test", LogLevel.INFO);
       logger.debug("debug message");
