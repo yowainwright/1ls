@@ -15,6 +15,7 @@ import {
   getShortcutHelp,
 } from "../utils/shortcuts";
 import { CliOptions } from "../types";
+import { runInteractive } from "../interactive/app";
 
 async function handleGrepOperation(options: CliOptions): Promise<void> {
   const results = await grep(options.grep!, options.find!, {
@@ -133,6 +134,29 @@ export async function main(args: string[]): Promise<void> {
   if (options.grep && options.find) {
     await handleGrepOperation(options);
     return;
+  }
+
+  if (options.readFile) {
+    const filePath = args[args.indexOf("readFile") + 1];
+    const data = await readFile(filePath);
+    const expression = args[args.indexOf("readFile") + 2] || ".";
+
+    const hasNoExpression = expression === ".";
+    const shouldUseInteractive = options.interactive || hasNoExpression;
+
+    if (shouldUseInteractive) {
+      await runInteractive(data);
+      return;
+    }
+
+    options.expression = expression;
+    await processExpression(options, data);
+    return;
+  }
+
+  if (options.interactive) {
+    console.error("Error: Interactive mode requires a file path. Use: 1ls readFile <path>");
+    process.exit(1);
   }
 
   const jsonData = await loadData(options, args);

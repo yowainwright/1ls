@@ -42,9 +42,93 @@ echo '[1, 2, 3]' | 1ls '.map(x => x * 2)'
 # Chain operations
 echo '[{"name": "Alice", "age": 30}, {"name": "Bob", "age": 25}]' | 1ls '.filter(x => x.age > 26).map(x => x.name)'
 # Output: ["Alice"]
+
+# Interactive mode - explore JSON with fuzzy search
+1ls readFile data.json
+# Opens interactive explorer with fuzzy search, arrow key navigation, and live preview
 ```
 
 ## Examples
+
+### Interactive Mode
+
+Explore JSON interactively with fuzzy search and build expressions with method discovery:
+
+```bash
+# Open interactive explorer from a file (automatic when no expression)
+1ls readFile data.json
+
+# Works with all supported formats
+1ls readFile config.yaml
+1ls readFile config.toml
+
+# For remote data, save to a file first
+curl https://api.github.com/users/github > /tmp/user.json
+1ls readFile /tmp/user.json
+
+# Or use an expression directly (non-interactive)
+1ls readFile data.json '.users.filter(x => x.active)'
+```
+
+#### Mode 1: Path Explorer
+
+Navigate and search JSON paths:
+
+- **Fuzzy search**: Type to filter paths (e.g., "user.name" matches `.users[0].name`, `.user.username`, etc.)
+- **Live preview**: See values as you navigate
+- **Type information**: Shows String, Number, Array, Object, Boolean, or null
+- **↑/↓**: Navigate, **Enter**: Select, **Tab**: Build expression, **Esc/q**: Quit
+
+#### Mode 2: Expression Builder
+
+Build complex expressions with guided method selection:
+
+**Workflow:**
+1. Navigate to a path in Explorer mode → Press **Tab**
+2. Type to fuzzy search methods → **→** to accept
+3. Type to fuzzy search properties → **→** to complete
+4. Repeat to chain methods
+5. Press **Enter** to execute
+
+**Example Session:**
+```
+1. Navigate to .users (Array) → Tab
+2. Type "fil" → → (accepts .filter(x => ...))
+3. Type "act" → → (completes with x.active, back to method selection)
+4. Type "map" → → (accepts .map(x => ...))
+5. Type "name" → → (completes with x.name)
+6. Enter → executes: .users.filter(x => x.active).map(x => x.name)
+```
+
+**Undo mistakes:**
+- Press **←** at any time to undo the last segment
+- Example: `.users.filter(x => x.active).map(x => x.name)` → **←** → `.users.filter(x => x.active)`
+
+**Available Methods by Type:**
+
+**Array**: map, filter, reduce, find, findIndex, some, every, sort, reverse, slice, concat, join, flat, flatMap, length
+
+**String**: toUpperCase, toLowerCase, trim, trimStart, trimEnd, split, replace, replaceAll, substring, slice, startsWith, endsWith, includes, match, length
+
+**Object**: {keys}, {values}, {entries}, {length}
+
+**Number**: toFixed, toString
+
+**Keyboard Shortcuts:**
+- **↑/↓**: Navigate methods/properties
+- **→ or Tab**: Accept/complete method or property (autocomplete-style)
+- **←**: Undo last segment (remove to previous dot)
+- **Enter**: Execute expression
+- **Type**: Fuzzy search methods/properties
+- **Esc**: Go back to Explorer / Quit
+- **q**: Quit (from Explorer)
+
+**Use cases:**
+- Exploring unfamiliar API responses
+- Building filter/map chains interactively
+- Discovering available methods for each type
+- Learning JavaScript array/string methods
+- Prototyping complex data transformations
 
 ### Working with JSON
 
@@ -180,6 +264,7 @@ echo '["a", "b"]' | 1ls '.jn(",")'           # Short for .join()
 |--------|-------|-------------|
 | `--help` | `-h` | Show help |
 | `--version` | `-v` | Show version |
+| `--interactive` | | Interactive fuzzy search explorer |
 | `--raw` | `-r` | Output raw strings, not JSON |
 | `--pretty` | `-p` | Pretty print output |
 | `--compact` | `-c` | Compact output |
@@ -353,6 +438,7 @@ MIT © Jeff Wainwright
 | Performance | ⚡ Fast (Bun) | ⚡ Fast | 🚀 Good |
 | Learning Curve | Easy | Steep | Easy |
 | Multi-format | ✓ | x | x |
+| Interactive Mode | ✓ | x | ✓ |
 | Shortcuts | ✓ | x | x |
 | Arrow Functions | ✓ | x | ✓ |
 | File Operations | ✓ | x | x |

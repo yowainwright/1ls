@@ -36,6 +36,7 @@ export interface CliOptions
   readFile?: boolean;
   help?: boolean;
   version?: boolean;
+  interactive?: boolean;
 }
 
 export enum TokenType {

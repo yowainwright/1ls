@@ -109,6 +109,10 @@ export function parseArgs(args: string[]): CliOptions {
         options.recursive = true;
         break;
 
+      case "--interactive":
+        options.interactive = true;
+        break;
+
       case "--ignore-case":
       case "-i":
         options.ignoreCase = true;
