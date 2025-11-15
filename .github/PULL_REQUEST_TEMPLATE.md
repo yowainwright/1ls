@@ -1,11 +1,37 @@
-## Fixes
+## Description
 
-- Fixes #
+Brief description of changes.
 
-## Proposed Changes
+## Type
 
-- Change
+- [ ] Bug fix
+- [ ] New feature
+- [ ] Documentation update
+- [ ] Refactoring
+- [ ] Performance improvement
 
----
+## Related Issues
 
-> Read about referenced issues [here](https://help.github.com/articles/closing-issues-using-keywords/). Replace words with this Pull Request's context.
+Fixes #
+
+## Changes
+
+-
+-
+-
+
+## Testing
+
+- [ ] Tests pass (`bun test`)
+- [ ] Type check passes (`bun run typecheck`)
+- [ ] Build succeeds (`bun run build`)
+- [ ] Linting passes (`bun run lint`)
+- [ ] Manual testing completed
+
+## Checklist
+
+- [ ] Code follows the project's style guidelines
+- [ ] Self-review of code completed
+- [ ] Documentation updated (if needed)
+- [ ] No new warnings introduced
+- [ ] Tests added/updated for changes

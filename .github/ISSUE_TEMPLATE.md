@@ -1,7 +1,34 @@
-## Requested Update
+## Description
 
-## Why Is This Update Needed?
+Brief description of the issue or feature request.
 
-## Are There Examples Of This Requested Update Elsewhere?
+## Type
 
-> Read about references issues [here](https://help.github.com/articles/closing-issues-using-keywords/). Provide paragraph text responses to each header.
+- [ ] Bug
+- [ ] Feature request
+- [ ] Documentation
+- [ ] Question
+
+## Environment (if bug)
+
+- Bun version:
+- 1ls version:
+- Operating system:
+
+## Steps to reproduce (if bug)
+
+1.
+2.
+3.
+
+## Expected behavior
+
+What should happen.
+
+## Actual behavior
+
+What actually happens.
+
+## Additional context
+
+Add any other context, screenshots, or examples here.
