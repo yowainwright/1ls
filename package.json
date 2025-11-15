@@ -1,6 +1,6 @@
 {
   "name": "1ls",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "1 line script - Lightweight JSON CLI with JavaScript syntax",
   "type": "module",
   "main": "dist/index.js",
