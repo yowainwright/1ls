@@ -95,8 +95,6 @@ export const runInteractive = async (data: unknown): Promise<void> => {
     const hasExpression = expressionString !== null;
     if (hasExpression) {
       try {
-        stdout.write(colorize("\nExpression: " + expressionString + "\n\n", colors.dim));
-
         const expandedExpression = expandShortcuts(expressionString);
         const lexer = new Lexer(expandedExpression);
         const tokens = lexer.tokenize();
