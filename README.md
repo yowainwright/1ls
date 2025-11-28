@@ -1,6 +1,20 @@
-# 1ls - One Line Script
+# 1ls
 
-A 0 dependency, lightweight, fast data processor with familiar JavaScript syntax. 
+[![CI](https://github.com/yowainwright/1ls/actions/workflows/ci.yml/badge.svg)](https://github.com/yowainwright/1ls/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/yowainwright/1ls/branch/main/graph/badge.svg)](https://codecov.io/gh/yowainwright/1ls)
+
+> One-line script
+
+A 0 dependency, lightweight, fast data processor with familiar JavaScript syntax.
+
+This is useful for writing 1ls, one-line scripts, in the terminal or for short scripts 
+that are as concise as possible in a familiar syntax, JavaScript, with dot notation, 
+fuzzy matching, and shortening capabilities for maximum efficiency.
+
+On top of that, the library is very small because it has no dependencies. 
+And, it is compiled with QuickJs for binary builds.
+This means you get good speed compared to jq and fx but it's still, just JS, 
+the language y'all know.
 
 ## Why 1ls?
 
@@ -14,12 +28,13 @@ A 0 dependency, lightweight, fast data processor with familiar JavaScript syntax
 ## Installation
 
 ```bash
-# Using npm (or bun)
-npm install -g 1ls
+# Using bun (or npm, pnpm, etc)
+# works in the commandline or the web
+bun add -g 1ls
 
+# Or via binaries. here you get a QuickJs build
 # Using Homebrew (macOS/Linux)
 brew install yowainwright/tap/1ls
-
 # Using curl
 curl -fsSL https://raw.githubusercontent.com/yowainwright/1ls/main/install.sh | bash
 ```

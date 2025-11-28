@@ -1,18 +1,18 @@
 import { JSON5 } from "./constants";
 import { ParseState } from "./types";
 
-function isQuoteChar(char: string): boolean {
+export function isQuoteChar(char: string): boolean {
   return char === '"' || char === "'";
 }
 
-function findCommentEnd(chars: string[], startIndex: number, endPattern: string): number {
+export function findCommentEnd(chars: string[], startIndex: number, endPattern: string): number {
   const remaining = chars.slice(startIndex);
   const endIndex = remaining.findIndex((c) => c === endPattern);
   const notFound = endIndex === -1;
   return notFound ? chars.length - startIndex : endIndex;
 }
 
-function findMultiLineCommentEnd(chars: string[], startIndex: number): number {
+export function findMultiLineCommentEnd(chars: string[], startIndex: number): number {
   let offset = 2;
   const maxLength = chars.length - startIndex;
 
@@ -30,7 +30,7 @@ function findMultiLineCommentEnd(chars: string[], startIndex: number): number {
   return offset;
 }
 
-function handleStringChar(state: ParseState, char: string, nextChar: string | undefined): ParseState {
+export function handleStringChar(state: ParseState, char: string, nextChar: string | undefined): ParseState {
   state.result.push(char);
 
   const isEscaped = char === "\\" && nextChar;
@@ -47,7 +47,7 @@ function handleStringChar(state: ParseState, char: string, nextChar: string | un
   return state;
 }
 
-function handleNormalChar(state: ParseState, char: string, nextChar: string | undefined, chars: string[], index: number): ParseState {
+export function handleNormalChar(state: ParseState, char: string, nextChar: string | undefined, chars: string[], index: number): ParseState {
   const isQuote = isQuoteChar(char);
   if (isQuote) {
     state.result.push(char);

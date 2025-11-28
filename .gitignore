@@ -48,3 +48,6 @@ bun.lockb
 tmp/
 temp/
 .cache/
+.idea
+bin
+.claude

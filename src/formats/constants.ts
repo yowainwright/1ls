@@ -1,25 +1,25 @@
-const INTEGER = /^-?\d+$/;
-const INTEGER_WITH_SIGN = /^[+-]?\d+$/;
-const FLOAT = /^-?\d+\.\d+$/;
-const FLOAT_WITH_SIGN = /^[+-]?\d+\.\d+$/;
-const NUMBER = /^-?\d+(\.\d+)?$/;
+export const INTEGER = /^-?\d+$/;
+export const INTEGER_WITH_SIGN = /^[+-]?\d+$/;
+export const FLOAT = /^-?\d+\.\d+$/;
+export const FLOAT_WITH_SIGN = /^[+-]?\d+\.\d+$/;
+export const NUMBER = /^-?\d+(\.\d+)?$/;
 
-const ATTRIBUTES = /(\w+)=["']([^"']+)["']/g;
-const SELF_CLOSING = /^<(\w+)([^>]*?)\/>/;
-const OPEN_TAG = /^<(\w+)([^>]*)>([\s\S]*)<\/\1>$/;
-const NESTED_TAGS = /<\w+/;
-const COMPLETE_TAGS = /<\/\w+>$/;
-const XML_DECLARATION = /^<\?xml[^>]+\?>\s*/;
+export const ATTRIBUTES = /(\w+)=["']([^"']+)["']/g;
+export const SELF_CLOSING = /^<(\w+)([^>]*?)\/>/;
+export const OPEN_TAG = /^<(\w+)([^>]*)>([\s\S]*)<\/\1>$/;
+export const NESTED_TAGS = /<\w+/;
+export const COMPLETE_TAGS = /<\/\w+>$/;
+export const XML_DECLARATION = /^<\?xml[^>]+\?>\s*/;
 
-const TRAILING_COMMA = /,(\s*[}\]])/g;
-const UNQUOTED_KEY = /(['"])?([a-zA-Z_$][a-zA-Z0-9_$]*)\1?\s*:/g;
+export const TRAILING_COMMA = /,(\s*[}\]])/g;
+export const UNQUOTED_KEY = /(['"])?([a-zA-Z_$][a-zA-Z0-9_$]*)\1?\s*:/g;
 
-const JSON5_FEATURES = /\/\/|\/\*|,\s*[}\]]/;
-const SECTION_HEADER = /^\[[\w.\s]+\]$/m;
-const TOML_SECTION = /^\[[\w.]+\]$/m;
-const TOML_QUOTED_VALUES = /^\w+\s*=\s*"[^"]*"$/m;
-const TOML_SYNTAX = /=\s*["[{]/m;
-const INI_SYNTAX = /^\w+\s*=\s*.+$/m;
+export const JSON5_FEATURES = /\/\/|\/\*|,\s*[}\]]/;
+export const SECTION_HEADER = /^\[[\w.\s]+\]$/m;
+export const TOML_SECTION = /^\[[\w.]+\]$/m;
+export const TOML_QUOTED_VALUES = /^\w+\s*=\s*"[^"]*"$/m;
+export const TOML_SYNTAX = /=\s*["[{]/m;
+export const INI_SYNTAX = /^\w+\s*=\s*.+$/m;
 
 export const CSV = {
   NUMBER,

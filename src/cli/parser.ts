@@ -1,18 +1,6 @@
 import { CliOptions } from "../types";
 import { DataFormat } from "../utils/types";
-import { VALID_OUTPUT_FORMATS, VALID_INPUT_FORMATS } from "./constants";
-
-const DEFAULT_OPTIONS: CliOptions = {
-  format: "json",
-  pretty: false,
-  raw: false,
-  compact: false,
-  type: false,
-  recursive: false,
-  ignoreCase: false,
-  showLineNumbers: false,
-  inputFormat: undefined,
-};
+import { VALID_OUTPUT_FORMATS, VALID_INPUT_FORMATS, DEFAULT_OPTIONS } from "./constants";
 
 export function parseArgs(args: string[]): CliOptions {
   const options: CliOptions = { ...DEFAULT_OPTIONS };
