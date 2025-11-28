@@ -114,22 +114,33 @@ export function isCallableMethod(target: unknown, method: string): boolean {
   return typeof methodValue === "function";
 }
 
+const hasMethodOnTarget = (target: unknown, method: string): boolean => {
+  const isNullish = target === null || target === undefined;
+  if (isNullish) return false;
+
+  const targetObj = target as Record<string, unknown>;
+  return typeof targetObj[method] === "function";
+};
+
+const extractErrorMessage = (error: unknown): string =>
+  error instanceof Error ? error.message : String(error);
+
 export function callMethod(
   target: unknown,
   method: string,
   args: readonly unknown[],
 ): unknown {
-  const targetObj = target as Record<string, unknown>;
-  const hasMethod = target !== null && target !== undefined && typeof targetObj[method] === "function";
-  if (!hasMethod) {
+  const methodExists = hasMethodOnTarget(target, method);
+  if (!methodExists) {
     throw new Error(`Method ${method} does not exist on ${typeof target}`);
   }
 
   try {
+    const targetObj = target as Record<string, unknown>;
     const methodFn = targetObj[method] as (...args: unknown[]) => unknown;
     return methodFn.call(target, ...args);
   } catch (error: unknown) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
+    const errorMessage = extractErrorMessage(error);
     throw new Error(`Error executing method ${method}: ${errorMessage}`);
   }
 }
@@ -184,6 +195,11 @@ export class JsonNavigator {
     return getPropertyFromObject(baseValue, ast.property);
   }
 
+  private evaluateArg(arg: ASTNode, data: unknown): unknown {
+    const isArrowFunction = arg.type === "ArrowFunction";
+    return isArrowFunction ? this.createFunction(arg) : this.evaluate(arg, data);
+  }
+
   private evaluateMethodCall(ast: MethodCallNode, data: unknown): unknown {
     const target = ast.object ? this.evaluate(ast.object, data) : data;
 
@@ -194,11 +210,7 @@ export class JsonNavigator {
       return executeOperator(target, operator, evaluatedArg);
     }
 
-    const evaluatedArgs = ast.args.map((arg) => {
-      const isArrowFunction = arg.type === "ArrowFunction";
-      return isArrowFunction ? this.createFunction(arg) : this.evaluate(arg, data);
-    });
-
+    const evaluatedArgs = ast.args.map((arg) => this.evaluateArg(arg, data));
     return callMethod(target, ast.method, evaluatedArgs);
   }
 

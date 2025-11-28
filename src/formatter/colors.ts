@@ -1,4 +1,4 @@
-const COLORS = {
+export const COLORS = {
   reset: "\x1b[0m",
   bright: "\x1b[1m",
   dim: "\x1b[2m",
@@ -13,7 +13,7 @@ const COLORS = {
   gray: "\x1b[90m",
 };
 
-const COLOR_PATTERNS = [
+export const COLOR_PATTERNS = [
   { regex: /"([^"]+)":/g, replacement: `${COLORS.cyan}"$1"${COLORS.reset}:` },
   { regex: /: "([^"]*)"/g, replacement: `: ${COLORS.green}"$1"${COLORS.reset}` },
   { regex: /: (-?\d+\.?\d*)/g, replacement: `: ${COLORS.yellow}$1${COLORS.reset}` },

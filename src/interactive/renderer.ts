@@ -1,10 +1,13 @@
 import { stdout } from "process";
-import { clearScreen, colors, colorize, highlightMatches } from "./terminal";
+import { clearScreen, clearLine, clearToEnd, moveCursor, colors, colorize, highlightMatches } from "./terminal";
 import { renderBuildMode, renderArrowFnMode } from "./renderer-builder";
 import type { State, JsonPath } from "./types";
 import type { FuzzyMatch } from "./fuzzy";
 
 const MAX_VISIBLE_ITEMS = 10;
+
+let lastRenderedLines: string[] = [];
+let isFirstRender = true;
 
 const formatPath = (path: string, matches: number[]): string =>
   highlightMatches(path, matches);
@@ -51,84 +54,51 @@ const renderTitle = (): string => {
   return colorize(title, color);
 };
 
-const renderPrompt = (query: string): string => {
-  const title = renderTitle();
-  const searchLabel = "\n\nSearch: ";
-  const prompt = title.concat(searchLabel, query, "\n\n");
-  return prompt;
+const PRIMITIVE_TYPES = ["String", "Number", "Boolean", "null"];
+const COMPLEX_TYPES = ["Array", "Object"];
+const MAX_PREVIEW_LINES = 5;
+
+const formatPrimitivePreview = (displayValue: string): string =>
+  colorize(String(displayValue), colors.cyan);
+
+const formatComplexPreview = (value: unknown): string => {
+  const formatted = JSON.stringify(value, null, 2);
+  const lines = formatted.split("\n");
+  const limited = lines.slice(0, MAX_PREVIEW_LINES);
+  const hasMore = lines.length > MAX_PREVIEW_LINES;
+  const preview = colorize(limited.join("\n"), colors.cyan);
+
+  return hasMore
+    ? preview.concat(colorize("\n... (truncated)", colors.dim))
+    : preview;
 };
 
-const renderVisiblePaths = (state: State): string => {
-  const selectedIndex = state.selectedIndex;
-  const totalMatches = state.matches.length;
+const formatPreviewContent = (selected: JsonPath): string => {
+  const { type, displayValue, value } = selected;
 
-  if (totalMatches === 0) {
-    return colorize("No matches found", colors.dim);
-  }
+  const isPrimitive = PRIMITIVE_TYPES.includes(type);
+  if (isPrimitive) return formatPrimitivePreview(displayValue);
 
-  const halfWindow = Math.floor(MAX_VISIBLE_ITEMS / 2);
-  let startIndex = Math.max(0, selectedIndex - halfWindow);
-  const endIndex = Math.min(totalMatches, startIndex + MAX_VISIBLE_ITEMS);
+  const isComplex = COMPLEX_TYPES.includes(type);
+  if (isComplex) return formatComplexPreview(value);
 
-  const actualVisible = endIndex - startIndex;
-  if (actualVisible < MAX_VISIBLE_ITEMS && totalMatches >= MAX_VISIBLE_ITEMS) {
-    startIndex = Math.max(0, endIndex - MAX_VISIBLE_ITEMS);
-  }
-
-  const visibleMatches = state.matches.slice(startIndex, endIndex);
-  const mapper = (match: FuzzyMatch<JsonPath>, idx: number): string => {
-    const absoluteIndex = startIndex + idx;
-    const isSelected = absoluteIndex === selectedIndex;
-    return formatPathEntry(match, isSelected);
-  };
-  const lines = visibleMatches.map(mapper);
-  const joined = lines.join("\n");
-  return joined;
+  return colorize(String(value), colors.cyan);
 };
 
 const renderPreview = (state: State): string => {
-  const hasMatches = state.matches.length > 0;
-  const hasValidIndex =
-    state.selectedIndex >= 0 && state.selectedIndex < state.matches.length;
+  const { matches, selectedIndex } = state;
 
-  if (!hasMatches || !hasValidIndex) {
-    return "";
-  }
+  const hasMatches = matches.length > 0;
+  const hasValidIndex = selectedIndex >= 0 && selectedIndex < matches.length;
+  const canRenderPreview = hasMatches && hasValidIndex;
 
-  const selected = state.matches[state.selectedIndex].item;
+  if (!canRenderPreview) return "";
+
+  const selected = matches[selectedIndex].item;
   const previewTitle = colorize("\n\nPreview:\n", colors.bright);
+  const previewContent = formatPreviewContent(selected);
 
-  let preview = "";
-  const valueType = selected.type;
-
-  if (valueType === "String" || valueType === "Number" || valueType === "Boolean" || valueType === "null") {
-    preview = colorize(String(selected.displayValue), colors.cyan);
-  } else if (valueType === "Array" || valueType === "Object") {
-    const formatted = JSON.stringify(selected.value, null, 2);
-    const lines = formatted.split("\n");
-    const limited = lines.slice(0, 5);
-    const hasMore = lines.length > 5;
-    preview = colorize(limited.join("\n"), colors.cyan);
-    if (hasMore) {
-      preview = preview.concat(colorize("\n... (truncated)", colors.dim));
-    }
-  } else {
-    preview = colorize(String(selected.value), colors.cyan);
-  }
-
-  return previewTitle.concat(preview);
-};
-
-const renderMoreIndicator = (totalCount: number): string => {
-  const remaining = totalCount - MAX_VISIBLE_ITEMS;
-  const hasMore = remaining > 0;
-
-  if (hasMore) {
-    const text = "\n\n... ".concat(String(remaining), " more");
-    return colorize(text, colors.dim);
-  }
-
-  return "";
+  return previewTitle.concat(previewContent);
 };
 
 const renderHelp = (): string => {
@@ -145,29 +115,114 @@ const renderHelp = (): string => {
   return colorize(help, colors.dim);
 };
 
-const renderExploreMode = (state: State): void => {
-  clearScreen();
+const calculateVisibleRange = (selectedIndex: number, totalMatches: number): { start: number; end: number } => {
+  const halfWindow = Math.floor(MAX_VISIBLE_ITEMS / 2);
+  const initialStart = Math.max(0, selectedIndex - halfWindow);
+  const end = Math.min(totalMatches, initialStart + MAX_VISIBLE_ITEMS);
 
-  const prompt = renderPrompt(state.query);
-  stdout.write(prompt);
+  const actualVisible = end - initialStart;
+  const needsAdjustment = actualVisible < MAX_VISIBLE_ITEMS && totalMatches >= MAX_VISIBLE_ITEMS;
+  const start = needsAdjustment ? Math.max(0, end - MAX_VISIBLE_ITEMS) : initialStart;
 
-  const paths = renderVisiblePaths(state);
-  stdout.write(paths);
+  return { start, end };
+};
 
-  const moreIndicator = renderMoreIndicator(state.matches.length);
-  stdout.write(moreIndicator);
+const buildMatchLines = (state: State): string[] => {
+  const { selectedIndex, matches } = state;
+  const totalMatches = matches.length;
 
+  const hasNoMatches = totalMatches === 0;
+  if (hasNoMatches) {
+    return [colorize("No matches found", colors.dim)];
+  }
+
+  const { start, end } = calculateVisibleRange(selectedIndex, totalMatches);
+  const visibleMatches = matches.slice(start, end);
+
+  return visibleMatches.map((match, i) => {
+    const absoluteIndex = start + i;
+    const isSelected = absoluteIndex === selectedIndex;
+    return formatPathEntry(match, isSelected);
+  });
+};
+
+const buildRemainingIndicator = (totalMatches: number): string[] => {
+  const remaining = totalMatches - MAX_VISIBLE_ITEMS;
+  const hasMore = remaining > 0;
+
+  return hasMore
+    ? ["", colorize("... " + remaining + " more", colors.dim)]
+    : [];
+};
+
+const buildPreviewLines = (state: State): string[] => {
   const preview = renderPreview(state);
-  stdout.write(preview);
+  return preview ? preview.split("\n") : [];
+};
 
-  const help = renderHelp();
-  stdout.write(help);
+const buildExploreContent = (state: State): string[] => {
+  const header = [renderTitle(), "", "Search: " + state.query, ""];
+  const matchLines = buildMatchLines(state);
+  const remainingIndicator = buildRemainingIndicator(state.matches.length);
+  const previewLines = buildPreviewLines(state);
+  const footer = ["", renderHelp().trim()];
+
+  return [
+    ...header,
+    ...matchLines,
+    ...remainingIndicator,
+    ...previewLines,
+    ...footer,
+  ];
+};
+
+const renderFirstTime = (lines: string[]): void => {
+  clearScreen();
+  stdout.write(lines.join("\n"));
+  lastRenderedLines = lines;
+  isFirstRender = false;
+};
+
+const renderChangedLine = (line: string, index: number): void => {
+  moveCursor(index + 1);
+  clearLine();
+  stdout.write(line);
+};
+
+const renderDiff = (newLines: string[]): void => {
+  if (isFirstRender) {
+    renderFirstTime(newLines);
+    return;
+  }
+
+  newLines.forEach((line, i) => {
+    const hasChanged = lastRenderedLines[i] !== line;
+    if (hasChanged) renderChangedLine(line, i);
+  });
+
+  const hasShrunk = newLines.length < lastRenderedLines.length;
+  if (hasShrunk) {
+    moveCursor(newLines.length + 1);
+    clearToEnd();
+  }
+
+  lastRenderedLines = newLines;
+};
+
+const renderExploreMode = (state: State): void => {
+  const lines = buildExploreContent(state);
+  renderDiff(lines);
 };
 
 const MODE_RENDERERS: Record<State["mode"], (state: State) => void> = {
   explore: renderExploreMode,
   build: renderBuildMode,
   "build-arrow-fn": renderArrowFnMode,
+};
+
+export const resetRenderState = (): void => {
+  lastRenderedLines = [];
+  isFirstRender = true;
 };
 
 export const render = (state: State): void => {

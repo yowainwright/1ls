@@ -21,7 +21,7 @@ export function parseINIValue(value: string): unknown {
   return trimmed;
 }
 
-function stripINIComments(line: string): string {
+export function stripINIComments(line: string): string {
   const commentIdx = line.indexOf(";");
   const hashCommentIdx = line.indexOf("#");
 
@@ -36,7 +36,7 @@ function stripINIComments(line: string): string {
   return line.substring(0, firstCommentIdx);
 }
 
-function processINILine(state: INIParseState, line: string): INIParseState {
+export function processINILine(state: INIParseState, line: string): INIParseState {
   const withoutComments = stripINIComments(line);
   const trimmed = withoutComments.trim();
   const isEmpty = !trimmed;

@@ -4,9 +4,16 @@ export const clearScreen = (): void => {
   stdout.write("\x1b[2J\x1b[H");
 };
 
-export const moveCursor = (x: number, y: number): void => {
-  const escapeSequence = "\x1b[".concat(String(y), ";", String(x), "H");
-  stdout.write(escapeSequence);
+export const moveCursor = (row: number, col: number = 1): void => {
+  stdout.write(`\x1b[${row};${col}H`);
+};
+
+export const clearLine = (): void => {
+  stdout.write("\x1b[2K");
+};
+
+export const clearToEnd = (): void => {
+  stdout.write("\x1b[J");
 };
 
 export const hideCursor = (): void => {

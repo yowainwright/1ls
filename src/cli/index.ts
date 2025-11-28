@@ -15,9 +15,10 @@ import {
   getShortcutHelp,
 } from "../utils/shortcuts";
 import { CliOptions } from "../types";
-import { runInteractive } from "../interactive/app";
 
-async function handleGrepOperation(options: CliOptions): Promise<void> {
+export const getInteractive = () => import("../interactive/app");
+
+export async function handleGrepOperation(options: CliOptions): Promise<void> {
   const results = await grep(options.grep!, options.find!, {
     recursive: options.recursive,
     ignoreCase: options.ignoreCase,
@@ -38,7 +39,7 @@ async function handleGrepOperation(options: CliOptions): Promise<void> {
   }
 }
 
-async function loadData(options: CliOptions, args: string[]): Promise<unknown> {
+export async function loadData(options: CliOptions, args: string[]): Promise<unknown> {
   if (options.readFile) {
     const filePath = args[args.indexOf("readFile") + 1];
     const data = await readFile(filePath);
@@ -62,7 +63,7 @@ async function loadData(options: CliOptions, args: string[]): Promise<unknown> {
   return null;
 }
 
-async function processExpression(
+export async function processExpression(
   options: CliOptions,
   jsonData: unknown,
 ): Promise<void> {
@@ -145,6 +146,7 @@ export async function main(args: string[]): Promise<void> {
     const shouldUseInteractive = options.interactive || hasNoExpression;
 
     if (shouldUseInteractive) {
+      const { runInteractive } = await getInteractive();
       await runInteractive(data);
       return;
     }
