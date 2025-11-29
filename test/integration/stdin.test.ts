@@ -297,4 +297,42 @@ describeStdin("CLI Stdin Pipe Integration", () => {
       expect(result.exitCode).toBe(0);
     });
   });
+
+  describe("--detect flag", () => {
+    test("detects JSON format", async () => {
+      const result = await runWithStdin('{"name":"test"}', ["--detect"]);
+      expect(result.exitCode).toBe(0);
+      expect(result.stdout.trim()).toBe("json");
+    });
+
+    test("detects YAML format", async () => {
+      const result = await runWithStdin("name: test\nvalue: 42", ["--detect"]);
+      expect(result.exitCode).toBe(0);
+      expect(result.stdout.trim()).toBe("yaml");
+    });
+
+    test("detects CSV format", async () => {
+      const result = await runWithStdin("a,b,c\n1,2,3", ["--detect"]);
+      expect(result.exitCode).toBe(0);
+      expect(result.stdout.trim()).toBe("csv");
+    });
+
+    test("detects TSV format", async () => {
+      const result = await runWithStdin("a\tb\tc\n1\t2\t3", ["--detect"]);
+      expect(result.exitCode).toBe(0);
+      expect(result.stdout.trim()).toBe("tsv");
+    });
+
+    test("detects JSON array", async () => {
+      const result = await runWithStdin("[1,2,3]", ["--detect"]);
+      expect(result.exitCode).toBe(0);
+      expect(result.stdout.trim()).toBe("json");
+    });
+
+    test("detects plain text", async () => {
+      const result = await runWithStdin("hello world", ["--detect"]);
+      expect(result.exitCode).toBe(0);
+      expect(result.stdout.trim()).toBe("text");
+    });
+  });
 });

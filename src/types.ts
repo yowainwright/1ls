@@ -26,6 +26,7 @@ export interface FormattingOptions {
   type?: boolean;
   format?: OutputFormat;
   inputFormat?: DataFormat;
+  detect?: boolean;
 }
 
 export interface CliOptions

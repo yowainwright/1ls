@@ -14,6 +14,7 @@ import {
   shortenExpression,
   getShortcutHelp,
 } from "../utils/shortcuts";
+import { detectFormat } from "../formats";
 import { CliOptions } from "../types";
 
 export const getInteractive = () => import("../interactive/app");
@@ -119,6 +120,18 @@ export async function main(args: string[]): Promise<void> {
 
   if (options.expand) {
     console.log(expandShortcuts(options.expand));
+    process.exit(0);
+  }
+
+  if (options.detect) {
+    const isStdinAvailable = !process.stdin.isTTY;
+    if (!isStdinAvailable) {
+      console.error("Error: --detect requires input from stdin");
+      process.exit(1);
+    }
+    const input = await Bun.stdin.text();
+    const format = detectFormat(input);
+    console.log(format);
     process.exit(0);
   }
 
