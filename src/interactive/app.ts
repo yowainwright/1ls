@@ -50,17 +50,6 @@ const setupErrorBoundary = (): void => {
   });
 };
 
-
-const handleError = (error: Error): void => {
-  cleanup();
-  const errorPrefix = colorize("Error: ", colors.yellow);
-  const errorMessage = error.message;
-  const newline = "\n";
-  const fullMessage = errorPrefix.concat(errorMessage, newline);
-  stdout.write(fullMessage);
-  exit(1);
-};
-
 const processInput = (
   state: State,
   data: Buffer,
@@ -145,6 +134,6 @@ export const runInteractive = async (data: unknown): Promise<void> => {
 
     exit(0);
   } catch (error) {
-    handleError(error as Error);
+    handleFatalError(error);
   }
 };
