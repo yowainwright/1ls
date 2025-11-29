@@ -146,6 +146,10 @@ export function parseArgs(args: string[]): CliOptions {
         options.shortcuts = true;
         break;
 
+      case "--detect":
+        options.detect = true;
+        break;
+
       default:
         const isExpressionStart = arg.startsWith(".") || arg.startsWith("[");
         if (isExpressionStart) {

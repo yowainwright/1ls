@@ -18,21 +18,36 @@ import { JsonNavigator } from "../navigator/json";
 import { expandShortcuts } from "../utils/shortcuts";
 import type { State } from "./types";
 
+let isRawModeEnabled = false;
+
 const cleanup = (): void => {
-  showCursor();
-  disableRawMode();
+  if (isRawModeEnabled) {
+    showCursor();
+    disableRawMode();
+    isRawModeEnabled = false;
+  }
   clearScreen();
 };
 
-
-const handleError = (error: Error): void => {
+const handleFatalError = (error: unknown): void => {
   cleanup();
-  const errorPrefix = colorize("Error: ", colors.yellow);
-  const errorMessage = error.message;
-  const newline = "\n";
-  const fullMessage = errorPrefix.concat(errorMessage, newline);
-  stdout.write(fullMessage);
+  const errorMessage = error instanceof Error ? error.message : String(error);
+  const output = colorize(`Fatal error: ${errorMessage}\n`, colors.yellow);
+  stdout.write(output);
   exit(1);
+};
+
+const setupErrorBoundary = (): void => {
+  process.on("uncaughtException", handleFatalError);
+  process.on("unhandledRejection", handleFatalError);
+  process.on("SIGINT", () => {
+    cleanup();
+    exit(0);
+  });
+  process.on("SIGTERM", () => {
+    cleanup();
+    exit(0);
+  });
 };
 
 const processInput = (
@@ -73,6 +88,8 @@ const runEventLoop = async (initialState: State): Promise<string | null> => {
 };
 
 export const runInteractive = async (data: unknown): Promise<void> => {
+  setupErrorBoundary();
+
   const paths = navigateJson(data);
 
   const hasPaths = paths.length > 0;
@@ -85,6 +102,7 @@ export const runInteractive = async (data: unknown): Promise<void> => {
   const initialState = createInitialState(paths, data);
 
   enableRawMode();
+  isRawModeEnabled = true;
   hideCursor();
   render(initialState);
 
@@ -116,6 +134,6 @@ export const runInteractive = async (data: unknown): Promise<void> => {
 
     exit(0);
   } catch (error) {
-    handleError(error as Error);
+    handleFatalError(error);
   }
 };
