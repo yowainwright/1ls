@@ -1,0 +1,5 @@
+[test]
+preload = ["./src/test/setup.ts"]
+
+[resolve]
+alias = { "@" = "./src" }

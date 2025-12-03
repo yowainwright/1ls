@@ -1,20 +1,18 @@
 import Hero from '@/components/sections/hero'
 import Footer from '@/components/sections/footer'
 import ExamplesCarousel from '@/components/ExamplesCarousel'
-import { ThemeToggle } from '@/components/theme-toggle'
+import { Playground } from '@/components/Playground'
 
 function App() {
   return (
-    <div className="min-h-screen bg-background">
-      <div className="fixed right-4 top-4 z-50">
-        <ThemeToggle />
-      </div>
-
-      <main>
+    <div className="relative min-h-screen bg-background overflow-hidden">
+      <div className="aurora-gradient" />
+      <main className="relative z-10">
         <Hero />
+        <Playground />
         <ExamplesCarousel />
       </main>
-      <Footer />
+      <Footer className="relative z-10" />
     </div>
   )
 }

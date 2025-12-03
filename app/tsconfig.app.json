@@ -19,7 +19,8 @@
     /* Path Aliases */
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "1ls/browser": ["../dist/browser/index.d.ts"]
     },
 
     /* Linting */
@@ -30,5 +31,6 @@
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true
   },
-  "include": ["src"]
+  "include": ["src"],
+  "exclude": ["src/test", "src/**/__tests__"]
 }

@@ -1,8 +1,5 @@
-"use client"
-
-import { useEffect, useState } from "react"
-import { Code, highlightCode } from "@/lib/codehike"
-import type { HighlightedCode } from "@/lib/codehike"
+import { Codeblock } from "@/components/Codeblock"
+import type { Language } from "@/components/Codeblock"
 import type { CodeExample } from "../types"
 
 interface SpotlightCardProps {
@@ -10,50 +7,18 @@ interface SpotlightCardProps {
 }
 
 export function SpotlightCard({ example }: SpotlightCardProps) {
-  const [inputCode, setInputCode] = useState<HighlightedCode | null>(null)
-  const [outputCode, setOutputCode] = useState<HighlightedCode | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
-
-  useEffect(() => {
-    async function highlight() {
-      setIsLoading(true)
-      const [input, output] = await Promise.all([
-        highlightCode(
-          { value: example.input, lang: example.language, meta: "" },
-          "github-dark"
-        ),
-        highlightCode(
-          { value: example.output, lang: "json", meta: "" },
-          "github-dark"
-        ),
-      ])
-      setInputCode(input)
-      setOutputCode(output)
-      setIsLoading(false)
-    }
-
-    highlight()
-  }, [example])
-
-  if (isLoading || !inputCode || !outputCode) {
-    return (
-      <div className="flex h-96 items-center justify-center rounded-lg border border-border bg-card">
-        <div className="text-muted-foreground">Loading...</div>
-      </div>
-    )
-  }
-
   return (
-    <div className="h-full w-full space-y-4 rounded-lg border border-border bg-card p-6">
+    <div className="h-full w-full space-y-4 rounded-lg border border-border/10 bg-card p-6 shadow-lg shadow-black/5 dark:shadow-black/20">
       <SpotlightCardHeader
         title={example.title}
         description={example.description}
         format={example.format}
       />
       <SpotlightCardContent
-        inputCode={inputCode}
-        outputCode={outputCode}
+        input={example.input}
+        output={example.output}
         command={example.command}
+        language={example.language as Language}
       />
     </div>
   )
@@ -80,17 +45,18 @@ function SpotlightCardHeader({ title, description, format }: SpotlightCardHeader
 }
 
 interface SpotlightCardContentProps {
-  inputCode: HighlightedCode
-  outputCode: HighlightedCode
+  input: string
+  output: string
   command: string
+  language: Language
 }
 
-function SpotlightCardContent({ inputCode, outputCode, command }: SpotlightCardContentProps) {
+function SpotlightCardContent({ input, output, command, language }: SpotlightCardContentProps) {
   return (
     <div className="space-y-4">
       <div>
         <div className="mb-2 text-xs font-medium text-muted-foreground">Input:</div>
-        <Code codeblock={inputCode} />
+        <Codeblock code={input} language={language} />
       </div>
 
       <div className="flex items-center justify-center">
@@ -102,7 +68,7 @@ function SpotlightCardContent({ inputCode, outputCode, command }: SpotlightCardC
 
       <div>
         <div className="mb-2 text-xs font-medium text-muted-foreground">Output:</div>
-        <Code codeblock={outputCode} />
+        <Codeblock code={output} language="json" />
       </div>
     </div>
   )
