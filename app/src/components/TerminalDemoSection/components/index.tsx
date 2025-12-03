@@ -12,7 +12,7 @@ export function TerminalCard({ example }: TerminalCardProps) {
   const commandString = createCommandString(example.input, example.command)
 
   return (
-    <div className="w-full overflow-hidden rounded-lg border border-border bg-card shadow-sm">
+    <div className="w-full overflow-hidden rounded-lg border border-border/10 bg-card shadow-lg shadow-black/5 dark:shadow-black/20">
       <TerminalCardHeader title={example.title} description={example.description} />
       <TerminalCardContent files={files} />
       <TerminalCardFooter command={commandString} output={example.output} />
@@ -27,7 +27,7 @@ interface TerminalCardHeaderProps {
 
 function TerminalCardHeader({ title, description }: TerminalCardHeaderProps) {
   return (
-    <div className="border-b border-border bg-muted/50 px-4 py-3">
+    <div className="border-b border-border/10 bg-muted/50 px-4 py-3">
       <h3 className="font-mono text-sm font-semibold text-foreground">
         {title}
       </h3>
@@ -60,7 +60,7 @@ interface TerminalCardFooterProps {
 
 function TerminalCardFooter({ command, output }: TerminalCardFooterProps) {
   return (
-    <div className="space-y-2 border-t border-border bg-muted/30 px-4 py-3">
+    <div className="space-y-2 border-t border-border/10 bg-muted/30 px-4 py-3">
       <div>
         <div className="text-xs font-medium text-muted-foreground">Command:</div>
         <code className="mt-1 block font-mono text-xs text-foreground">

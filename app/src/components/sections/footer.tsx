@@ -1,9 +1,13 @@
 import { Github, Package } from "lucide-react"
 import { siteConfig } from "@/lib/config"
 
-export default function Footer() {
+interface FooterProps {
+  className?: string
+}
+
+export default function Footer({ className = "" }: FooterProps) {
   return (
-    <footer className="border-t border-border">
+    <footer className={`border-t border-border/10 ${className}`}>
       <div className="container mx-auto px-4 py-8">
         <div className="flex flex-col items-center justify-between gap-4 md:flex-row">
           <div className="text-center md:text-left">

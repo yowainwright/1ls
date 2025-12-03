@@ -2,7 +2,7 @@ import { motion } from "framer-motion"
 import { TerminalCard } from "./components"
 import { TERMINAL_EXAMPLES } from "./constants"
 
-const ease = [0.16, 1, 0.3, 1]
+const ease = [0.16, 1, 0.3, 1] as const
 
 export default function TerminalDemoSection() {
   const containerVariants = {

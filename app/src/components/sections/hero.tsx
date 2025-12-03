@@ -1,9 +1,9 @@
 import { motion } from "framer-motion"
-import { AuroraText } from "@/components/aurora-text"
+import { Logo } from "@/components/Logo"
 import { siteConfig } from "@/lib/config"
 import { Github } from "lucide-react"
 
-const ease = [0.16, 1, 0.3, 1]
+const ease = [0.16, 1, 0.3, 1] as const
 
 export default function Hero() {
   return (
@@ -11,18 +11,9 @@ export default function Hero() {
       <div className="container mx-auto max-w-5xl">
         <div className="flex flex-col items-center text-center">
           {/* Main Title */}
-          <motion.div
-            className="mb-6 w-full"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, ease }}
-          >
-            <h1 className="px-8 text-7xl font-bold tracking-tighter sm:text-8xl md:text-9xl lg:text-[12rem]">
-              <AuroraText className="font-black">
-                {siteConfig.hero.title}
-              </AuroraText>
-            </h1>
-          </motion.div>
+          <div className="mb-6 flex w-full justify-center">
+            <Logo className="text-6xl sm:text-7xl md:text-8xl lg:text-9xl" />
+          </div>
 
           {/* Subtitle */}
           <motion.p
@@ -55,12 +46,12 @@ export default function Hero() {
               href={siteConfig.hero.secondaryCtaHref}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center justify-center gap-2 rounded-lg border border-border bg-background px-8 py-3 text-base font-medium text-foreground transition-colors hover:bg-secondary focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+              className="inline-flex items-center justify-center gap-2 rounded-lg border border-border/10 bg-background px-8 py-3 text-base font-medium text-foreground shadow-sm transition-all hover:bg-secondary hover:shadow-md focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
             >
               <Github className="h-5 w-5" />
               {siteConfig.hero.secondaryCta}
             </a>
-            <div className="rounded-lg border border-border bg-card px-4 py-3 font-mono text-sm text-card-foreground shadow-sm">
+            <div className="rounded-lg border border-border/10 bg-card px-4 py-3 font-mono text-sm text-card-foreground shadow-md shadow-black/5 dark:shadow-black/20">
               <code className="text-primary">npm install -g 1ls</code>
             </div>
           </motion.div>
