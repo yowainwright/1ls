@@ -14,7 +14,7 @@ export default defineConfig({
   ],
   base: '/1ls/',
   server: {
-    port: 3333,
+    port: 3000 + Math.floor(Math.random() * 1000),
   },
   resolve: {
     alias: {

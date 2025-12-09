@@ -1,3 +1,6 @@
+import { motion } from "framer-motion"
+import { LOGO_STYLES, EASE_CURVE } from "@/lib/styles"
+
 const LOGO_CONFIG = {
   text: "1ls",
   fontFamily: "'Fira Code', 'FiraCode Nerd Font', ui-monospace, monospace",
@@ -9,20 +12,33 @@ interface LogoProps {
 
 export function Logo({ className = "" }: LogoProps) {
   return (
-    <span
-      className={`inline-block animate-aurora font-bold tracking-tighter ${className}`}
+    <motion.span
+      className={`inline-block font-bold tracking-tighter ${className}`}
+      initial={{ scale: 2.5, opacity: 0, filter: "blur(10px)" }}
+      animate={{
+        scale: 1,
+        opacity: 1,
+        filter: "blur(0px)",
+        y: [0, -4, 0],
+      }}
+      transition={{
+        scale: { duration: 1.2, ease: EASE_CURVE },
+        opacity: { duration: 1.2, ease: EASE_CURVE },
+        filter: { duration: 1.2, ease: EASE_CURVE },
+        y: {
+          duration: 3,
+          ease: "easeInOut",
+          repeat: Infinity,
+          delay: 1.2,
+        },
+      }}
       style={{
-        background: "linear-gradient(90deg, rgb(var(--primary)), rgb(var(--accent)), rgb(var(--primary)))",
-        backgroundSize: "200% auto",
-        WebkitBackgroundClip: "text",
-        backgroundClip: "text",
-        color: "transparent",
+        ...LOGO_STYLES,
         fontFamily: LOGO_CONFIG.fontFamily,
-        letterSpacing: "-0.05em",
       }}
     >
       {LOGO_CONFIG.text}
-    </span>
+    </motion.span>
   )
 }
 

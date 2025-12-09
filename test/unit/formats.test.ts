@@ -188,6 +188,12 @@ items:
     expect(parseYAML(input)).toEqual(expected);
   });
 
+  test('parses empty values as null', () => {
+    const input = 'a: null\nb: ~\nc:';
+    const expected = { a: null, b: null, c: null };
+    expect(parseYAML(input)).toEqual(expected);
+  });
+
   test('ignores comments', () => {
     const input = '# This is a comment\nname: Alice # inline comment\n# Another comment\nage: 30';
     const expected = { name: 'Alice', age: 30 };
@@ -231,6 +237,115 @@ user:
   test('parses floating point numbers', () => {
     const input = 'pi: 3.14\ntemp: -0.5';
     const expected = { pi: 3.14, temp: -0.5 };
+    expect(parseYAML(input)).toEqual(expected);
+  });
+
+  test('parses objects in arrays', () => {
+    const input = `
+pokemon:
+  - name: Pikachu
+    type: electric
+  - name: Charizard
+    type: fire`;
+    const expected = {
+      pokemon: [
+        { name: 'Pikachu', type: 'electric' },
+        { name: 'Charizard', type: 'fire' }
+      ]
+    };
+    expect(parseYAML(input)).toEqual(expected);
+  });
+
+  test('parses nested arrays within list item objects', () => {
+    const input = `
+pokemon:
+  - name: Pikachu
+    moves:
+      - Thunder Shock
+      - Quick Attack
+  - name: Charizard
+    moves:
+      - Flamethrower
+      - Fly`;
+    const expected = {
+      pokemon: [
+        { name: 'Pikachu', moves: ['Thunder Shock', 'Quick Attack'] },
+        { name: 'Charizard', moves: ['Flamethrower', 'Fly'] }
+      ]
+    };
+    expect(parseYAML(input)).toEqual(expected);
+  });
+
+  test('parses deeply nested structures', () => {
+    const input = `
+config:
+  servers:
+    - name: web
+      ports:
+        - 80
+        - 443
+      settings:
+        ssl: true
+    - name: api
+      ports:
+        - 3000
+      settings:
+        ssl: false`;
+    const expected = {
+      config: {
+        servers: [
+          { name: 'web', ports: [80, 443], settings: { ssl: true } },
+          { name: 'api', ports: [3000], settings: { ssl: false } }
+        ]
+      }
+    };
+    expect(parseYAML(input)).toEqual(expected);
+  });
+
+  test('parses mixed arrays and objects at multiple levels', () => {
+    const input = `
+app:
+  name: myapp
+  environments:
+    - name: dev
+      features:
+        - debug
+        - hot-reload
+    - name: prod
+      features:
+        - minify
+  database:
+    host: localhost`;
+    const expected = {
+      app: {
+        name: 'myapp',
+        environments: [
+          { name: 'dev', features: ['debug', 'hot-reload'] },
+          { name: 'prod', features: ['minify'] }
+        ],
+        database: { host: 'localhost' }
+      }
+    };
+    expect(parseYAML(input)).toEqual(expected);
+  });
+
+  test('parses multiple top-level keys with arrays', () => {
+    const input = `
+users:
+  - name: Alice
+  - name: Bob
+products:
+  - id: 1
+    name: Widget
+  - id: 2
+    name: Gadget`;
+    const expected = {
+      users: [{ name: 'Alice' }, { name: 'Bob' }],
+      products: [
+        { id: 1, name: 'Widget' },
+        { id: 2, name: 'Gadget' }
+      ]
+    };
     expect(parseYAML(input)).toEqual(expected);
   });
 });

@@ -2,8 +2,12 @@ import { Lexer } from "../lexer";
 import { ExpressionParser } from "../expression";
 import { JsonNavigator } from "../navigator/json";
 import { REGEX_SPECIAL_CHARS, SHORTCUTS } from "./constants";
+import { parseYAML } from "../formats/yaml";
+import { parseCSV } from "../formats/csv";
+import { parseTOML } from "../formats/toml";
 
 export { Lexer, ExpressionParser, JsonNavigator };
+export { parseYAML, parseCSV, parseTOML };
 
 export function escapeRegExp(str: string): string {
   return str.replace(REGEX_SPECIAL_CHARS, "\\$&");

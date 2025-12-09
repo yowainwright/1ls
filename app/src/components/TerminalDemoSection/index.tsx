@@ -1,8 +1,8 @@
 import { motion } from "framer-motion"
+import { SectionHeader } from "@/components/SectionHeader"
+import { EASE_CURVE } from "@/lib/styles"
 import { TerminalCard } from "./components"
 import { TERMINAL_EXAMPLES } from "./constants"
-
-const ease = [0.16, 1, 0.3, 1] as const
 
 export default function TerminalDemoSection() {
   const containerVariants = {
@@ -20,14 +20,17 @@ export default function TerminalDemoSection() {
     visible: {
       opacity: 1,
       y: 0,
-      transition: { duration: 0.6, ease },
+      transition: { duration: 0.6, ease: EASE_CURVE },
     },
   }
 
   return (
     <section className="px-4 py-16 md:py-24">
       <div className="container mx-auto max-w-6xl">
-        <SectionHeader />
+        <SectionHeader
+          title="See It In Action"
+          description="Interactive examples showing how 1ls makes JSON processing simple and intuitive"
+        />
         <motion.div
           className="grid gap-6 md:grid-cols-2"
           variants={containerVariants}
@@ -43,24 +46,5 @@ export default function TerminalDemoSection() {
         </motion.div>
       </div>
     </section>
-  )
-}
-
-function SectionHeader() {
-  return (
-    <motion.div
-      className="mb-12 text-center"
-      initial={{ opacity: 0, y: 20 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      transition={{ duration: 0.6, ease }}
-    >
-      <h2 className="mb-4 text-3xl font-bold tracking-tight sm:text-4xl md:text-5xl">
-        See It In Action
-      </h2>
-      <p className="mx-auto max-w-2xl text-lg text-muted-foreground">
-        Interactive examples showing how 1ls makes JSON processing simple and intuitive
-      </p>
-    </motion.div>
   )
 }

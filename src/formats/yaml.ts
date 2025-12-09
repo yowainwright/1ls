@@ -83,107 +83,132 @@ export function findPreviousKey(lines: string[], currentIndex: number): string |
   }, null);
 }
 
+function stripComment(line: string): string {
+  const commentIdx = line.indexOf("#");
+  if (commentIdx < 0) return line;
+  const beforeComment = line.substring(0, commentIdx);
+  const quoteCount = (beforeComment.match(/["']/g) || []).length;
+  return quoteCount % 2 === 0 ? beforeComment : line;
+}
+
+function isListItemWithObject(value: string): boolean {
+  const colonIdx = value.indexOf(":");
+  if (colonIdx <= 0) return false;
+  const key = value.substring(0, colonIdx);
+  return !key.includes(" ") || key.startsWith('"') || key.startsWith("'");
+}
+
+interface StackFrame {
+  container: Record<string, unknown> | unknown[]
+  indent: number
+  pendingKey?: string
+}
+
 export function parseYAML(input: string): unknown {
   const lines = input.trim().split("\n");
   const result: Record<string, unknown> = {};
-  const stack: unknown[] = [result];
-  const indentStack: number[] = [0];
-  let currentList: unknown[] | null = null;
-  let listIndent = -1;
+  const stack: StackFrame[] = [{ container: result, indent: -1 }];
 
-  lines.forEach((rawLine, lineNum) => {
-    let line = rawLine;
+  function getIndent(line: string): number {
+    return line.length - line.trimStart().length;
+  }
 
-    const commentIdx = line.indexOf("#");
-    const hasComment = commentIdx >= 0;
-    if (hasComment) {
-      const beforeComment = line.substring(0, commentIdx);
-      const quoteCount = (beforeComment.match(/["']/g) || []).length;
-      const isBalanced = quoteCount % 2 === 0;
-      if (isBalanced) {
-        line = beforeComment;
-      }
+  function top(): StackFrame {
+    return stack[stack.length - 1];
+  }
+
+  function popWhile(predicate: (frame: StackFrame) => boolean): void {
+    while (stack.length > 1 && predicate(top())) {
+      stack.pop();
     }
+  }
 
-    if (!line.trim()) return;
-    if (line.trim() === "---" || line.trim() === "...") return;
-
-    const indent = line.length - line.trimStart().length;
+  for (let i = 0; i < lines.length; i++) {
+    const line = stripComment(lines[i]);
     const trimmed = line.trim();
 
+    if (!trimmed || trimmed === "---" || trimmed === "...") continue;
+
+    const indent = getIndent(line);
     const isListItem = trimmed.startsWith("- ");
+
     if (isListItem) {
-      const value = trimmed.substring(2).trim();
+      const content = trimmed.substring(2).trim();
 
-      const isSameList = currentList !== null && indent === listIndent;
-      if (isSameList) {
-        currentList!.push(parseYAMLValue(value));
-        return;
-      }
+      popWhile((f) => f.indent > indent || (f.indent >= indent && !Array.isArray(f.container)));
 
-      currentList = [parseYAMLValue(value)];
-      listIndent = indent;
+      let targetArray: unknown[];
+      const current = top();
 
-      while (
-        indentStack.length > 1 &&
-        indentStack[indentStack.length - 1] >= indent
-      ) {
-        stack.pop();
-        indentStack.pop();
-      }
+      if (Array.isArray(current.container) && current.indent === indent) {
+        targetArray = current.container;
+      } else {
+        targetArray = [];
 
-      const parent = stack[stack.length - 1];
-      const isObject = typeof parent === "object" && !Array.isArray(parent);
-
-      if (isObject) {
-        const prevLine = findPreviousKey(lines, lineNum);
-        if (prevLine) {
-          (parent as Record<string, unknown>)[prevLine] = currentList;
-        }
-      }
-      return;
-    }
-
-    if (!trimmed.startsWith("- ")) {
-      currentList = null;
-      listIndent = -1;
-    }
-
-    const colonIndex = trimmed.indexOf(":");
-    const hasKeyValue = colonIndex > 0;
-
-    if (hasKeyValue) {
-      const key = trimmed.substring(0, colonIndex).trim();
-      const value = trimmed.substring(colonIndex + 1).trim();
-
-      while (
-        indentStack.length > 1 &&
-        indentStack[indentStack.length - 1] >= indent
-      ) {
-        stack.pop();
-        indentStack.pop();
-      }
-
-      const parent = stack[stack.length - 1];
-
-      if (!value) {
-        const nextLineIdx = lineNum + 1;
-        if (nextLineIdx < lines.length) {
-          const nextLine = lines[nextLineIdx].trim();
-          if (nextLine.startsWith("- ")) {
-            return;
+        if (current.pendingKey) {
+          (current.container as Record<string, unknown>)[current.pendingKey] = targetArray;
+          current.pendingKey = undefined;
+        } else {
+          const prevKey = findPreviousKey(lines, i);
+          if (prevKey && !Array.isArray(current.container)) {
+            (current.container as Record<string, unknown>)[prevKey] = targetArray;
           }
         }
+        stack.push({ container: targetArray, indent });
+      }
 
-        const newObj: Record<string, unknown> = {};
-        (parent as Record<string, unknown>)[key] = newObj;
-        stack.push(newObj);
-        indentStack.push(indent);
+      if (isListItemWithObject(content)) {
+        const colonIdx = content.indexOf(":");
+        const key = content.substring(0, colonIdx).trim();
+        const val = content.substring(colonIdx + 1).trim();
+        const obj: Record<string, unknown> = { [key]: val ? parseYAMLValue(val) : null };
+        targetArray.push(obj);
+        stack.push({ container: obj, indent: indent + 2 });
+      } else if (content) {
+        targetArray.push(parseYAMLValue(content));
       } else {
-        (parent as Record<string, unknown>)[key] = parseYAMLValue(value);
+        const obj: Record<string, unknown> = {};
+        targetArray.push(obj);
+        stack.push({ container: obj, indent: indent + 2 });
+      }
+      continue;
+    }
+
+    const colonIdx = trimmed.indexOf(":");
+    if (colonIdx > 0) {
+      const key = trimmed.substring(0, colonIdx).trim();
+      const value = trimmed.substring(colonIdx + 1).trim();
+
+      popWhile((f) => f.indent > indent || (f.indent === indent && Array.isArray(f.container)));
+
+      const current = top();
+      const container = current.container;
+
+      if (Array.isArray(container)) continue;
+
+      if (value) {
+        container[key] = parseYAMLValue(value);
+      } else {
+        const nextIdx = i + 1;
+        const hasNext = nextIdx < lines.length;
+        const nextLine = hasNext ? stripComment(lines[nextIdx]) : "";
+        const nextTrimmed = nextLine.trim();
+        const nextIndent = hasNext ? getIndent(nextLine) : -1;
+        const nextIsListItem = nextTrimmed.startsWith("- ");
+        const nextIsNestedContent = hasNext && nextIndent > indent && nextTrimmed;
+
+        if (nextIsListItem && nextIndent > indent) {
+          current.pendingKey = key;
+        } else if (nextIsNestedContent) {
+          const newObj: Record<string, unknown> = {};
+          container[key] = newObj;
+          stack.push({ container: newObj, indent });
+        } else {
+          container[key] = null;
+        }
       }
     }
-  });
+  }
 
   return result;
 }
