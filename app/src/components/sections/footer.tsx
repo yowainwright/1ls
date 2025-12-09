@@ -1,16 +1,30 @@
 import { Github, Package } from "lucide-react"
 import { siteConfig } from "@/lib/config"
+import { LOGO_STYLES } from "@/lib/styles"
 
 interface FooterProps {
   className?: string
 }
 
 export default function Footer({ className = "" }: FooterProps) {
+  const currentYear = new Date().getFullYear()
+  const startYear = 2024
+
   return (
     <footer className={`border-t border-border/10 ${className}`}>
       <div className="container mx-auto px-4 py-8">
         <div className="flex flex-col items-center justify-between gap-4 md:flex-row">
-          <div className="text-center md:text-left">
+          <div className="flex flex-col items-center md:items-start gap-2">
+            <span
+              className="text-2xl font-bold tracking-tighter"
+              style={{
+                ...LOGO_STYLES,
+                animation: undefined,
+                filter: undefined,
+              }}
+            >
+              1ls
+            </span>
             <p className="text-sm text-muted-foreground">
               Built by{" "}
               <a
@@ -23,7 +37,7 @@ export default function Footer({ className = "" }: FooterProps) {
               </a>
             </p>
             <p className="text-sm text-muted-foreground">
-              Licensed under MIT
+              © {startYear}–{currentYear} MIT License
             </p>
           </div>
           <div className="flex gap-4">
@@ -31,7 +45,7 @@ export default function Footer({ className = "" }: FooterProps) {
               href={siteConfig.links.github}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-muted-foreground transition-colors hover:text-foreground"
+              className="text-accent transition-colors hover:text-accent/80"
               aria-label="GitHub"
             >
               <Github className="h-5 w-5" />
@@ -40,7 +54,7 @@ export default function Footer({ className = "" }: FooterProps) {
               href={siteConfig.links.npm}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-muted-foreground transition-colors hover:text-foreground"
+              className="text-accent transition-colors hover:text-accent/80"
               aria-label="npm"
             >
               <Package className="h-5 w-5" />

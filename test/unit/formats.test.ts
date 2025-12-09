@@ -188,6 +188,12 @@ items:
     expect(parseYAML(input)).toEqual(expected);
   });
 
+  test('parses empty values as null', () => {
+    const input = 'a: null\nb: ~\nc:';
+    const expected = { a: null, b: null, c: null };
+    expect(parseYAML(input)).toEqual(expected);
+  });
+
   test('ignores comments', () => {
     const input = '# This is a comment\nname: Alice # inline comment\n# Another comment\nage: 30';
     const expected = { name: 'Alice', age: 30 };
@@ -231,6 +237,179 @@ user:
   test('parses floating point numbers', () => {
     const input = 'pi: 3.14\ntemp: -0.5';
     const expected = { pi: 3.14, temp: -0.5 };
+    expect(parseYAML(input)).toEqual(expected);
+  });
+
+  test('parses objects in arrays', () => {
+    const input = `
+pokemon:
+  - name: Pikachu
+    type: electric
+  - name: Charizard
+    type: fire`;
+    const expected = {
+      pokemon: [
+        { name: 'Pikachu', type: 'electric' },
+        { name: 'Charizard', type: 'fire' }
+      ]
+    };
+    expect(parseYAML(input)).toEqual(expected);
+  });
+
+  test('parses nested arrays within list item objects', () => {
+    const input = `
+pokemon:
+  - name: Pikachu
+    moves:
+      - Thunder Shock
+      - Quick Attack
+  - name: Charizard
+    moves:
+      - Flamethrower
+      - Fly`;
+    const expected = {
+      pokemon: [
+        { name: 'Pikachu', moves: ['Thunder Shock', 'Quick Attack'] },
+        { name: 'Charizard', moves: ['Flamethrower', 'Fly'] }
+      ]
+    };
+    expect(parseYAML(input)).toEqual(expected);
+  });
+
+  test('parses deeply nested structures', () => {
+    const input = `
+config:
+  servers:
+    - name: web
+      ports:
+        - 80
+        - 443
+      settings:
+        ssl: true
+    - name: api
+      ports:
+        - 3000
+      settings:
+        ssl: false`;
+    const expected = {
+      config: {
+        servers: [
+          { name: 'web', ports: [80, 443], settings: { ssl: true } },
+          { name: 'api', ports: [3000], settings: { ssl: false } }
+        ]
+      }
+    };
+    expect(parseYAML(input)).toEqual(expected);
+  });
+
+  test('parses mixed arrays and objects at multiple levels', () => {
+    const input = `
+app:
+  name: myapp
+  environments:
+    - name: dev
+      features:
+        - debug
+        - hot-reload
+    - name: prod
+      features:
+        - minify
+  database:
+    host: localhost`;
+    const expected = {
+      app: {
+        name: 'myapp',
+        environments: [
+          { name: 'dev', features: ['debug', 'hot-reload'] },
+          { name: 'prod', features: ['minify'] }
+        ],
+        database: { host: 'localhost' }
+      }
+    };
+    expect(parseYAML(input)).toEqual(expected);
+  });
+
+  test('parses multiple top-level keys with arrays', () => {
+    const input = `
+users:
+  - name: Alice
+  - name: Bob
+products:
+  - id: 1
+    name: Widget
+  - id: 2
+    name: Gadget`;
+    const expected = {
+      users: [{ name: 'Alice' }, { name: 'Bob' }],
+      products: [
+        { id: 1, name: 'Widget' },
+        { id: 2, name: 'Gadget' }
+      ]
+    };
+    expect(parseYAML(input)).toEqual(expected);
+  });
+
+  test('parses root-level array of simple values', () => {
+    const input = `- apple
+- banana
+- cherry`;
+    const expected = ['apple', 'banana', 'cherry'];
+    expect(parseYAML(input)).toEqual(expected);
+  });
+
+  test('parses root-level array of objects', () => {
+    const input = `- name: Alice
+  age: 30
+- name: Bob
+  age: 25`;
+    const expected = [
+      { name: 'Alice', age: 30 },
+      { name: 'Bob', age: 25 }
+    ];
+    expect(parseYAML(input)).toEqual(expected);
+  });
+
+  test('parses multiline literal string (|)', () => {
+    const input = `description: |
+  This is a
+  multiline string`;
+    const expected = { description: 'This is a\nmultiline string' };
+    expect(parseYAML(input)).toEqual(expected);
+  });
+
+  test('parses multiline folded string (>)', () => {
+    const input = `description: >
+  This should be
+  folded into one line`;
+    const expected = { description: 'This should be folded into one line' };
+    expect(parseYAML(input)).toEqual(expected);
+  });
+
+  test('parses type tags (!!str)', () => {
+    const input = `not_a_number: !!str 123
+is_string: !!str true`;
+    const expected = { not_a_number: '123', is_string: 'true' };
+    expect(parseYAML(input)).toEqual(expected);
+  });
+
+  test('parses anchors and aliases with merge', () => {
+    const input = `defaults: &defaults
+  adapter: postgres
+  host: localhost
+development:
+  <<: *defaults
+  database: dev_db`;
+    const expected = {
+      defaults: { adapter: 'postgres', host: 'localhost' },
+      development: { adapter: 'postgres', host: 'localhost', database: 'dev_db' }
+    };
+    expect(parseYAML(input)).toEqual(expected);
+  });
+
+  test('parses simple alias references', () => {
+    const input = `name: &myname Alice
+greeting: *myname`;
+    const expected = { name: 'Alice', greeting: 'Alice' };
     expect(parseYAML(input)).toEqual(expected);
   });
 });

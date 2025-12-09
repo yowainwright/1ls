@@ -2,6 +2,8 @@ import { createFileRoute } from '@tanstack/react-router'
 import Hero from '@/components/sections/hero'
 import Footer from '@/components/sections/footer'
 import ExamplesCarousel from '@/components/ExamplesCarousel'
+import { Features } from '@/components/Features'
+import { Insights } from '@/components/Insights'
 import { Playground } from '@/components/Playground'
 
 export const Route = createFileRoute('/')({
@@ -13,8 +15,10 @@ function HomePage() {
     <>
       <main className="relative z-10">
         <Hero />
-        <Playground />
+        <Features />
         <ExamplesCarousel />
+        <Insights />
+        <Playground />
       </main>
       <Footer className="relative z-10" />
     </>

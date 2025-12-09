@@ -6,38 +6,23 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel"
+import { SectionHeader } from "@/components/SectionHeader"
+import { EASE_CURVE } from "@/lib/styles"
 import { SpotlightCard } from "./components"
 import { CODE_EXAMPLES } from "./constants"
-
-const ease = [0.16, 1, 0.3, 1] as const
 
 export default function ExamplesCarousel() {
   return (
     <section className="px-4 py-16 md:py-24">
       <div className="container mx-auto max-w-6xl">
-        <SectionHeader />
+        <SectionHeader
+          title="Works With Any Format"
+          description="JSON, YAML, CSV, TypeScript, plain text, and more - all with the same simple syntax"
+          className="mb-12"
+        />
         <CarouselWrapper />
       </div>
     </section>
-  )
-}
-
-function SectionHeader() {
-  return (
-    <motion.div
-      className="mb-12 text-center"
-      initial={{ opacity: 0, y: 20 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      transition={{ duration: 0.6, ease }}
-    >
-      <h2 className="mb-4 text-3xl font-bold tracking-tight sm:text-4xl md:text-5xl">
-        Works With Any Format
-      </h2>
-      <p className="mx-auto max-w-2xl text-lg text-muted-foreground">
-        JSON, YAML, CSV, TypeScript, plain text, and more - all with the same simple syntax
-      </p>
-    </motion.div>
   )
 }
 
@@ -47,7 +32,7 @@ function CarouselWrapper() {
       initial={{ opacity: 0, y: 20 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
-      transition={{ duration: 0.6, delay: 0.2, ease }}
+      transition={{ duration: 0.6, delay: 0.2, ease: EASE_CURVE }}
     >
       <Carousel
         opts={{
