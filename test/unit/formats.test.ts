@@ -348,6 +348,70 @@ products:
     };
     expect(parseYAML(input)).toEqual(expected);
   });
+
+  test('parses root-level array of simple values', () => {
+    const input = `- apple
+- banana
+- cherry`;
+    const expected = ['apple', 'banana', 'cherry'];
+    expect(parseYAML(input)).toEqual(expected);
+  });
+
+  test('parses root-level array of objects', () => {
+    const input = `- name: Alice
+  age: 30
+- name: Bob
+  age: 25`;
+    const expected = [
+      { name: 'Alice', age: 30 },
+      { name: 'Bob', age: 25 }
+    ];
+    expect(parseYAML(input)).toEqual(expected);
+  });
+
+  test('parses multiline literal string (|)', () => {
+    const input = `description: |
+  This is a
+  multiline string`;
+    const expected = { description: 'This is a\nmultiline string' };
+    expect(parseYAML(input)).toEqual(expected);
+  });
+
+  test('parses multiline folded string (>)', () => {
+    const input = `description: >
+  This should be
+  folded into one line`;
+    const expected = { description: 'This should be folded into one line' };
+    expect(parseYAML(input)).toEqual(expected);
+  });
+
+  test('parses type tags (!!str)', () => {
+    const input = `not_a_number: !!str 123
+is_string: !!str true`;
+    const expected = { not_a_number: '123', is_string: 'true' };
+    expect(parseYAML(input)).toEqual(expected);
+  });
+
+  test('parses anchors and aliases with merge', () => {
+    const input = `defaults: &defaults
+  adapter: postgres
+  host: localhost
+development:
+  <<: *defaults
+  database: dev_db`;
+    const expected = {
+      defaults: { adapter: 'postgres', host: 'localhost' },
+      development: { adapter: 'postgres', host: 'localhost', database: 'dev_db' }
+    };
+    expect(parseYAML(input)).toEqual(expected);
+  });
+
+  test('parses simple alias references', () => {
+    const input = `name: &myname Alice
+greeting: *myname`;
+    const expected = { name: 'Alice', greeting: 'Alice' };
+    expect(parseYAML(input)).toEqual(expected);
+  });
 });
 
 describe('TOML Format', () => {
