@@ -98,3 +98,40 @@ test('Navigator: object operation on arrays', () => {
   const data = [1, 2, 3, 4, 5];
   expect(evaluate('.{length}', data)).toBe(5);
 });
+
+test('Navigator: method calls inside arrow functions', () => {
+  const lines = [
+    'PLAYER_JOINED: Alice entered the game',
+    'KILL: Bob eliminated by Alice',
+    'CHAT: Alice: "nice shot!"',
+    'KILL: Charlie eliminated by Bob',
+  ];
+  expect(evaluate(".filter(l => l.includes('KILL'))", lines)).toEqual([
+    'KILL: Bob eliminated by Alice',
+    'KILL: Charlie eliminated by Bob',
+  ]);
+  expect(evaluate(".filter(l => l.includes('CHAT'))", lines)).toEqual([
+    'CHAT: Alice: "nice shot!"',
+  ]);
+  expect(evaluate(".filter(l => l.includes('PLAYER_JOINED'))", lines)).toEqual([
+    'PLAYER_JOINED: Alice entered the game',
+  ]);
+});
+
+test('Navigator: chained method calls inside arrow functions', () => {
+  const data = ['  hello  ', '  WORLD  ', '  Test  '];
+  expect(evaluate('.map(s => s.trim())', data)).toEqual(['hello', 'WORLD', 'Test']);
+  expect(evaluate('.map(s => s.trim().toLowerCase())', data)).toEqual(['hello', 'world', 'test']);
+});
+
+test('Navigator: nested method calls in filter predicates', () => {
+  const users = [
+    { name: 'Alice Smith', role: 'admin' },
+    { name: 'Bob Jones', role: 'user' },
+    { name: 'Charlie Smith', role: 'user' },
+  ];
+  expect(evaluate(".filter(u => u.name.includes('Smith'))", users)).toEqual([
+    { name: 'Alice Smith', role: 'admin' },
+    { name: 'Charlie Smith', role: 'user' },
+  ]);
+});
