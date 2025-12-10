@@ -361,8 +361,17 @@ export class ExpressionParser {
 
     const isDot = () => this.current.type === TokenType.DOT;
     const isIdentifier = () => this.current.type === TokenType.IDENTIFIER;
+    const isMethodCall = () => this.current.type === TokenType.LEFT_PAREN;
 
-    while (isDot()) {
+    while (isDot() || isMethodCall()) {
+      if (isMethodCall()) {
+        const propertyNode = node as PropertyAccessNode;
+        const method = propertyNode.property;
+        const object = propertyNode.object;
+        node = this.parseMethodCall(object ? object : createRootNode(), method);
+        continue;
+      }
+
       this.advance();
 
       if (!isIdentifier()) break;

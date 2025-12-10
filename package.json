@@ -69,5 +69,21 @@
     "turbo": "^2.3.3",
     "typescript": "5.9.2"
   },
-  "packageManager": "bun@1.1.38"
+  "packageManager": "bun@1.1.38",
+  "release-it": {
+    "git": {
+      "commitMessage": "chore(release): ${version}",
+      "tagName": "v${version}",
+      "requireCleanWorkingDir": true,
+      "requireUpstream": true
+    },
+    "github": {
+      "release": true,
+      "releaseName": "Release ${version}",
+      "releaseNotes": "git log --pretty=format:'* %s (%h)' ${latestTag}...HEAD"
+    },
+    "npm": {
+      "publish": true
+    }
+  }
 }

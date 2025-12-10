@@ -78,3 +78,47 @@ test('Expression: method call with arrow function', () => {
   expect((ast.expression as any).args).toHaveLength(1);
   expect((ast.expression as any).args[0].type).toBe('ArrowFunction');
 });
+
+test('Expression: method call inside arrow function body', () => {
+  const lexer = new Lexer(".filter(l => l.includes('KILL'))");
+  const tokens = lexer.tokenize();
+  const parser = new ExpressionParser(tokens);
+  const ast = parser.parse();
+
+  expect(ast.expression?.type).toBe('MethodCall');
+  expect((ast.expression as any).method).toBe('filter');
+
+  const arrowFn = (ast.expression as any).args[0];
+  expect(arrowFn.type).toBe('ArrowFunction');
+  expect(arrowFn.params).toEqual(['l']);
+
+  const body = arrowFn.body;
+  expect(body.type).toBe('MethodCall');
+  expect(body.method).toBe('includes');
+  expect(body.args).toHaveLength(1);
+  expect(body.args[0].type).toBe('Literal');
+  expect(body.args[0].value).toBe('KILL');
+
+  expect(body.object.type).toBe('PropertyAccess');
+  expect(body.object.property).toBe('l');
+});
+
+test('Expression: chained method calls inside arrow function', () => {
+  const lexer = new Lexer('.map(s => s.trim().toLowerCase())');
+  const tokens = lexer.tokenize();
+  const parser = new ExpressionParser(tokens);
+  const ast = parser.parse();
+
+  expect(ast.expression?.type).toBe('MethodCall');
+  expect((ast.expression as any).method).toBe('map');
+
+  const arrowFn = (ast.expression as any).args[0];
+  expect(arrowFn.type).toBe('ArrowFunction');
+
+  const body = arrowFn.body;
+  expect(body.type).toBe('MethodCall');
+  expect(body.method).toBe('toLowerCase');
+
+  expect(body.object.type).toBe('MethodCall');
+  expect(body.object.method).toBe('trim');
+});
