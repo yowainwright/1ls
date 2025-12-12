@@ -1,11 +1,13 @@
 import { useState, useEffect, useRef, useCallback } from "react"
-import Editor from "react-simple-code-editor"
+import EditorModule from "react-simple-code-editor"
 import { Minimize2, Maximize2 } from "lucide-react"
 import { Codeblock } from "@/components/Codeblock"
 import { SectionHeader } from "@/components/SectionHeader"
 import type { Format } from "./types"
 import { FORMAT_CONFIGS, DEFAULT_EXPRESSION, FORMATS } from "./constants"
 import { runEvaluation, highlightCode } from "./utils"
+
+const Editor = (EditorModule as { default?: typeof EditorModule }).default || EditorModule
 
 interface PlaygroundState {
   format: Format

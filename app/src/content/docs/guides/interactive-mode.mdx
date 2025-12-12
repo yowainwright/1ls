@@ -1,0 +1,51 @@
+# Interactive Mode
+
+Explore JSON interactively with fuzzy search and expression building.
+
+## Opening Interactive Mode
+
+Open a file without an expression to enter interactive mode.
+
+```bash
+1ls readFile data.json
+```
+
+Works with all supported formats.
+
+```bash
+1ls readFile config.yaml
+1ls readFile config.toml
+```
+
+## Mode 1: Path Explorer
+
+Navigate and search JSON paths.
+
+- **Fuzzy search:** Type to filter paths
+- **Live preview:** See values as you navigate
+- **Type information:** Shows String, Number, Array, Object, Boolean, or null
+
+## Mode 2: Expression Builder
+
+Build complex expressions with guided method selection.
+
+<ExpressionBuilderSteps />
+
+## Example Session
+
+```bash
+1. Navigate to .users (Array) → Tab
+2. Type "fil" → → (accepts .filter(x => ...))
+3. Type "act" → → (completes with x.active)
+4. Type "map" → → (accepts .map(x => ...))
+5. Type "name" → → (completes with x.name)
+6. Enter → executes: .users.filter(x => x.active).map(x => x.name)
+```
+
+## Keyboard Shortcuts
+
+<KeyboardShortcuts />
+
+## Available Methods by Type
+
+<MethodsByType />
