@@ -7,6 +7,7 @@ export type Language =
   | "bash"
   | "shell"
   | "diff"
+  | "csv"
 
 export interface CodeblockProps {
   code: string

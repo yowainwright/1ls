@@ -12,7 +12,6 @@ import {
   transformerMetaHighlight,
 } from '@shikijs/transformers'
 import rehypeSlug from 'rehype-slug'
-import rehypeAutolinkHeadings from 'rehype-autolink-headings'
 import remarkGfm from 'remark-gfm'
 import path from 'path'
 
@@ -26,14 +25,15 @@ export default defineConfig({
     {
       enforce: 'pre',
       ...mdx({
+        providerImportSource: '@mdx-js/react',
         remarkPlugins: [remarkGfm],
         rehypePlugins: [
           rehypeSlug,
-          [rehypeAutolinkHeadings, { behavior: 'wrap' }],
           [
             rehypeShiki,
             {
               theme: 'dracula',
+              addLanguageClass: true,
               transformers: [
                 transformerNotationDiff(),
                 transformerNotationHighlight(),

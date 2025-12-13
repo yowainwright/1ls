@@ -11,6 +11,7 @@ export const LANGUAGES: readonly Language[] = [
   "bash",
   "shell",
   "diff",
+  "csv",
 ] as const
 
 export const CODEBLOCK_CLASSES = {

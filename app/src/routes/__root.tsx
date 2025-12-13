@@ -12,7 +12,7 @@ export const Route = createRootRoute({
 function RootLayout() {
   return (
     <QueryClientProvider client={queryClient}>
-      <div className="relative min-h-screen bg-background overflow-hidden">
+      <div className="relative min-h-screen bg-background">
         <div className="aurora-gradient" />
         <Navbar />
         <Outlet />

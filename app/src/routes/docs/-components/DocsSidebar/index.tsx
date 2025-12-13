@@ -65,8 +65,10 @@ interface DesktopSidebarProps {
 
 function DesktopSidebar({ pathname }: DesktopSidebarProps) {
   return (
-    <aside className="hidden md:block w-72 shrink-0 sticky top-16 h-[calc(100vh-4rem)] overflow-y-auto border-r border-border/10">
-      <SidebarNavContent pathname={pathname} />
+    <aside className="hidden md:block w-72 border-r border-border/10">
+      <div className="sticky top-20 h-[calc(100vh-5rem)] overflow-y-auto pt-6 pb-12">
+        <SidebarNavContent pathname={pathname} />
+      </div>
     </aside>
   )
 }
@@ -78,7 +80,7 @@ interface SidebarNavContentProps {
 
 function SidebarNavContent({ pathname, onNavigate }: SidebarNavContentProps) {
   return (
-    <nav className="p-4 space-y-6">
+    <nav className="px-4 space-y-6">
       {DOCS_NAV.map((section) => (
         <SidebarSection
           key={section.title}
