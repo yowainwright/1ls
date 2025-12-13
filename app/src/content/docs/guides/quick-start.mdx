@@ -1,0 +1,63 @@
+# Quick Start
+
+Learn the basics of 1ls expressions in 5 minutes.
+
+## Property Access
+
+Access object properties with familiar dot notation.
+
+```bash
+echo '{"name": "John", "age": 30}' | 1ls '.name'
+# Output: "John"
+```
+
+## Array Operations
+
+Use JavaScript array methods directly.
+
+```bash
+echo '[1, 2, 3, 4, 5]' | 1ls '.filter(x => x > 2)'
+# Output: [3, 4, 5]
+```
+
+## Map with Arrow Functions
+
+Transform data with map and arrow functions.
+
+```bash
+echo '[1, 2, 3]' | 1ls '.map(x => x * 2)'
+# Output: [2, 4, 6]
+```
+
+## Chaining Methods
+
+Chain multiple operations together.
+
+```bash
+echo '[{"name": "Alice", "age": 30}, {"name": "Bob", "age": 25}]' | 1ls '.filter(x => x.age > 26).map(x => x.name)'
+# Output: ["Alice"]
+```
+
+## Array Indexing
+
+Access array elements by index, including negative indexes.
+
+```bash
+echo '["first", "second", "third"]' | 1ls '.[0]'
+# Output: "first"
+
+echo '["first", "second", "third"]' | 1ls '.[-1]'
+# Output: "third"
+```
+
+## Object Operations
+
+Extract keys, values, or entries from objects.
+
+```bash
+echo '{"a": 1, "b": 2, "c": 3}' | 1ls '.{keys}'
+# Output: ["a", "b", "c"]
+
+echo '{"a": 1, "b": 2, "c": 3}' | 1ls '.{values}'
+# Output: [1, 2, 3]
+```

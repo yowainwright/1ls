@@ -25,13 +25,9 @@ export function Navbar({ className = "" }: NavbarProps) {
     >
       <div className={`transition-all duration-300 ${bgClasses}`}>
         <div className="container mx-auto flex items-center justify-between h-16 px-4 md:px-8">
-          <div className="flex items-center gap-8">
-            <NavLogo />
-            <NavLinks />
-          </div>
-          <div className="flex items-center gap-4">
-            <GithubButton />
-          </div>
+          <NavLogo />
+          <NavLinks />
+          <GithubButton />
         </div>
       </div>
     </nav>

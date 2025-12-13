@@ -1,0 +1,52 @@
+# Multi-format Support
+
+1ls automatically detects and parses many data formats.
+
+## Supported Formats
+
+<FormatsTable />
+
+## Examples
+
+### YAML
+
+```bash
+echo 'name: John
+age: 30
+city: NYC' | 1ls '.name'
+# Output: "John"
+```
+
+### CSV
+
+```bash
+echo 'name,age
+John,30
+Jane,25' | 1ls '.map(x => x.name)'
+# Output: ["John", "Jane"]
+```
+
+### ENV
+
+```bash
+echo 'DATABASE_URL=postgres://localhost/db
+PORT=3000' | 1ls '.PORT'
+# Output: 3000
+```
+
+### NDJSON (logs)
+
+```bash
+echo '{"level":"error","msg":"Failed"}
+{"level":"info","msg":"Started"}' | 1ls '.filter(x => x.level === "error")'
+# Output: [{"level":"error","msg":"Failed"}]
+```
+
+## Explicit Format
+
+Use `--input-format` to specify the format explicitly.
+
+```bash
+cat data.yaml | 1ls --input-format yaml '.users[0].name'
+cat data.csv | 1ls --input-format csv '.filter(x => x.age > 25)'
+```

@@ -249,3 +249,112 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Shiki code block styles */
+@layer components {
+  .shiki-wrapper {
+    background: #282a36;
+  }
+
+  .shiki-wrapper pre {
+    margin: 0;
+    background: transparent !important;
+  }
+
+  .shiki-wrapper code {
+    display: table;
+    width: 100%;
+    counter-reset: line;
+  }
+
+  .shiki-wrapper .line {
+    display: table-row;
+  }
+
+  .shiki-wrapper .line::before {
+    content: counter(line);
+    counter-increment: line;
+    display: table-cell;
+    width: 2.5rem;
+    min-width: 2.5rem;
+    padding-right: 1rem;
+    text-align: right;
+    color: rgb(var(--muted-foreground) / 0.4);
+    user-select: none;
+    border-right: 1px solid rgb(255 255 255 / 0.1);
+    position: sticky;
+    left: 0;
+    background: #282a36;
+  }
+
+  .shiki-wrapper .line > span:first-child {
+    padding-left: 1rem;
+  }
+
+  /* Diff highlighting */
+  .shiki-wrapper .diff.add {
+    background: rgb(80 250 123 / 0.15);
+  }
+
+  .shiki-wrapper .diff.add::before {
+    color: rgb(80 250 123);
+    content: '+' counter(line);
+  }
+
+  .shiki-wrapper .diff.remove {
+    background: rgb(255 85 85 / 0.15);
+  }
+
+  .shiki-wrapper .diff.remove::before {
+    color: rgb(255 85 85);
+    content: '-' counter(line);
+  }
+
+  /* Line highlighting */
+  .shiki-wrapper .highlighted {
+    background: rgb(var(--primary) / 0.15);
+  }
+
+  .shiki-wrapper .highlighted-word {
+    background: rgb(var(--primary) / 0.25);
+    border-radius: 0.25rem;
+    padding: 0.125rem 0.25rem;
+  }
+
+  /* Focus mode */
+  .shiki-wrapper .has-focus .line:not(.focused) {
+    opacity: 0.5;
+    filter: blur(0.5px);
+    transition: opacity 0.3s, filter 0.3s;
+  }
+
+  .shiki-wrapper .has-focus .line.focused {
+    background: rgb(var(--primary) / 0.1);
+  }
+
+  /* Prose overrides for MDX */
+  .prose pre {
+    padding: 0;
+    margin: 0;
+    background: transparent;
+  }
+
+  .prose code::before,
+  .prose code::after {
+    content: none;
+  }
+
+  .prose :where(code):not(:where([class~="not-prose"], [class~="not-prose"] *)) {
+    background: rgb(var(--muted) / 0.5);
+    padding: 0.125rem 0.375rem;
+    border-radius: 0.25rem;
+    font-size: 0.875em;
+  }
+
+  .prose pre code {
+    background: transparent;
+    padding: 0;
+    border-radius: 0;
+    font-size: inherit;
+  }
+}
