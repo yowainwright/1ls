@@ -192,7 +192,7 @@ jobs:
               event_type: '1ls-release',
               client_payload: {
                 version: '${{ steps.version.outputs.version }}',
-                release_url: '${{ github.event.release.html_url || "Manual trigger" }}',
+                release_url: '${{ github.event.release.html_url }}' || 'Manual trigger',
                 trigger_type: '${{ github.event_name }}'
               }
             });
