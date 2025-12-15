@@ -16,7 +16,7 @@ jobs:
         include:
           - os: macos-latest
             artifact: 1ls-qjs-darwin-arm64
-          - os: macos-12
+          - os: macos-13
             artifact: 1ls-qjs-darwin-x64
           - os: ubuntu-latest
             artifact: 1ls-qjs-linux-x64
@@ -95,11 +95,11 @@ jobs:
           SHA_LINUX_X64=$(shasum -a 256 ./dist/1ls-qjs-linux-x64 | cut -d ' ' -f 1)
           SHA_LINUX_ARM64=$(shasum -a 256 ./dist/1ls-qjs-linux-arm64 | cut -d ' ' -f 1)
 
-          sed -i '' "s/version \".*\"/version \"${VERSION}\"/" Formula/1ls.rb
-          sed -i '' "s/sha256 \".*\" # arm64/sha256 \"${SHA_ARM64}\" # arm64/" Formula/1ls.rb
-          sed -i '' "s/sha256 \".*\" # x64/sha256 \"${SHA_X64}\" # x64/" Formula/1ls.rb
-          sed -i '' "s/sha256 \".*\" # linux-x64/sha256 \"${SHA_LINUX_X64}\" # linux-x64/" Formula/1ls.rb
-          sed -i '' "s/sha256 \".*\" # linux-arm64/sha256 \"${SHA_LINUX_ARM64}\" # linux-arm64/" Formula/1ls.rb
+          sed -i '' "s/version \".*\"/version \"${VERSION}\"/" Formula/onels.rb
+          sed -i '' "s/sha256 \".*\" # arm64/sha256 \"${SHA_ARM64}\" # arm64/" Formula/onels.rb
+          sed -i '' "s/sha256 \".*\" # x64/sha256 \"${SHA_X64}\" # x64/" Formula/onels.rb
+          sed -i '' "s/sha256 \".*\" # linux-x64/sha256 \"${SHA_LINUX_X64}\" # linux-x64/" Formula/onels.rb
+          sed -i '' "s/sha256 \".*\" # linux-arm64/sha256 \"${SHA_LINUX_ARM64}\" # linux-arm64/" Formula/onels.rb
 
       - name: Push formula to tap repo
         env:
@@ -121,9 +121,10 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-          # Add formula
-          mkdir -p Formula
-          cp ${{ github.workspace }}/Formula/1ls.rb Formula/1ls.rb
+          # Add formula and alias
+          mkdir -p Formula Aliases
+          cp ${{ github.workspace }}/Formula/onels.rb Formula/onels.rb
+          ln -sf ../Formula/onels.rb Aliases/1ls
 
           # Add README if missing
           if [ ! -f README.md ]; then
