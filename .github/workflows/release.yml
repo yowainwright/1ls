@@ -80,11 +80,11 @@ jobs:
 
       - name: Flatten artifacts
         run: |
-          mv ./dist/1ls-qjs-darwin-arm64/1ls-qjs-darwin-arm64 ./dist/
-          mv ./dist/1ls-qjs-darwin-x64/1ls-qjs-darwin-x64 ./dist/
-          mv ./dist/1ls-qjs-linux-x64/1ls-qjs-linux-x64 ./dist/
-          mv ./dist/1ls-qjs-linux-arm64/1ls-qjs-linux-arm64 ./dist/
-          rm -rf ./dist/1ls-qjs-darwin-arm64/ ./dist/1ls-qjs-darwin-x64/ ./dist/1ls-qjs-linux-x64/ ./dist/1ls-qjs-linux-arm64/
+          for artifact in 1ls-qjs-darwin-arm64 1ls-qjs-darwin-x64 1ls-qjs-linux-x64 1ls-qjs-linux-arm64; do
+            mv "./dist/${artifact}/${artifact}" "./dist/${artifact}.tmp"
+            rm -rf "./dist/${artifact}"
+            mv "./dist/${artifact}.tmp" "./dist/${artifact}"
+          done
 
       - name: Calculate checksums and update formula
         run: |
