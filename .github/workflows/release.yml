@@ -20,6 +20,8 @@ jobs:
             artifact: 1ls-qjs-darwin-x64
           - os: ubuntu-latest
             artifact: 1ls-qjs-linux-x64
+          - os: ubuntu-24.04-arm
+            artifact: 1ls-qjs-linux-arm64
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -81,7 +83,8 @@ jobs:
           mv ./dist/1ls-qjs-darwin-arm64/1ls-qjs-darwin-arm64 ./dist/
           mv ./dist/1ls-qjs-darwin-x64/1ls-qjs-darwin-x64 ./dist/
           mv ./dist/1ls-qjs-linux-x64/1ls-qjs-linux-x64 ./dist/
-          rm -rf ./dist/1ls-qjs-darwin-arm64/ ./dist/1ls-qjs-darwin-x64/ ./dist/1ls-qjs-linux-x64/
+          mv ./dist/1ls-qjs-linux-arm64/1ls-qjs-linux-arm64 ./dist/
+          rm -rf ./dist/1ls-qjs-darwin-arm64/ ./dist/1ls-qjs-darwin-x64/ ./dist/1ls-qjs-linux-x64/ ./dist/1ls-qjs-linux-arm64/
 
       - name: Calculate checksums and update formula
         run: |
@@ -89,27 +92,52 @@ jobs:
           VERSION="${VERSION#v}"
           SHA_ARM64=$(shasum -a 256 ./dist/1ls-qjs-darwin-arm64 | cut -d ' ' -f 1)
           SHA_X64=$(shasum -a 256 ./dist/1ls-qjs-darwin-x64 | cut -d ' ' -f 1)
-          SHA_LINUX=$(shasum -a 256 ./dist/1ls-qjs-linux-x64 | cut -d ' ' -f 1)
+          SHA_LINUX_X64=$(shasum -a 256 ./dist/1ls-qjs-linux-x64 | cut -d ' ' -f 1)
+          SHA_LINUX_ARM64=$(shasum -a 256 ./dist/1ls-qjs-linux-arm64 | cut -d ' ' -f 1)
 
           sed -i '' "s/version \".*\"/version \"${VERSION}\"/" Formula/1ls.rb
           sed -i '' "s/sha256 \".*\" # arm64/sha256 \"${SHA_ARM64}\" # arm64/" Formula/1ls.rb
           sed -i '' "s/sha256 \".*\" # x64/sha256 \"${SHA_X64}\" # x64/" Formula/1ls.rb
-          sed -i '' "s/sha256 \".*\" # linux/sha256 \"${SHA_LINUX}\" # linux/" Formula/1ls.rb
+          sed -i '' "s/sha256 \".*\" # linux-x64/sha256 \"${SHA_LINUX_X64}\" # linux-x64/" Formula/1ls.rb
+          sed -i '' "s/sha256 \".*\" # linux-arm64/sha256 \"${SHA_LINUX_ARM64}\" # linux-arm64/" Formula/1ls.rb
 
       - name: Push formula to tap repo
         env:
           GH_TOKEN: ${{ secrets.PR_CREATE_TOKEN }}
         run: |
-          git clone https://x-access-token:${GH_TOKEN}@github.com/yowainwright/homebrew-tap.git ../tap || git init ../tap
-          cd ../tap
+          TAP_REPO="https://x-access-token:${GH_TOKEN}@github.com/yowainwright/homebrew-tap.git"
+
+          # Clone or init the tap repo
+          if git clone "$TAP_REPO" ../tap 2>/dev/null; then
+            cd ../tap
+          else
+            # Empty repo - initialize fresh
+            mkdir -p ../tap && cd ../tap
+            git init
+            git remote add origin "$TAP_REPO"
+            git checkout -b main
+          fi
+
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          # Add formula
           mkdir -p Formula
           cp ${{ github.workspace }}/Formula/1ls.rb Formula/1ls.rb
-          git add Formula/1ls.rb
+
+          # Add README if missing
+          if [ ! -f README.md ]; then
+            echo "# Homebrew Tap" > README.md
+            echo "" >> README.md
+            echo "## Install" >> README.md
+            echo "\`\`\`bash" >> README.md
+            echo "brew install yowainwright/tap/1ls" >> README.md
+            echo "\`\`\`" >> README.md
+          fi
+
+          git add .
           git commit -m "chore: update 1ls formula to ${{ github.ref_name }}" || echo "No changes"
-          git remote set-url origin https://x-access-token:${GH_TOKEN}@github.com/yowainwright/homebrew-tap.git 2>/dev/null || git remote add origin https://x-access-token:${GH_TOKEN}@github.com/yowainwright/homebrew-tap.git
-          git push -u origin main || git push -u origin HEAD:main
+          git push -u origin main
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
@@ -118,6 +146,7 @@ jobs:
             ./dist/1ls-qjs-darwin-arm64
             ./dist/1ls-qjs-darwin-x64
             ./dist/1ls-qjs-linux-x64
+            ./dist/1ls-qjs-linux-arm64
           generate_release_notes: true
           body: |
             ## Install
@@ -141,5 +170,6 @@ jobs:
             - `1ls-qjs-darwin-arm64` - macOS Apple Silicon
             - `1ls-qjs-darwin-x64` - macOS Intel
             - `1ls-qjs-linux-x64` - Linux x64
+            - `1ls-qjs-linux-arm64` - Linux ARM64
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
