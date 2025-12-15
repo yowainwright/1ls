@@ -476,3 +476,5 @@ MIT © Jeff Wainwright
 - [GitHub Repository](https://github.com/yowainwright/1ls)
 - [Documentation](https://1ls.dev)
 - [Issue Tracker](https://github.com/yowainwright/1ls/issues)
+
+<img referrerpolicy="no-referrer-when-downgrade" src="https://static.scarf.sh/a.png?x-pxid=500dd7ce-0f58-4763-b6a7-fc992b6a12cb" />
