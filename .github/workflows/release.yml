@@ -16,7 +16,7 @@ jobs:
         include:
           - os: macos-latest
             artifact: 1ls-qjs-darwin-arm64
-          - os: macos-13
+          - os: macos-12
             artifact: 1ls-qjs-darwin-x64
           - os: ubuntu-latest
             artifact: 1ls-qjs-linux-x64
@@ -96,16 +96,20 @@ jobs:
           sed -i '' "s/sha256 \".*\" # x64/sha256 \"${SHA_X64}\" # x64/" Formula/1ls.rb
           sed -i '' "s/sha256 \".*\" # linux/sha256 \"${SHA_LINUX}\" # linux/" Formula/1ls.rb
 
-      - name: Commit formula update
+      - name: Push formula to tap repo
         env:
           GH_TOKEN: ${{ secrets.PR_CREATE_TOKEN }}
         run: |
+          git clone https://x-access-token:${GH_TOKEN}@github.com/yowainwright/tap.git ../tap || git init ../tap
+          cd ../tap
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git remote set-url origin https://x-access-token:${GH_TOKEN}@github.com/${{ github.repository }}.git
+          mkdir -p Formula
+          cp ${{ github.workspace }}/Formula/1ls.rb Formula/1ls.rb
           git add Formula/1ls.rb
-          git commit -m "chore: update Homebrew formula for ${{ github.ref_name }}" || echo "No changes"
-          git push origin HEAD:main
+          git commit -m "chore: update 1ls formula to ${{ github.ref_name }}" || echo "No changes"
+          git remote set-url origin https://x-access-token:${GH_TOKEN}@github.com/yowainwright/tap.git 2>/dev/null || git remote add origin https://x-access-token:${GH_TOKEN}@github.com/yowainwright/tap.git
+          git push -u origin main || git push -u origin HEAD:main
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
@@ -120,7 +124,7 @@ jobs:
 
             ### Homebrew (macOS/Linux)
             ```bash
-            brew install yowainwright/1ls/1ls
+            brew install yowainwright/tap/1ls
             ```
 
             ### npm/bun
