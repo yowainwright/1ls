@@ -37,7 +37,7 @@ bun add -g 1ls
 
 # Or via binaries. here you get a QuickJs build
 # Using Homebrew (macOS/Linux)
-brew install yowainwright/1ls/1ls
+brew install yowainwright/tap/1ls
 # Using curl
 curl -fsSL https://raw.githubusercontent.com/yowainwright/1ls/main/scripts/install.sh | bash
 ```
