@@ -106,3 +106,17 @@ test('Shortcuts: handle string methods correctly', () => {
     expect(shortenExpression(full)).toBe(short);
   });
 });
+
+test('Shortcuts: getShortcutHelp returns formatted help text', () => {
+  const { getShortcutHelp } = require('../../src/utils/shortcuts');
+  const help = getShortcutHelp();
+
+  expect(typeof help).toBe('string');
+  expect(help).toContain('Array Methods');
+  expect(help).toContain('Object Methods');
+  expect(help).toContain('String Methods');
+  expect(help).toContain('Universal Methods');
+  expect(help).toContain('.mp');
+  expect(help).toContain('.map');
+  expect(help).toContain('Examples');
+});

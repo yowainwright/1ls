@@ -18,6 +18,9 @@ import {
   isWithinDepthLimit,
   createRegexFromPattern,
   shouldStopSearching,
+  createGrepResult,
+  logVerboseError,
+  extractMatchesFromLine,
 } from "../../src/utils/file";
 
 describe("file utilities", () => {
@@ -319,6 +322,110 @@ describe("file utilities", () => {
     test("returns empty array for non-file/non-directory", async () => {
       const results = await grep("test", testDir, { recursive: false });
       expect(results).toEqual([]);
+    });
+
+    test("returns results with context when context option is set", async () => {
+      const results = await grep("foo", join(testDir, "test.txt"), { context: 1 });
+      expect(results.length).toBeGreaterThan(0);
+      const resultWithContext = results.find(r => r.context !== undefined);
+      expect(resultWithContext?.context).toBeDefined();
+    });
+  });
+
+  describe("createGrepResult", () => {
+    test("creates grep result with context", () => {
+      const lines = ["line1", "line2", "line3", "line4", "line5"];
+      const result = createGrepResult("/test/file.txt", 2, 0, "line3", lines, 1);
+
+      expect(result.file).toBe("/test/file.txt");
+      expect(result.line).toBe(3);
+      expect(result.context).toEqual(["line2", "line3", "line4"]);
+    });
+
+    test("creates grep result without context when contextSize is undefined", () => {
+      const lines = ["line1", "line2", "line3"];
+      const result = createGrepResult("/test/file.txt", 1, 0, "line2", lines, undefined);
+
+      expect(result.file).toBe("/test/file.txt");
+      expect(result.context).toBeUndefined();
+    });
+
+    test("handles context at start of file", () => {
+      const lines = ["line1", "line2", "line3"];
+      const result = createGrepResult("/test/file.txt", 0, 0, "line1", lines, 2);
+
+      expect(result.context).toEqual(["line1", "line2", "line3"]);
+    });
+
+    test("handles context at end of file", () => {
+      const lines = ["line1", "line2", "line3"];
+      const result = createGrepResult("/test/file.txt", 2, 0, "line3", lines, 2);
+
+      expect(result.context).toEqual(["line1", "line2", "line3"]);
+    });
+  });
+
+  describe("logVerboseError", () => {
+    test("logs error when verbose is true", () => {
+      const originalError = console.error;
+      const logs: string[] = [];
+      console.error = (msg: string) => logs.push(msg);
+
+      logVerboseError("/test/file.txt", new Error("test error"), true);
+
+      expect(logs.length).toBe(1);
+      expect(logs[0]).toContain("Failed to search");
+      expect(logs[0]).toContain("test error");
+
+      console.error = originalError;
+    });
+
+    test("does not log when verbose is false", () => {
+      const originalError = console.error;
+      const logs: string[] = [];
+      console.error = (msg: string) => logs.push(msg);
+
+      logVerboseError("/test/file.txt", new Error("test error"), false);
+
+      expect(logs.length).toBe(0);
+
+      console.error = originalError;
+    });
+
+    test("handles non-Error objects", () => {
+      const originalError = console.error;
+      const logs: string[] = [];
+      console.error = (msg: string) => logs.push(msg);
+
+      logVerboseError("/test/file.txt", "string error", true);
+
+      expect(logs.length).toBe(1);
+      expect(logs[0]).toContain("string error");
+
+      console.error = originalError;
+    });
+  });
+
+  describe("extractMatchesFromLine", () => {
+    test("extracts multiple matches from a line", () => {
+      const line = "foo bar foo baz foo";
+      const regex = /foo/g;
+      const lines = [line];
+      const results = extractMatchesFromLine(line, 0, regex, "/test.txt", lines, undefined);
+
+      expect(results.length).toBe(3);
+      expect(results[0].column).toBe(1);
+      expect(results[1].column).toBe(9);
+      expect(results[2].column).toBe(17);
+    });
+
+    test("returns empty array when no matches", () => {
+      const line = "bar baz qux";
+      const regex = /foo/g;
+      const lines = [line];
+      const results = extractMatchesFromLine(line, 0, regex, "/test.txt", lines, undefined);
+
+      expect(results.length).toBe(0);
     });
   });
 });
