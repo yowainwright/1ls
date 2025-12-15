@@ -31,7 +31,7 @@ export function parseTypeScript(input: string): unknown {
 
   const exportIndex = transpiled.indexOf("export default");
   const codeBeforeExport = transpiled.substring(0, exportIndex);
-  const fullCode = `${codeBeforeExport}\n(${exportedValue})`;
+  const fullCode = `${codeBeforeExport}\nreturn (${exportedValue})`;
 
-  return eval(fullCode);
+  return new Function(fullCode)();
 }

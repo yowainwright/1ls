@@ -1,29 +1,27 @@
 import { useState, useEffect, useRef, useCallback } from "react"
 import EditorModule from "react-simple-code-editor"
-import { Minimize2, Maximize2 } from "lucide-react"
+import { Minimize2, Maximize2, Share2, Check } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Codeblock, CopyButton } from "@/components/Codeblock"
 import { SectionHeader } from "@/components/SectionHeader"
-import type { Format, PlaygroundMode } from "./types"
+import type {
+  Format,
+  PlaygroundMode,
+  PlaygroundState,
+  EvaluationState,
+  PlaygroundProps,
+  InputPanelProps,
+  FormatTabsProps,
+  OutputPanelProps,
+  PlaygroundHeaderProps,
+} from "./types"
 import { FORMAT_CONFIGS, DEFAULT_EXPRESSION, FORMATS, SANDBOX_STARTER } from "./constants"
 import { runEvaluation, highlightCode, detectFormat, minifyExpression, expandExpression } from "./utils"
+import { saveState, loadState, getShareableUrl, getStateFromUrl } from "./storage"
 
 const Editor = (EditorModule as { default?: typeof EditorModule }).default || EditorModule
 
 const SANDBOX_PLACEHOLDER = "Paste your JSON, YAML, CSV, TOML, or plain text here..."
-
-interface PlaygroundState {
-  format: Format
-  input: string
-  expression: string
-  isMinified: boolean
-  showMinifiedExpression: boolean
-}
-
-interface EvaluationState {
-  output: string
-  error: string | null
-}
 
 function usePlaygroundEvaluation(state: PlaygroundState) {
   const [evaluation, setEvaluation] = useState<EvaluationState>({ output: "", error: null })
@@ -74,12 +72,10 @@ function useFormatDetection(
   }, [input, mode, onFormatDetected])
 }
 
-interface PlaygroundProps {
-  mode?: PlaygroundMode
-}
-
 export function Playground({ mode = "preset" }: PlaygroundProps) {
   const isSandbox = mode === "sandbox"
+  const [isInitialized, setIsInitialized] = useState(false)
+  const [shareStatus, setShareStatus] = useState<"idle" | "copied">("idle")
 
   const [state, setState] = useState<PlaygroundState>(() => ({
     format: "json",
@@ -88,6 +84,40 @@ export function Playground({ mode = "preset" }: PlaygroundProps) {
     isMinified: false,
     showMinifiedExpression: false,
   }))
+
+  useEffect(() => {
+    if (!isSandbox || isInitialized) return
+
+    const urlState = getStateFromUrl()
+    if (urlState) {
+      setState(prev => ({ ...prev, ...urlState }))
+      setIsInitialized(true)
+      return
+    }
+
+    loadState().then(stored => {
+      if (stored) {
+        setState(prev => ({ ...prev, format: stored.format, input: stored.input, expression: stored.expression }))
+      }
+      setIsInitialized(true)
+    })
+  }, [isSandbox, isInitialized])
+
+  useEffect(() => {
+    if (!isSandbox || !isInitialized) return
+    const timeoutId = setTimeout(() => {
+      saveState({ format: state.format, input: state.input, expression: state.expression })
+    }, 500)
+    return () => clearTimeout(timeoutId)
+  }, [isSandbox, isInitialized, state.format, state.input, state.expression])
+
+  const handleShare = useCallback(() => {
+    const url = getShareableUrl({ format: state.format, input: state.input, expression: state.expression })
+    navigator.clipboard.writeText(url).then(() => {
+      setShareStatus("copied")
+      setTimeout(() => setShareStatus("idle"), 2000)
+    })
+  }, [state.format, state.input, state.expression])
 
   const { output, error } = usePlaygroundEvaluation(state)
 
@@ -158,7 +188,13 @@ export function Playground({ mode = "preset" }: PlaygroundProps) {
   return (
     <section className="px-4 py-16 md:py-24">
       <div className="container mx-auto max-w-6xl">
-        <SectionHeader title={title} description={description} />
+        <PlaygroundHeader
+          title={title}
+          description={description}
+          showShare={isSandbox}
+          shareStatus={shareStatus}
+          onShare={handleShare}
+        />
         <div className="grid gap-6 lg:grid-cols-2">
           <InputPanel
             mode={mode}
@@ -190,21 +226,6 @@ function minifyInput(input: string, format: Format): string {
     }
   }
   return input.split("\n").map(l => l.trim()).filter(Boolean).join("\n")
-}
-
-interface InputPanelProps {
-  mode: PlaygroundMode
-  format: Format
-  input: string
-  expression: string
-  isMinified: boolean
-  showMinifiedExpression: boolean
-  onFormatChange: (format: Format) => void
-  onInputChange: (input: string) => void
-  onExpressionChange: (expression: string) => void
-  onMinifyToggle: () => void
-  onShowMinifiedToggle: () => void
-  onSuggestionClick: (expression: string) => void
 }
 
 function InputPanel({
@@ -313,11 +334,6 @@ function InputPanel({
   )
 }
 
-interface FormatTabsProps {
-  format: Format
-  onFormatChange: (format: Format) => void
-}
-
 function FormatTabs({ format, onFormatChange }: FormatTabsProps) {
   return (
     <div className="flex gap-1 rounded-xl border border-border/10 bg-muted p-1 shadow-sm">
@@ -335,11 +351,6 @@ function FormatTabs({ format, onFormatChange }: FormatTabsProps) {
   )
 }
 
-interface OutputPanelProps {
-  output: string
-  error: string | null
-}
-
 function OutputPanel({ output, error }: OutputPanelProps) {
   return (
     <div className="space-y-4">
@@ -354,6 +365,22 @@ function OutputPanel({ output, error }: OutputPanelProps) {
           <Codeblock code={output || "// Result will appear here"} language="json" />
         )}
       </div>
+    </div>
+  )
+}
+
+function PlaygroundHeader({ title, description, showShare, shareStatus, onShare }: PlaygroundHeaderProps) {
+  return (
+    <div className="mb-8">
+      <SectionHeader title={title} description={description} className={showShare ? "mb-4" : "mb-0"} />
+      {showShare && (
+        <div className="flex justify-center">
+          <Button variant="outline" size="sm" onClick={onShare}>
+            {shareStatus === "copied" ? <Check className="h-4 w-4" /> : <Share2 className="h-4 w-4" />}
+            {shareStatus === "copied" ? "Copied!" : "Share"}
+          </Button>
+        </div>
+      )}
     </div>
   )
 }

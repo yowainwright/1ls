@@ -96,5 +96,5 @@ export function parseJavaScript(input: string): unknown {
   const code = exportMatch ? exportMatch[1] : withoutComments;
   const trimmed = code.trim().replace(/;$/, "");
 
-  return eval(`(${trimmed})`);
+  return new Function(`return (${trimmed})`)();
 }

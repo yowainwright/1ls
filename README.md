@@ -284,8 +284,8 @@ echo '["a", "b"]' | 1ls '.jn(",")'           # Short for .join()
 | `--version` | `-v` | Show version |
 | `--interactive` | | Interactive fuzzy search explorer |
 | `--raw` | `-r` | Output raw strings, not JSON |
-| `--pretty` | `-p` | Pretty print output |
-| `--compact` | `-c` | Compact output |
+| `--pretty` | `-p` | Pretty print output (default) |
+| `--compact` | `-c` | Compact single-line output |
 | `--type` | `-t` | Show type of result |
 
 ### Format Options

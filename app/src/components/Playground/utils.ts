@@ -102,10 +102,23 @@ export const detectCSV: FormatDetector = (content) => {
 
 export const detectYAML: FormatDetector = (content) => {
   const hasListItems = /^[ ]*- /m.test(content)
+  const hasNestedIndent = /^\s{2,}[a-zA-Z_]/m.test(content)
   const hasKeyValue = /^[a-zA-Z_][a-zA-Z0-9_]*:\s/m.test(content)
   const lineCount = content.split("\n").filter(l => l.trim()).length
-  if (!hasListItems && !(hasKeyValue && lineCount > 1)) return null
-  return { format: "yaml", confidence: 0.85, reason: "YAML structure detected" }
+
+  const rootKeys = content.split("\n")
+    .filter(l => l.trim() && !l.startsWith(" ") && !l.startsWith("\t"))
+    .map(l => l.match(/^([a-zA-Z_][a-zA-Z0-9_]*):/)?.[1])
+    .filter(Boolean)
+  const uniqueRootKeys = new Set(rootKeys)
+  const hasDuplicateRootKeys = rootKeys.length > uniqueRootKeys.size
+
+  if (hasDuplicateRootKeys) return null
+  if (hasListItems) return { format: "yaml", confidence: 0.9, reason: "YAML list items detected" }
+  if (hasNestedIndent && hasKeyValue) return { format: "yaml", confidence: 0.85, reason: "YAML nested structure detected" }
+  if (hasKeyValue && lineCount > 1 && uniqueRootKeys.size > 1) return { format: "yaml", confidence: 0.8, reason: "YAML key-value pairs detected" }
+
+  return null
 }
 
 export const detectMalformedJSON: FormatDetector = (content) => {
