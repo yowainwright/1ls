@@ -13,7 +13,12 @@ export async function parseInput(input: string, format?: DataFormat): Promise<un
 
   switch (actualFormat) {
     case "json":
-      return JSON.parse(input);
+      try {
+        return JSON.parse(input);
+      } catch (e) {
+        const preview = input.length > 50 ? input.slice(0, 50) + "..." : input;
+        throw new Error(`Invalid JSON: ${(e as Error).message}\nInput: ${preview}`);
+      }
     case "json5": {
       const { parseJSON5 } = await import("./json5");
       return parseJSON5(input);
@@ -65,8 +70,18 @@ export async function parseInput(input: string, format?: DataFormat): Promise<un
     case "lines":
       return parseLines(input);
     case "text":
-    default:
+    default: {
+      const looksLikeJSON = /^\s*[{[]/.test(input);
+      if (looksLikeJSON) {
+        try {
+          return JSON.parse(input);
+        } catch (e) {
+          const preview = input.length > 50 ? input.slice(0, 50) + "..." : input;
+          throw new Error(`Invalid JSON: ${(e as Error).message}\nInput: ${preview}`);
+        }
+      }
       return input;
+    }
   }
 }
 

@@ -661,6 +661,32 @@ describe('Format Detection Edge Cases', () => {
   });
 });
 
+describe('parseInput Error Handling', () => {
+  test('throws descriptive error for malformed JSON object', async () => {
+    const input = '{broken json';
+    await expect(parseInput(input)).rejects.toThrow('Invalid JSON');
+  });
+
+  test('throws descriptive error for malformed JSON array', async () => {
+    const input = '[1, 2, 3';
+    await expect(parseInput(input)).rejects.toThrow('Invalid JSON');
+  });
+
+  test('includes input preview in error message', async () => {
+    const input = '{"key": invalid}';
+    await expect(parseInput(input, 'json')).rejects.toThrow('Input:');
+  });
+
+  test('truncates long input in error preview', async () => {
+    const input = '{"very_long_key_name_that_exceeds_fifty_characters_total": "value"';
+    try {
+      await parseInput(input);
+    } catch (e) {
+      expect((e as Error).message).toContain('...');
+    }
+  });
+});
+
 describe('parseInput Integration', () => {
   test('parses TSV format', async () => {
     const input = 'name\tage\nAlice\t30';

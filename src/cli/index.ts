@@ -16,6 +16,7 @@ import {
 } from "../utils/shortcuts";
 import { detectFormat } from "../formats";
 import { CliOptions } from "../types";
+import { VERSION } from "../version";
 
 export const getInteractive = () => import("../interactive/app");
 
@@ -82,7 +83,7 @@ export async function processExpression(
     const parser = new ExpressionParser(tokens);
     const ast = parser.parse();
 
-    const navigator = new JsonNavigator();
+    const navigator = new JsonNavigator({ strict: options.strict });
     const result = navigator.evaluate(ast, jsonData);
 
     const formatter = new Formatter(options);
@@ -103,8 +104,7 @@ export async function main(args: string[]): Promise<void> {
   }
 
   if (options.version) {
-    const packageJson = await Bun.file("package.json").json();
-    console.log(`1ls version ${packageJson.version}`);
+    console.log(`1ls version ${VERSION}`);
     process.exit(0);
   }
 

@@ -150,6 +150,11 @@ export function parseArgs(args: string[]): CliOptions {
         options.detect = true;
         break;
 
+      case "--strict":
+      case "-s":
+        options.strict = true;
+        break;
+
       default:
         const isExpressionStart = arg.startsWith(".") || arg.startsWith("[");
         if (isExpressionStart) {

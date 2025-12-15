@@ -117,6 +117,9 @@ export class ExpressionParser {
 
     if (currentType === TokenType.DOT) {
       this.advance();
+      if (this.current.type === TokenType.EOF) {
+        return createRootNode();
+      }
       return this.parseAccessChain();
     }
 

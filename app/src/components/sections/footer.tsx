@@ -61,6 +61,12 @@ export default function Footer({ className = "" }: FooterProps) {
             </a>
           </div>
         </div>
+        <img
+          referrerPolicy="no-referrer-when-downgrade"
+          src="https://static.scarf.sh/a.png?x-pxid=500dd7ce-0f58-4763-b6a7-fc992b6a12cb"
+          alt=""
+          className="hidden"
+        />
       </div>
     </footer>
   )

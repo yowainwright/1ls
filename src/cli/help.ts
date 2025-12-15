@@ -47,6 +47,7 @@ Output Options:
   -p, --pretty           Pretty print JSON
   -c, --compact          Compact JSON
   -t, --type             Show value type info
+  -s, --strict           Error on undefined properties
   --format <type>        Output format (json|yaml|csv|table)
   -h, --help             Show help
   -v, --version          Show version
