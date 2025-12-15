@@ -2,6 +2,9 @@
 
 [![CI](https://github.com/yowainwright/1ls/actions/workflows/ci.yml/badge.svg)](https://github.com/yowainwright/1ls/actions/workflows/ci.yml)
 [![codecov](https://codecov.io/gh/yowainwright/1ls/branch/main/graph/badge.svg)](https://codecov.io/gh/yowainwright/1ls)
+[![npm version](https://img.shields.io/npm/v/1ls.svg)](https://www.npmjs.com/package/1ls)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![GitHub](https://img.shields.io/badge/GitHub-repo-blue)](https://github.com/yowainwright/1ls)
 
 > One-line script
 

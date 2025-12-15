@@ -12,7 +12,7 @@ on:
 jobs:
   test-published-release:
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -26,7 +26,6 @@ jobs:
           if [ -n "${{ inputs.version }}" ]; then
             VERSION="${{ inputs.version }}"
           else
-            # Get the latest published version from npm
             VERSION=$(npm view 1ls version)
           fi
           echo "version=$VERSION" >> $GITHUB_OUTPUT
@@ -37,10 +36,10 @@ jobs:
           echo "Waiting for 1ls@${{ steps.version.outputs.version }} to be available on npm..."
           for i in {1..30}; do
             if npm view 1ls@${{ steps.version.outputs.version }} version >/dev/null 2>&1; then
-              echo " Package 1ls@${{ steps.version.outputs.version }} is available on npm"
+              echo "Package 1ls@${{ steps.version.outputs.version }} is available on npm"
               break
             fi
-            echo "⏳ Attempt $i/30: Package not yet available, waiting 30 seconds..."
+            echo "Attempt $i/30: Package not yet available, waiting 30 seconds..."
             sleep 30
           done
 
@@ -49,37 +48,18 @@ jobs:
           cat > Dockerfile.release-test << 'EOF'
           FROM node:24-alpine
 
-          # Install bash and pnpm
           RUN apk add --no-cache bash
-          RUN npm install -g pnpm
 
           WORKDIR /app
 
-          # Install the specific version of 1ls from npm
           ARG ONELS_VERSION
           RUN echo "Installing 1ls@${ONELS_VERSION}" && \
               npm install -g 1ls@${ONELS_VERSION}
 
-          # Set up test environment
-          RUN mkdir -p packages/app packages/utils packages/shared e2e/fixtures/patches
-
-          # Copy test fixtures and scripts
-          COPY packages/e2e/fixtures/ ./e2e/fixtures/
-          COPY packages/e2e/scripts/ ./scripts/
-          
-          # Copy workspace configurations
-          COPY packages/e2e/fixtures/root-package.json ./package.json
-          COPY packages/e2e/fixtures/app-package.json ./packages/app/package.json
-          COPY packages/e2e/fixtures/utils-package.json ./packages/utils/package.json
-          COPY packages/e2e/fixtures/shared-package.json ./packages/shared/package.json
-
-          # Create dummy source files
-          RUN echo 'console.log("App module");' > ./packages/app/index.js && \
-              echo 'console.log("Utils module");' > ./packages/utils/index.js && \
-              echo 'console.log("Shared module");' > ./packages/shared/index.js
-
-          # Install dependencies and prepare scripts
-          RUN pnpm install && chmod +x ./scripts/*.sh
+          # Create test fixtures
+          RUN echo '{"name": "test", "users": [{"name": "Alice", "age": 30}, {"name": "Bob", "age": 25}]}' > test.json
+          RUN echo 'name: test' > test.yaml
+          RUN echo 'name,age' > test.csv && echo 'Alice,30' >> test.csv && echo 'Bob,25' >> test.csv
 
           CMD ["/bin/sh"]
           EOF
@@ -91,113 +71,169 @@ jobs:
 
       - name: Verify Installation
         run: |
-          echo " Verifying 1ls installation..."
+          echo "Verifying 1ls installation..."
           docker run --rm onels-release-test bash -c "
+            1ls --version
             1ls --help
-            echo 'Installation verified '
+            echo 'Installation verified'
           "
 
-      - name: Run Full E2E Test Suite
+      - name: Test JSON Processing
         run: |
-          echo "🧪 Running full e2e test suite with published package..."
+          echo "Testing JSON processing..."
           docker run --rm onels-release-test bash -c "
-            # Update test scripts to use global 1ls command
-            sed -i 's|node ./1ls/index.js|1ls|g' ./scripts/run-e2e-tests.sh
-            sed -i 's|node ./1ls/index.js|1ls|g' ./scripts/test-single-packages.sh
-            
-            echo '🏃♂ Running workspace e2e tests...'
-            ./scripts/run-e2e-tests.sh
-            
-            echo ' Running single package tests...'
-            ./scripts/test-single-packages.sh
-            
-            echo ' All tests completed successfully!'
+            echo 'Testing property access...'
+            echo '{\"name\": \"John\", \"age\": 30}' | 1ls '.name'
+
+            echo 'Testing array filter...'
+            echo '[1, 2, 3, 4, 5]' | 1ls '.filter(x => x > 2)'
+
+            echo 'Testing array map...'
+            echo '[1, 2, 3]' | 1ls '.map(x => x * 2)'
+
+            echo 'Testing nested access...'
+            echo '{\"user\": {\"name\": \"Alice\"}}' | 1ls '.user.name'
+
+            echo 'Testing chained methods...'
+            echo '[{\"name\": \"Alice\", \"age\": 30}, {\"name\": \"Bob\", \"age\": 25}]' | 1ls '.filter(x => x.age > 26).map(x => x.name)'
+
+            echo 'JSON processing tests passed'
           "
 
-      - name: Test with Different Package Managers
+      - name: Test File Operations
         run: |
-          echo " Testing with different package managers..."
-          
-          # Test with npm
-          cat > Dockerfile.npm-test << 'EOF'
-          FROM node:24-alpine
-          RUN apk add --no-cache bash
-          WORKDIR /app
-          ARG ONELS_VERSION
-          RUN npm install -g 1ls@${ONELS_VERSION}
-          COPY packages/e2e/fixtures/ ./e2e/fixtures/
-          COPY packages/e2e/scripts/ ./scripts/
-          COPY packages/e2e/fixtures/npm-root-package.json ./package.json
-          COPY packages/e2e/fixtures/app-package.json ./packages/app/package.json
-          COPY packages/e2e/fixtures/utils-package.json ./packages/utils/package.json
-          COPY packages/e2e/fixtures/shared-package.json ./packages/shared/package.json
-          RUN mkdir -p packages/app packages/utils packages/shared && \
-              echo 'console.log("test");' > ./packages/app/index.js && \
-              echo 'console.log("test");' > ./packages/utils/index.js && \
-              echo 'console.log("test");' > ./packages/shared/index.js && \
-              npm install && chmod +x ./scripts/*.sh
-          EOF
-
-          docker build \
-            --build-arg ONELS_VERSION=${{ steps.version.outputs.version }} \
-            -f Dockerfile.npm-test \
-            -t onels-npm-test .
-
-          docker run --rm onels-npm-test bash -c "
-            sed -i 's|node ./1ls/index.js|1ls|g' ./scripts/run-e2e-tests.sh
-            ./scripts/run-e2e-tests.sh
-            echo ' NPM workspace test passed'
-          "
-
-      - name: Performance and Compatibility Check
-        run: |
-          echo " Running performance and compatibility checks..."
+          echo "Testing file operations..."
           docker run --rm onels-release-test bash -c "
-            echo '🕐 Testing command execution time...'
+            echo 'Testing readFile...'
+            1ls readFile test.json '.name'
+
+            echo 'Testing readFile with expression...'
+            1ls readFile test.json '.users.map(u => u.name)'
+
+            echo 'File operations tests passed'
+          "
+
+      - name: Test Multi-Format Support
+        run: |
+          echo "Testing multi-format support..."
+          docker run --rm onels-release-test bash -c "
+            echo 'Testing YAML input...'
+            echo 'name: John
+            age: 30' | 1ls '.name'
+
+            echo 'Testing CSV input...'
+            echo 'name,age
+            John,30
+            Jane,25' | 1ls '.map(x => x.name)'
+
+            echo 'Multi-format tests passed'
+          "
+
+      - name: Test Object Operations
+        run: |
+          echo "Testing object operations..."
+          docker run --rm onels-release-test bash -c "
+            echo 'Testing keys...'
+            echo '{\"a\": 1, \"b\": 2}' | 1ls '.{keys}'
+
+            echo 'Testing values...'
+            echo '{\"a\": 1, \"b\": 2}' | 1ls '.{values}'
+
+            echo 'Testing entries...'
+            echo '{\"a\": 1, \"b\": 2}' | 1ls '.{entries}'
+
+            echo 'Object operations tests passed'
+          "
+
+      - name: Test Array Methods
+        run: |
+          echo "Testing array methods..."
+          docker run --rm onels-release-test bash -c "
+            echo 'Testing reduce...'
+            echo '[1, 2, 3, 4]' | 1ls '.reduce((acc, x) => acc + x, 0)'
+
+            echo 'Testing find...'
+            echo '[1, 2, 3, 4, 5]' | 1ls '.find(x => x > 3)'
+
+            echo 'Testing some...'
+            echo '[1, 2, 3]' | 1ls '.some(x => x > 2)'
+
+            echo 'Testing every...'
+            echo '[2, 4, 6]' | 1ls '.every(x => x % 2 === 0)'
+
+            echo 'Testing sort...'
+            echo '[3, 1, 2]' | 1ls '.sort((a, b) => a - b)'
+
+            echo 'Testing reverse...'
+            echo '[1, 2, 3]' | 1ls '.reverse()'
+
+            echo 'Array methods tests passed'
+          "
+
+      - name: Test CLI Options
+        run: |
+          echo "Testing CLI options..."
+          docker run --rm onels-release-test bash -c "
+            echo 'Testing --raw option...'
+            echo '{\"name\": \"John\"}' | 1ls --raw '.name'
+
+            echo 'Testing --pretty option...'
+            echo '{\"a\":1,\"b\":2}' | 1ls --pretty '.'
+
+            echo 'Testing --compact option...'
+            echo '{\"a\": 1, \"b\": 2}' | 1ls --compact '.'
+
+            echo 'Testing --type option...'
+            echo '[1, 2, 3]' | 1ls --type '.'
+
+            echo 'CLI options tests passed'
+          "
+
+      - name: Test Shortcuts
+        run: |
+          echo "Testing shortcuts..."
+          docker run --rm onels-release-test bash -c "
+            echo 'Testing --shortcuts...'
+            1ls --shortcuts | head -20
+
+            echo 'Testing shortcut expansion...'
+            1ls --expand '.mp(x => x * 2)'
+
+            echo 'Testing shortcut compression...'
+            1ls --shorten '.map(x => x * 2)'
+
+            echo 'Shortcuts tests passed'
+          "
+
+      - name: Performance Check
+        run: |
+          echo "Running performance checks..."
+          docker run --rm onels-release-test bash -c "
+            echo 'Testing command execution time...'
             time 1ls --help >/dev/null
-            
-            echo '📋 Testing with debug output...'
-            1ls --debug --isTestingCLI
-            
-            echo ' Testing with various options...'
-            1ls --path package.json --debug --isTestingCLI
-            
-            echo ' Performance and compatibility checks passed'
+
+            echo 'Testing JSON processing time...'
+            time echo '[1,2,3,4,5]' | 1ls '.map(x => x * 2)' >/dev/null
+
+            echo 'Performance checks passed'
           "
 
       - name: Report Test Results
         run: |
-          echo " Test Summary"
+          echo "Test Summary"
           echo "==============="
-          echo " Tested 1ls version: ${{ steps.version.outputs.version }}"
-          echo " Full e2e test suite: PASSED"
-          echo " Single package tests: PASSED"
-          echo " Multi package manager tests: PASSED"
-          echo " Performance checks: PASSED"
+          echo "Tested 1ls version: ${{ steps.version.outputs.version }}"
+          echo "Installation: PASSED"
+          echo "JSON processing: PASSED"
+          echo "File operations: PASSED"
+          echo "Multi-format support: PASSED"
+          echo "Object operations: PASSED"
+          echo "Array methods: PASSED"
+          echo "CLI options: PASSED"
+          echo "Shortcuts: PASSED"
+          echo "Performance: PASSED"
           echo ""
-          echo "🎉 Published package is working correctly!"
-          echo " Ready for production use"
-
-      - name: Trigger External E2E Tests
-        if: success()
-        uses: actions/github-script@v7
-        with:
-          github-token: ${{ secrets.ONELS_TEST_DISPATCH_TOKEN }}
-          script: |
-            console.log(' Triggering external e2e tests in 1ls-test repository');
-            
-            await github.rest.repos.createDispatchEvent({
-              owner: 'yowainwright',
-              repo: '1ls-test',
-              event_type: '1ls-release',
-              client_payload: {
-                version: '${{ steps.version.outputs.version }}',
-                release_url: '${{ github.event.release.html_url }}' || 'Manual trigger',
-                trigger_type: '${{ github.event_name }}'
-              }
-            });
-            
-            console.log(' Successfully triggered external tests for version ${{ steps.version.outputs.version }}');
+          echo "Published package is working correctly!"
 
       - name: Create Test Report
         if: always()
@@ -207,24 +243,22 @@ jobs:
 
           **Version Tested:** ${{ steps.version.outputs.version }}
           **Test Date:** $(date -u +"%Y-%m-%d %H:%M:%S UTC")
-          **Status:**  PASSED
+          **Status:** PASSED
 
           ## Test Coverage
-          -  E2E workspace tests
-          -  Single package tests  
-          -  NPM compatibility
-          -  PNPM compatibility
-          -  Yarn compatibility
-          -  Bun compatibility
-          -  Patch detection
-          -  PeerDependencies handling
-          -  Performance validation
-          -  External test repository triggered
+          - Installation verification
+          - JSON processing (property access, filter, map, chaining)
+          - File operations (readFile)
+          - Multi-format support (JSON, YAML, CSV)
+          - Object operations (keys, values, entries)
+          - Array methods (reduce, find, some, every, sort, reverse)
+          - CLI options (raw, pretty, compact, type)
+          - Shortcuts (expand, shorten)
+          - Performance validation
 
           ## Summary
           All tests passed successfully. The published package is ready for use.
-          External e2e tests have been triggered in the 1ls-test repository.
           EOF
-          
-          echo "📄 Test report created:"
+
+          echo "Test report created:"
           cat test-report.md

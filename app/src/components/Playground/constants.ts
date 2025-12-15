@@ -194,7 +194,7 @@ export const SANDBOX_STARTER: Record<Format, { data: string; expression: string 
 Alice,30,true
 Bob,25,false
 Charlie,35,true`,
-    expression: ".filter(u => u.active === 'true').map(u => u.name)",
+    expression: ".filter(u => u.active).map(u => u.name)",
   },
   toml: {
     data: `[user]
