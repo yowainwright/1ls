@@ -95,38 +95,46 @@ jobs:
           SHA_LINUX_X64=$(shasum -a 256 ./dist/1ls-qjs-linux-x64 | cut -d ' ' -f 1)
           SHA_LINUX_ARM64=$(shasum -a 256 ./dist/1ls-qjs-linux-arm64 | cut -d ' ' -f 1)
 
+          echo "=== Checksums ==="
+          echo "VERSION: ${VERSION}"
+          echo "SHA_ARM64: ${SHA_ARM64}"
+          echo "SHA_X64: ${SHA_X64}"
+          echo "SHA_LINUX_X64: ${SHA_LINUX_X64}"
+          echo "SHA_LINUX_ARM64: ${SHA_LINUX_ARM64}"
+
+          echo "=== Formula before sed ==="
+          cat Formula/onels.rb
+
           sed -i '' "s/version \".*\"/version \"${VERSION}\"/" Formula/onels.rb
           sed -i '' "s/sha256 \".*\" # arm64/sha256 \"${SHA_ARM64}\" # arm64/" Formula/onels.rb
           sed -i '' "s/sha256 \".*\" # x64/sha256 \"${SHA_X64}\" # x64/" Formula/onels.rb
           sed -i '' "s/sha256 \".*\" # linux-x64/sha256 \"${SHA_LINUX_X64}\" # linux-x64/" Formula/onels.rb
           sed -i '' "s/sha256 \".*\" # linux-arm64/sha256 \"${SHA_LINUX_ARM64}\" # linux-arm64/" Formula/onels.rb
 
+          echo "=== Formula after sed ==="
+          cat Formula/onels.rb
+
       - name: Push formula to tap repo
         env:
           GH_TOKEN: ${{ secrets.PR_CREATE_TOKEN }}
         run: |
+          set -x
           TAP_REPO="https://x-access-token:${GH_TOKEN}@github.com/yowainwright/homebrew-tap.git"
 
-          # Clone or init the tap repo
-          if git clone "$TAP_REPO" ../tap 2>/dev/null; then
-            cd ../tap
-          else
-            # Empty repo - initialize fresh
-            mkdir -p ../tap && cd ../tap
-            git init
-            git remote add origin "$TAP_REPO"
-            git checkout -b main
-          fi
+          git clone "$TAP_REPO" ../tap
+          cd ../tap
 
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-          # Add formula and alias
           mkdir -p Formula Aliases
+          echo "=== Copying formula from workspace ==="
           cp ${{ github.workspace }}/Formula/onels.rb Formula/onels.rb
           ln -sf ../Formula/onels.rb Aliases/1ls
 
-          # Add README if missing
+          echo "=== Formula content in tap repo ==="
+          cat Formula/onels.rb
+
           if [ ! -f README.md ]; then
             echo "# Homebrew Tap" > README.md
             echo "" >> README.md
@@ -137,7 +145,9 @@ jobs:
           fi
 
           git add .
-          git commit -m "chore: update 1ls formula to ${{ github.ref_name }}" || echo "No changes"
+          echo "=== Git status ==="
+          git status
+          git commit -m "chore: update 1ls formula to ${{ github.ref_name }}" || echo "No changes to commit"
           git push -u origin main
 
       - name: Create GitHub Release
