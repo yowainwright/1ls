@@ -100,7 +100,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.PR_CREATE_TOKEN }}
         run: |
-          git clone https://x-access-token:${GH_TOKEN}@github.com/yowainwright/tap.git ../tap || git init ../tap
+          git clone https://x-access-token:${GH_TOKEN}@github.com/yowainwright/homebrew-tap.git ../tap || git init ../tap
           cd ../tap
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
@@ -108,7 +108,7 @@ jobs:
           cp ${{ github.workspace }}/Formula/1ls.rb Formula/1ls.rb
           git add Formula/1ls.rb
           git commit -m "chore: update 1ls formula to ${{ github.ref_name }}" || echo "No changes"
-          git remote set-url origin https://x-access-token:${GH_TOKEN}@github.com/yowainwright/tap.git 2>/dev/null || git remote add origin https://x-access-token:${GH_TOKEN}@github.com/yowainwright/tap.git
+          git remote set-url origin https://x-access-token:${GH_TOKEN}@github.com/yowainwright/homebrew-tap.git 2>/dev/null || git remote add origin https://x-access-token:${GH_TOKEN}@github.com/yowainwright/homebrew-tap.git
           git push -u origin main || git push -u origin HEAD:main
 
       - name: Create GitHub Release
