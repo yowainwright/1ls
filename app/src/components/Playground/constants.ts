@@ -1,4 +1,4 @@
-import type { Format, FormatConfig } from "./types"
+import type { Format, FormatConfig, DetectionResult } from "./types"
 
 export interface ExpressionSuggestion {
   label: string
@@ -160,3 +160,59 @@ arrows = 999`,
 export const DEFAULT_EXPRESSION = ".spotify.playlists.filter(p => p.public).map(p => p.name)"
 
 export const FORMATS: Format[] = ["json", "yaml", "csv", "toml", "text"]
+
+export const TEXT_FALLBACK: DetectionResult = { format: "text", confidence: 0.5, reason: "Plain text" }
+
+export const EMPTY_RESULT: DetectionResult = { format: "text", confidence: 1.0, reason: "Empty content" }
+
+export const SANDBOX_STARTER: Record<Format, { data: string; expression: string }> = {
+  json: {
+    data: `{
+  "users": [
+    { "name": "Alice", "age": 30, "active": true },
+    { "name": "Bob", "age": 25, "active": false },
+    { "name": "Charlie", "age": 35, "active": true }
+  ]
+}`,
+    expression: ".users.filter(u => u.active).map(u => u.name)",
+  },
+  yaml: {
+    data: `users:
+  - name: Alice
+    age: 30
+    active: true
+  - name: Bob
+    age: 25
+    active: false
+  - name: Charlie
+    age: 35
+    active: true`,
+    expression: ".users.filter(u => u.active).map(u => u.name)",
+  },
+  csv: {
+    data: `name,age,active
+Alice,30,true
+Bob,25,false
+Charlie,35,true`,
+    expression: ".filter(u => u.active === 'true').map(u => u.name)",
+  },
+  toml: {
+    data: `[user]
+name = "Alice"
+age = 30
+active = true
+
+[settings]
+theme = "dark"
+notifications = true`,
+    expression: ".user.name",
+  },
+  text: {
+    data: `INFO: User Alice logged in
+ERROR: Connection failed
+INFO: User Bob logged in
+WARN: Low memory
+INFO: User Charlie logged in`,
+    expression: ".filter(line => line.includes('INFO'))",
+  },
+}

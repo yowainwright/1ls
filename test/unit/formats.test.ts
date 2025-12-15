@@ -491,7 +491,200 @@ name = "mydb"`;
   });
 });
 
+describe('YAML Edge Cases', () => {
+  test('parses type tag without space (!!tag at end)', () => {
+    const input = 'value: !!str';
+    const result = parseYAML(input);
+    expect(result).toEqual({ value: '!!str' });
+  });
+
+  test('parses comments inside quoted strings', () => {
+    const input = 'message: "Hello # not a comment"';
+    const expected = { message: 'Hello # not a comment' };
+    expect(parseYAML(input)).toEqual(expected);
+  });
+
+  test('handles empty list items', () => {
+    const input = `items:
+  -
+    name: first
+  -
+    name: second`;
+    const expected = { items: [{ name: 'first' }, { name: 'second' }] };
+    expect(parseYAML(input)).toEqual(expected);
+  });
+
+  test('parses list item objects correctly', () => {
+    const input = `items:
+  - name: Alice
+    age: 30`;
+    const result = parseYAML(input);
+    expect(result.items[0].name).toBe('Alice');
+    expect(result.items[0].age).toBe(30);
+  });
+
+  test('parses multiline string with empty lines', () => {
+    const input = `text: |
+  line one
+
+  line three`;
+    const expected = { text: 'line one\n\nline three' };
+    expect(parseYAML(input)).toEqual(expected);
+  });
+
+  test('parses multiline folded with trailing modifiers', () => {
+    const input = `desc: >-
+  folded text
+  continues here`;
+    const expected = { desc: 'folded text continues here' };
+    expect(parseYAML(input)).toEqual(expected);
+  });
+
+  test('parses deeply nested list items', () => {
+    const input = `items:
+  - name: test
+    value: 123
+    nested:
+      key: value`;
+    const result = parseYAML(input);
+    expect(result.items[0].name).toBe('test');
+    expect(result.items[0].nested.key).toBe('value');
+  });
+
+  test('handles anchor on key with pending list', () => {
+    const input = `data: &mydata
+  - item1
+  - item2`;
+    const result = parseYAML(input);
+    expect(result.data).toEqual(['item1', 'item2']);
+  });
+
+  test('parses multiline literal with |+', () => {
+    const input = `text: |+
+  line one
+  line two`;
+    const result = parseYAML(input);
+    expect(result.text).toContain('line one');
+  });
+
+  test('parses multiline literal with |-', () => {
+    const input = `text: |-
+  line one
+  line two`;
+    const result = parseYAML(input);
+    expect(result.text).toContain('line one');
+  });
+
+  test('parses multiline folded with >+', () => {
+    const input = `text: >+
+  line one
+  line two`;
+    const result = parseYAML(input);
+    expect(result.text).toContain('line one');
+  });
+
+  test('handles list after key with comment', () => {
+    const input = `# comment
+data: # inline comment
+  - item1
+  - item2`;
+    const result = parseYAML(input);
+    expect(result.data).toEqual(['item1', 'item2']);
+  });
+
+  test('handles key with multiline indicator and comment', () => {
+    const input = `text: | # comment
+  content here`;
+    const result = parseYAML(input);
+    expect(result.text).toBe('content here');
+  });
+
+  test('handles empty content in list item', () => {
+    const input = `items:
+  - first
+  -
+  - third`;
+    const result = parseYAML(input);
+    expect(result.items[0]).toBe('first');
+    expect(result.items[2]).toBe('third');
+  });
+
+  test('handles list items with simple values after object', () => {
+    const input = `data:
+  - name: Alice
+  - Bob
+  - Charlie`;
+    const result = parseYAML(input);
+    expect(result.data[0].name).toBe('Alice');
+    expect(result.data[1]).toBe('Bob');
+  });
+
+  test('handles nested arrays without parent key on same line', () => {
+    const input = `config:
+  items:
+    - one
+    - two`;
+    const result = parseYAML(input);
+    expect(result.config.items).toEqual(['one', 'two']);
+  });
+});
+
+describe('Format Detection Edge Cases', () => {
+  test('detects NDJSON', () => {
+    const input = '{"a":1}\n{"b":2}\n{"c":3}';
+    expect(detectFormat(input)).toBe('ndjson');
+  });
+
+  test('detects ENV format', () => {
+    const input = 'DATABASE_URL=postgres://localhost\nAPI_KEY=secret123';
+    expect(detectFormat(input)).toBe('env');
+  });
+
+  test('detects protobuf-like syntax', () => {
+    const input = 'message User {\n  string name = 1;\n}';
+    expect(detectFormat(input)).toBe('text');
+  });
+
+  test('detects TypeScript with let declaration', () => {
+    const input = 'let users: string[] = [];';
+    expect(detectFormat(input)).toBe('typescript');
+  });
+
+  test('detects TypeScript with var declaration', () => {
+    const input = 'var count: number = 0;';
+    expect(detectFormat(input)).toBe('typescript');
+  });
+
+  test('returns text for empty input', () => {
+    expect(detectFormat('')).toBe('text');
+    expect(detectFormat('   ')).toBe('text');
+  });
+});
+
 describe('parseInput Integration', () => {
+  test('parses TSV format', async () => {
+    const input = 'name\tage\nAlice\t30';
+    const expected = [{ name: 'Alice', age: 30 }];
+    expect(await parseInput(input, 'tsv')).toEqual(expected);
+  });
+
+  test('parses ENV format', async () => {
+    const input = 'NAME=Alice\nAGE=30';
+    const result = await parseInput(input, 'env');
+    expect(result).toEqual({ NAME: 'Alice', AGE: 30 });
+  });
+
+  test('parses NDJSON format', async () => {
+    const input = '{"name":"Alice"}\n{"name":"Bob"}';
+    const expected = [{ name: 'Alice' }, { name: 'Bob' }];
+    expect(await parseInput(input, 'ndjson')).toEqual(expected);
+  });
+
+  test('parses lines format', async () => {
+    const input = 'line1\nline2\nline3';
+    expect(await parseInput(input, 'lines')).toEqual(['line1', 'line2', 'line3']);
+  });
+
   test('auto-detects and parses JSON', async () => {
     const input = '{"name": "Alice", "age": 30}';
     const expected = { name: 'Alice', age: 30 };
