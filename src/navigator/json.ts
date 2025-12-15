@@ -145,7 +145,17 @@ export function callMethod(
   }
 }
 
+export interface NavigatorOptions {
+  strict?: boolean;
+}
+
 export class JsonNavigator {
+  private options: NavigatorOptions;
+
+  constructor(options: NavigatorOptions = {}) {
+    this.options = options;
+  }
+
   evaluate(ast: ASTNode, data: unknown): unknown {
     switch (ast.type) {
       case "Root":
@@ -192,7 +202,14 @@ export class JsonNavigator {
     data: unknown,
   ): unknown {
     const baseValue = ast.object ? this.evaluate(ast.object, data) : data;
-    return getPropertyFromObject(baseValue, ast.property);
+    const result = getPropertyFromObject(baseValue, ast.property);
+
+    if (this.options.strict && result === undefined) {
+      const path = ast.property;
+      throw new Error(`Property "${path}" is undefined`);
+    }
+
+    return result;
   }
 
   private evaluateArg(arg: ASTNode, data: unknown): unknown {

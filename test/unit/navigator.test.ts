@@ -248,3 +248,32 @@ test('Navigator: slice on non-array returns undefined', () => {
   const data = { value: 'string' };
   expect(evaluate('.value[0:2]', data)).toBeUndefined();
 });
+
+function evaluateStrict(expression: string, data: unknown): unknown {
+  const lexer = new Lexer(expression);
+  const tokens = lexer.tokenize();
+  const parser = new ExpressionParser(tokens);
+  const ast = parser.parse();
+  const navigator = new JsonNavigator({ strict: true });
+  return navigator.evaluate(ast, data);
+}
+
+test('Navigator: strict mode throws on undefined property', () => {
+  const data = { name: 'John' };
+  expect(() => evaluateStrict('.nonexistent', data)).toThrow('Property "nonexistent" is undefined');
+});
+
+test('Navigator: strict mode allows valid property access', () => {
+  const data = { name: 'John' };
+  expect(evaluateStrict('.name', data)).toBe('John');
+});
+
+test('Navigator: strict mode throws on nested undefined property', () => {
+  const data = { user: { name: 'John' } };
+  expect(() => evaluateStrict('.user.email', data)).toThrow('Property "email" is undefined');
+});
+
+test('Navigator: non-strict mode returns undefined for missing property', () => {
+  const data = { name: 'John' };
+  expect(evaluate('.nonexistent', data)).toBeUndefined();
+});

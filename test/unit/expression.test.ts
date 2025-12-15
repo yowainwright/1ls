@@ -2,6 +2,16 @@ import { test, expect } from 'bun:test';
 import { Lexer } from '../../src/lexer';
 import { ExpressionParser } from '../../src/expression';
 
+test('Expression: identity (pass-through)', () => {
+  const lexer = new Lexer('.');
+  const tokens = lexer.tokenize();
+  const parser = new ExpressionParser(tokens);
+  const ast = parser.parse();
+
+  expect(ast.type).toBe('Root');
+  expect(ast.expression?.type).toBe('Root');
+});
+
 test('Expression: simple property access', () => {
   const lexer = new Lexer('.name');
   const tokens = lexer.tokenize();

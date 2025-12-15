@@ -38,6 +38,7 @@ export interface CliOptions
   help?: boolean;
   version?: boolean;
   interactive?: boolean;
+  strict?: boolean;
 }
 
 export enum TokenType {
