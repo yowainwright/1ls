@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from "react"
 import EditorModule from "react-simple-code-editor"
 import { Minimize2, Maximize2, Share2, Check } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Codeblock, CopyButton } from "@/components/Codeblock"
+import { Codeblock, CopyButton, getHighlighter, THEME } from "@/components/Codeblock"
 import { SectionHeader } from "@/components/SectionHeader"
 import type {
   Format,
@@ -335,18 +335,50 @@ function InputPanel({
 }
 
 function FormatTabs({ format, onFormatChange }: FormatTabsProps) {
+  const [highlightedSnippets, setHighlightedSnippets] = useState<Record<Format, string>>({} as Record<Format, string>)
+
+  useEffect(() => {
+    getHighlighter().then((highlighter) => {
+      const snippets = {} as Record<Format, string>
+      for (const f of FORMATS) {
+        const config = FORMAT_CONFIGS[f]
+        const lang = config.language === "csv" || config.language === "text" ? "txt" : config.language
+        const html = highlighter.codeToHtml(config.snippet, {
+          lang,
+          theme: THEME,
+        })
+        snippets[f] = html
+      }
+      setHighlightedSnippets(snippets)
+    })
+  }, [])
+
   return (
     <div className="flex gap-1 rounded-xl border border-border/10 bg-muted p-1 shadow-sm">
-      {FORMATS.map((f) => (
-        <Button
-          key={f}
-          variant={format === f ? "outline" : "ghost"}
-          size="sm"
-          onClick={() => onFormatChange(f)}
-        >
-          {FORMAT_CONFIGS[f].label}
-        </Button>
-      ))}
+      {FORMATS.map((f) => {
+        const isActive = format === f
+        const html = highlightedSnippets[f]
+        return (
+          <Button
+            key={f}
+            variant={isActive ? "outline" : "ghost"}
+            size="sm"
+            onClick={() => onFormatChange(f)}
+            className={`
+              font-mono
+              [&_pre]:!bg-transparent [&_pre]:!p-0 [&_pre]:!m-0
+              [&_code]:!bg-transparent [&_.line]:!inline
+              ${!isActive ? "opacity-60 hover:opacity-100" : ""}
+            `}
+          >
+            {html ? (
+              <span dangerouslySetInnerHTML={{ __html: html }} />
+            ) : (
+              FORMAT_CONFIGS[f].label
+            )}
+          </Button>
+        )
+      })}
     </div>
   )
 }
