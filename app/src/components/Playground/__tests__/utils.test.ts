@@ -323,7 +323,7 @@ describe("runEvaluation", () => {
 
   test("evaluates text format as array of lines", () => {
     const input = "line1\nline2\nline3"
-    const expression = '.{length}'
+    const expression = '.length'
     const result = runEvaluation(input, expression, "text")
     expect(result.error).toBeNull()
     expect(result.output).toContain("3")
