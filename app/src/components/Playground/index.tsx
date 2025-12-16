@@ -2,7 +2,8 @@ import { useState, useEffect, useRef, useCallback } from "react"
 import EditorModule from "react-simple-code-editor"
 import { Minimize2, Maximize2, Share2, Check } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Codeblock, CopyButton, getHighlighter, THEME } from "@/components/Codeblock"
+import { Codeblock, CopyButton, getHighlighter, THEME, LANGUAGES } from "@/components/Codeblock"
+import type { Highlighter } from "shiki"
 import { SectionHeader } from "@/components/SectionHeader"
 import type {
   Format,
@@ -16,7 +17,7 @@ import type {
   PlaygroundHeaderProps,
 } from "./types"
 import { FORMAT_CONFIGS, DEFAULT_EXPRESSION, FORMATS, SANDBOX_STARTER } from "./constants"
-import { runEvaluation, highlightCode, detectFormat, minifyExpression, expandExpression } from "./utils"
+import { runEvaluation, detectFormat, minifyExpression, expandExpression } from "./utils"
 import { saveState, loadState, getShareableUrl, getStateFromUrl } from "./storage"
 
 const Editor = (EditorModule as { default?: typeof EditorModule }).default || EditorModule
@@ -70,6 +71,43 @@ function useFormatDetection(
 
     return () => clearTimeout(timeoutId)
   }, [input, mode, onFormatDetected])
+}
+
+function useShikiHighlighter() {
+  const highlighterRef = useRef<Highlighter | null>(null)
+  const [ready, setReady] = useState(false)
+
+  useEffect(() => {
+    getHighlighter().then((h) => {
+      highlighterRef.current = h
+      setReady(true)
+    })
+  }, [])
+
+  const highlight = useCallback((code: string, language: string): string => {
+    if (!highlighterRef.current || !code) return escapeHtml(code)
+    const lang = language === "csv" || language === "text" ? "txt" : language
+    const validLang = LANGUAGES.includes(lang as typeof LANGUAGES[number]) ? lang : "txt"
+    try {
+      const html = highlighterRef.current.codeToHtml(code, {
+        lang: validLang,
+        theme: THEME,
+      })
+      const match = html.match(/<code[^>]*>([\s\S]*?)<\/code>/)
+      return match ? match[1] : escapeHtml(code)
+    } catch {
+      return escapeHtml(code)
+    }
+  }, [])
+
+  return { highlight, ready }
+}
+
+function escapeHtml(text: string): string {
+  return text
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
 }
 
 export function Playground({ mode = "preset" }: PlaygroundProps) {
@@ -246,6 +284,17 @@ function InputPanel({
   const isSandbox = mode === "sandbox"
   const showSuggestions = !isSandbox && suggestions.length > 0
   const minifiedExpression = minifyExpression(expression)
+  const { highlight } = useShikiHighlighter()
+
+  const highlightInput = useCallback(
+    (code: string) => highlight(code, FORMAT_CONFIGS[format].language),
+    [highlight, format]
+  )
+
+  const highlightExpression = useCallback(
+    (code: string) => highlight(code, "javascript"),
+    [highlight]
+  )
 
   return (
     <div className="space-y-4">
@@ -268,10 +317,10 @@ function InputPanel({
         <Editor
           value={input}
           onValueChange={onInputChange}
-          highlight={highlightCode}
+          highlight={highlightInput}
           padding={16}
           placeholder={isSandbox ? SANDBOX_PLACEHOLDER : undefined}
-          className="font-mono text-sm"
+          className="font-mono text-sm [&_.shiki]:!bg-transparent [&_.line]:block"
           style={{
             minHeight: "240px",
             maxHeight: "400px",
@@ -289,9 +338,9 @@ function InputPanel({
         <Editor
           value={expression}
           onValueChange={onExpressionChange}
-          highlight={highlightCode}
+          highlight={highlightExpression}
           padding={16}
-          className="font-mono text-sm"
+          className="font-mono text-sm [&_.shiki]:!bg-transparent [&_.line]:block"
           style={{ backgroundColor: "transparent" }}
           textareaClassName="focus:outline-none"
         />
@@ -335,50 +384,18 @@ function InputPanel({
 }
 
 function FormatTabs({ format, onFormatChange }: FormatTabsProps) {
-  const [highlightedSnippets, setHighlightedSnippets] = useState<Record<Format, string>>({} as Record<Format, string>)
-
-  useEffect(() => {
-    getHighlighter().then((highlighter) => {
-      const snippets = {} as Record<Format, string>
-      for (const f of FORMATS) {
-        const config = FORMAT_CONFIGS[f]
-        const lang = config.language === "csv" || config.language === "text" ? "txt" : config.language
-        const html = highlighter.codeToHtml(config.snippet, {
-          lang,
-          theme: THEME,
-        })
-        snippets[f] = html
-      }
-      setHighlightedSnippets(snippets)
-    })
-  }, [])
-
   return (
     <div className="flex gap-1 rounded-xl border border-border/10 bg-muted p-1 shadow-sm">
-      {FORMATS.map((f) => {
-        const isActive = format === f
-        const html = highlightedSnippets[f]
-        return (
-          <Button
-            key={f}
-            variant={isActive ? "outline" : "ghost"}
-            size="sm"
-            onClick={() => onFormatChange(f)}
-            className={`
-              font-mono
-              [&_pre]:!bg-transparent [&_pre]:!p-0 [&_pre]:!m-0
-              [&_code]:!bg-transparent [&_.line]:!inline
-              ${!isActive ? "opacity-60 hover:opacity-100" : ""}
-            `}
-          >
-            {html ? (
-              <span dangerouslySetInnerHTML={{ __html: html }} />
-            ) : (
-              FORMAT_CONFIGS[f].label
-            )}
-          </Button>
-        )
-      })}
+      {FORMATS.map((f) => (
+        <Button
+          key={f}
+          variant={format === f ? "outline" : "ghost"}
+          size="sm"
+          onClick={() => onFormatChange(f)}
+        >
+          {FORMAT_CONFIGS[f].label}
+        </Button>
+      ))}
     </div>
   )
 }
@@ -418,5 +435,5 @@ function PlaygroundHeader({ title, description, showShare, shareStatus, onShare 
 }
 
 export { FORMAT_CONFIGS, DEFAULT_EXPRESSION, FORMATS } from "./constants"
-export { runEvaluation, highlightCode, detectFormat, minifyExpression, expandExpression } from "./utils"
+export { runEvaluation, detectFormat, minifyExpression, expandExpression } from "./utils"
 export type { Format, FormatConfig, PlaygroundState, PlaygroundMode, DetectionResult } from "./types"

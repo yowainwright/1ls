@@ -204,3 +204,79 @@ describe("SANDBOX_STARTER", () => {
     }
   })
 })
+
+describe("Playground - Syntax Highlighting", () => {
+  test("applies Shiki highlighting to input after highlighter loads", async () => {
+    const { container } = render(<Playground />)
+
+    await waitFor(
+      () => {
+        const shikiSpans = container.querySelectorAll(".shiki span[style]")
+        expect(shikiSpans.length).toBeGreaterThan(0)
+      },
+      { timeout: 3000 }
+    )
+  })
+
+  test("highlights JSON input with appropriate syntax colors", async () => {
+    const { container } = render(<Playground />)
+
+    await waitFor(
+      () => {
+        const highlightedContent = container.querySelector(".shiki")
+        expect(highlightedContent).toBeInTheDocument()
+      },
+      { timeout: 3000 }
+    )
+  })
+
+  test("highlights expression editor with JavaScript syntax", async () => {
+    const { container } = render(<Playground />)
+
+    await waitFor(
+      () => {
+        const editors = container.querySelectorAll(".shiki")
+        expect(editors.length).toBeGreaterThanOrEqual(1)
+      },
+      { timeout: 3000 }
+    )
+  })
+
+  test("updates highlighting when format changes to YAML", async () => {
+    const { container } = render(<Playground />)
+    const buttons = container.querySelectorAll("button")
+    const yamlButton = Array.from(buttons).find((b) => b.textContent === "YAML")
+
+    if (yamlButton) {
+      fireEvent.click(yamlButton)
+    }
+
+    await waitFor(
+      () => {
+        expect(container.textContent).toContain("pokemon")
+        const shikiContent = container.querySelector(".shiki")
+        expect(shikiContent).toBeInTheDocument()
+      },
+      { timeout: 3000 }
+    )
+  })
+
+  test("updates highlighting when format changes to TOML", async () => {
+    const { container } = render(<Playground />)
+    const buttons = container.querySelectorAll("button")
+    const tomlButton = Array.from(buttons).find((b) => b.textContent === "TOML")
+
+    if (tomlButton) {
+      fireEvent.click(tomlButton)
+    }
+
+    await waitFor(
+      () => {
+        expect(container.textContent).toContain("[game]")
+        const shikiContent = container.querySelector(".shiki")
+        expect(shikiContent).toBeInTheDocument()
+      },
+      { timeout: 3000 }
+    )
+  })
+})

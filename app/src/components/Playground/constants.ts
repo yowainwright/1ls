@@ -7,14 +7,12 @@ export interface ExpressionSuggestion {
 
 export interface ExtendedFormatConfig extends FormatConfig {
   suggestions: ExpressionSuggestion[]
-  snippet: string
 }
 
 export const FORMAT_CONFIGS: Record<Format, ExtendedFormatConfig> = {
   json: {
     label: "JSON",
     language: "json",
-    snippet: `{ "json": true }`,
     placeholder: `{
   "spotify": {
     "playlists": [
@@ -41,7 +39,6 @@ export const FORMAT_CONFIGS: Record<Format, ExtendedFormatConfig> = {
   yaml: {
     label: "YAML",
     language: "yaml",
-    snippet: `yaml: true`,
     placeholder: `pokemon:
   - name: Pikachu
     type: electric
@@ -96,7 +93,6 @@ export const FORMAT_CONFIGS: Record<Format, ExtendedFormatConfig> = {
   csv: {
     label: "CSV",
     language: "csv",
-    snippet: `col,data`,
     placeholder: `movie,year,rating,boxOffice,genre
 The Dark Knight,2008,9.0,1004,action
 Inception,2010,8.8,836,scifi
@@ -116,7 +112,6 @@ Spider-Verse,2023,8.7,690,animation`,
   toml: {
     label: "TOML",
     language: "toml",
-    snippet: `[toml]`,
     placeholder: `[game]
 title = "Zelda: Tears of the Kingdom"
 platform = "Switch"
@@ -143,7 +138,6 @@ arrows = 999`,
   text: {
     label: "Text",
     language: "text",
-    snippet: `plain text`,
     placeholder: `🎮 PLAYER_JOINED: xX_DragonSlayer_Xx entered the game
 💀 KILL: NoobMaster69 eliminated by xX_DragonSlayer_Xx
 🏆 ACHIEVEMENT: xX_DragonSlayer_Xx unlocked "First Blood"
