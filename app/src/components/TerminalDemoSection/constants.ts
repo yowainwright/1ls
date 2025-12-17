@@ -2,6 +2,13 @@ import type { TerminalExample } from "./types"
 
 export const TERMINAL_EXAMPLES: TerminalExample[] = [
   {
+    title: "Shortcut Syntax",
+    description: "Minified expressions for faster typing",
+    command: ".fl(x => x.age > 25).mp(x => x.name)",
+    input: '[{"name": "Alice", "age": 30}, {"name": "Bob", "age": 20}]',
+    output: '["Alice"]',
+  },
+  {
     title: "JSON Processing",
     description: "Access nested JSON properties with dot notation",
     command: ".users[0].name",
