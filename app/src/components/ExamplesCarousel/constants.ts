@@ -2,6 +2,19 @@ import type { CodeExample } from "./types"
 
 export const CODE_EXAMPLES: CodeExample[] = [
   {
+    title: "Shortcut Syntax",
+    description: "Minified expressions: .fl = .filter, .mp = .map",
+    format: "JSON",
+    command: "1ls '.fl(x => x.age > 25).mp(x => x.name)'",
+    input: `[
+  {"name": "Alice", "age": 30},
+  {"name": "Bob", "age": 20},
+  {"name": "Carol", "age": 28}
+]`,
+    output: `["Alice", "Carol"]`,
+    language: "json",
+  },
+  {
     title: "JSON Processing",
     description: "Access nested JSON properties with JavaScript syntax",
     format: "JSON",

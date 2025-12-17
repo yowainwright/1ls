@@ -6,18 +6,17 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![GitHub](https://img.shields.io/badge/GitHub-repo-blue)](https://github.com/yowainwright/1ls)
 
-> One-line script
+> Minimal syntax. Maximum formats.
 
-A 0 dependency, lightweight, fast data processor with familiar JavaScript syntax.
+```bash
+# full
+echo '[1,2,3]' | 1ls '.filter(x => x > 1).map(x => x * 2)'
 
-This is useful for writing 1ls, one-line scripts, in the terminal or for short scripts 
-that are as concise as possible in a familiar syntax, JavaScript, with dot notation, 
-fuzzy matching, and shortening capabilities for maximum efficiency.
+# shortened
+echo '[1,2,3]' | 1ls '.fl(x => x > 1).mp(x => x * 2)'
+```
 
-On top of that, the library is very small because it has no dependencies. 
-And, it is compiled with QuickJs for binary builds.
-This means you get good speed compared to jq and fx but it's still, just JS, 
-the language y'all know.
+JavaScript syntax with shortcuts. JSON, YAML, TOML, XML, CSV, INI, ENV, NDJSON. Zero dependencies.
 
 ## Why 1ls?
 
@@ -27,6 +26,67 @@ the language y'all know.
 - **Intuitive**: Property access with dot notation, just like JavaScript
 - **Powerful**: Full support for array methods, arrow functions, and object operations
 - **Shortcuts**: Built-in shortcuts for common operations (e.g., `.mp` for `.map`)
+
+## jq vs fx vs 1ls
+
+**Filter and map:**
+```bash
+# jq
+echo '[{"age":25},{"age":35}]' | jq '[.[] | select(.age > 30) | .age]'
+
+# fx
+echo '[{"age":25},{"age":35}]' | fx '.filter(x => x.age > 30).map(x => x.age)'
+
+# 1ls
+echo '[{"age":25},{"age":35}]' | 1ls '.filter(x => x.age > 30).map(x => x.age)'
+echo '[{"age":25},{"age":35}]' | 1ls '.fl(x => x.age > 30).mp(x => x.age)'
+```
+
+**First matching item:**
+```bash
+# jq
+echo '[{"id":1},{"id":2}]' | jq '[.[] | select(.id == 2)] | first'
+
+# fx
+echo '[{"id":1},{"id":2}]' | fx '.find(x => x.id === 2)'
+
+# 1ls
+echo '[{"id":1},{"id":2}]' | 1ls '.find(x => x.id === 2)'
+echo '[{"id":1},{"id":2}]' | 1ls '.fd(x => x.id === 2)'
+```
+
+**Get array length:**
+```bash
+# jq
+echo '[1,2,3,4,5]' | jq 'length'
+
+# fx
+echo '[1,2,3,4,5]' | fx '.length'
+
+# 1ls
+echo '[1,2,3,4,5]' | 1ls '.length'
+echo '[1,2,3,4,5]' | 1ls '.ln'
+```
+
+**YAML input** (1ls only):
+```bash
+# jq - not supported
+# fx - not supported
+
+# 1ls
+echo 'name: Ada' | 1ls '.name'
+```
+
+**Convert between forms:**
+```bash
+# shorten
+1ls --shorten '.filter(x => x > 1).map(x => x * 2)'
+# → .fl(x => x > 1).mp(x => x * 2)
+
+# expand
+1ls --expand '.fl(x => x > 1).mp(x => x * 2)'
+# → .filter(x => x > 1).map(x => x * 2)
+```
 
 ## Installation
 
