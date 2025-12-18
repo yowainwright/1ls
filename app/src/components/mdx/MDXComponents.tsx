@@ -11,6 +11,7 @@ import { ShortcutsTable } from '@/routes/docs/api/shortcuts/-components/Shortcut
 import { CliCommands } from '@/routes/docs/api/shortcuts/-components/CliCommands'
 import { MethodCard } from '@/routes/docs/api/-components/MethodCard'
 import { ARRAY_METHODS } from '@/routes/docs/api/array-methods/-constants'
+import { BUILTIN_CATEGORIES } from '@/routes/docs/api/builtins/-constants'
 
 interface HeadingProps extends ComponentPropsWithoutRef<'h1'> {
   id?: string
@@ -42,6 +43,24 @@ function ArrayMethodsList() {
     <div className="space-y-8">
       {ARRAY_METHODS.map((method) => (
         <MethodCard key={method.name} {...method} />
+      ))}
+    </div>
+  )
+}
+
+function BuiltinsList() {
+  return (
+    <div className="space-y-12">
+      {BUILTIN_CATEGORIES.map((category) => (
+        <div key={category.title}>
+          <h2 className="text-2xl font-semibold tracking-tight mt-10 mb-2">{category.title}</h2>
+          <p className="text-muted-foreground mb-6">{category.description}</p>
+          <div className="space-y-6">
+            {category.builtins.map((builtin) => (
+              <MethodCard key={builtin.name} {...builtin} />
+            ))}
+          </div>
+        </div>
       ))}
     </div>
   )
@@ -210,4 +229,5 @@ export const mdxComponents: MDXComponents = {
   ShortcutsTable,
   CliCommands,
   ArrayMethodsList,
+  BuiltinsList,
 }

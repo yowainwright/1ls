@@ -13,6 +13,7 @@ export const DOCS_NAV: NavSection[] = [
     title: 'API Reference',
     items: [
       { title: 'Array Methods', href: '/docs/api/array-methods' },
+      { title: 'Builtin Functions', href: '/docs/api/builtins' },
       { title: 'Shortcuts', href: '/docs/api/shortcuts' },
       { title: 'Multi-format', href: '/docs/api/formats' },
     ],

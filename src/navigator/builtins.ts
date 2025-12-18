@@ -259,17 +259,19 @@ export const BUILTINS: Record<string, BuiltinFn> = {
     return data.reduce<number>((acc, val) => acc + (val as number), 0);
   },
   [BUILTIN_FUNCTIONS.PATH]: (data) => {
-    const paths: (string | number)[][] = [];
-    const walk = (val: unknown, currentPath: (string | number)[]) => {
-      paths.push(currentPath);
+    const collectPaths = (val: unknown, currentPath: (string | number)[]): (string | number)[][] => {
+      const self = [currentPath];
       if (isArray(val)) {
-        val.forEach((item, i) => walk(item, [...currentPath, i]));
-      } else if (isObject(val)) {
-        Object.keys(val).forEach((k) => walk(val[k], [...currentPath, k]));
+        const childPaths = val.flatMap((item, i) => collectPaths(item, [...currentPath, i]));
+        return [...self, ...childPaths];
       }
+      if (isObject(val)) {
+        const childPaths = Object.keys(val).flatMap((k) => collectPaths(val[k], [...currentPath, k]));
+        return [...self, ...childPaths];
+      }
+      return self;
     };
-    walk(data, []);
-    return paths;
+    return collectPaths(data, []);
   },
   [BUILTIN_FUNCTIONS.GETPATH]: (data, [path]) => getValueAtPath(data, path as (string | number)[]),
   [BUILTIN_FUNCTIONS.SETPATH]: (data, [path, value]) => setValueAtPath(data, path as (string | number)[], value),
