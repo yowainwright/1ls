@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react"
 import { NavLogo, NavLinks, GithubButton } from "./components"
+import { MobileNav } from "./MobileNav"
 import type { NavbarProps } from "./types"
 
 export function Navbar({ className = "" }: NavbarProps) {
@@ -25,9 +26,17 @@ export function Navbar({ className = "" }: NavbarProps) {
     >
       <div className={`transition-all duration-300 ${bgClasses}`}>
         <div className="container mx-auto flex items-center justify-between h-16 px-4 md:px-8">
-          <NavLogo />
+          <div className="md:hidden">
+            <MobileNav />
+          </div>
+          <div className="absolute left-1/2 -translate-x-1/2 md:static md:translate-x-0">
+            <NavLogo />
+          </div>
           <NavLinks />
-          <GithubButton />
+          <div className="hidden md:block">
+            <GithubButton />
+          </div>
+          <div className="md:hidden w-9" aria-hidden="true" />
         </div>
       </div>
     </nav>

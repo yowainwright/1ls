@@ -32,31 +32,7 @@ interface MobileSidebarTriggerProps {
 }
 
 function MobileSidebarTrigger({ open, onOpenChange, pathname }: MobileSidebarTriggerProps) {
-  return (
-    <div className="md:hidden">
-      <Sheet open={open} onOpenChange={onOpenChange}>
-        <SheetTrigger asChild>
-          <Button
-            variant="ghost"
-            size="icon"
-            className={cn(
-              'fixed top-20 z-40 transition-all duration-300',
-              open ? 'left-4' : 'left-1/2 -translate-x-1/2'
-            )}
-            aria-label="Toggle navigation"
-          >
-            {open ? <X size={20} /> : <Menu size={20} />}
-          </Button>
-        </SheetTrigger>
-        <SheetContent side="left" className="w-72 p-0 bg-background">
-          <SheetHeader className="sr-only">
-            <SheetTitle>Documentation Navigation</SheetTitle>
-          </SheetHeader>
-          <SidebarNavContent pathname={pathname} onNavigate={() => onOpenChange(false)} />
-        </SheetContent>
-      </Sheet>
-    </div>
-  )
+  return null
 }
 
 interface DesktopSidebarProps {
