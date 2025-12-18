@@ -347,6 +347,8 @@ echo '["a", "b"]' | 1ls '.jn(",")'           # Short for .join()
 | `--pretty` | `-p` | Pretty print output (default) |
 | `--compact` | `-c` | Compact single-line output |
 | `--type` | `-t` | Show type of result |
+| `--slurp` | `-S` | Read all inputs into an array |
+| `--null-input` | `-N` | Use null as input (for generating data) |
 
 ### Format Options
 
@@ -386,6 +388,25 @@ echo '["a", "b"]' | 1ls '.jn(",")'           # Short for .join()
 - `.[start:end]` - Array slice
 - `.[]` - Array spread
 
+### jq-compatible Operators
+- `..` - Recursive descent (collect all nested values)
+- `.foo?` - Optional access (returns null on error instead of failing)
+- `.foo ?? default` - Null coalescing (provide fallback for null/undefined)
+
+```bash
+# Recursive descent - get all values from nested structure
+echo '{"a": {"b": 1}, "c": [2, 3]}' | 1ls '..'
+# Output: [{"a": {"b": 1}, "c": [2, 3]}, {"b": 1}, 1, [2, 3], 2, 3]
+
+# Optional access - safe navigation
+echo '{"user": null}' | 1ls '.user?.name'
+# Output: null (instead of error)
+
+# Null coalescing - default values
+echo '{"name": null}' | 1ls '.name ?? "anonymous"'
+# Output: "anonymous"
+```
+
 ### Object Operations
 - `.{keys}` - Get object keys
 - `.{values}` - Get object values
@@ -410,6 +431,97 @@ All standard JavaScript array methods are supported:
 - `.startsWith()`, `.endsWith()`
 - `.substring()`, `.charAt()`
 - `.match()`, `.split()`
+
+### Builtin Functions (jq-compatible)
+
+**Array Operations:**
+- `head()` / `hd()` - First element
+- `last()` / `lst()` - Last element
+- `tail()` / `tl()` - All but first element
+- `take(n)` / `tk(n)` - Take first n elements
+- `drop(n)` / `drp(n)` - Drop first n elements
+- `uniq()` / `unq()` - Remove duplicates
+- `flatten()` / `fltn()` - Flatten nested arrays
+- `rev()` - Reverse array
+- `chunk(n)` / `chnk(n)` - Split into chunks of size n
+- `compact()` / `cmpct()` - Remove falsy values
+- `nth(n)` - Get element at index n
+- `add()` - Sum numbers or concatenate arrays/strings
+
+**Object Operations:**
+- `keys()` / `ks()` - Get object keys
+- `vals()` - Get object values
+- `pick(k1, k2, ...)` / `pk()` - Pick specific keys
+- `omit(k1, k2, ...)` / `omt()` - Omit specific keys
+- `merge(obj)` / `mrg()` - Shallow merge objects
+- `deepMerge(obj)` / `dMrg()` - Deep merge objects
+- `fromPairs()` / `frPrs()` - Convert pairs to object
+- `toPairs()` / `toPrs()` - Convert object to pairs
+- `has(key)` / `hs()` - Check if key exists
+- `pluck(key)` / `plk()` - Extract property from array of objects
+
+**Grouping & Sorting:**
+- `groupBy(fn)` / `grpBy()` - Group by key function
+- `sortBy(fn)` / `srtBy()` - Sort by key function
+
+**Math & Aggregation:**
+- `sum()` - Sum of numbers
+- `mean()` / `avg()` - Average of numbers
+- `min()` - Minimum value
+- `max()` - Maximum value
+- `floor()` / `flr()` - Floor number
+- `ceil()` / `cl()` - Ceiling number
+- `round()` / `rnd()` - Round number
+- `abs()` - Absolute value
+
+**String Operations:**
+- `split(sep)` / `spl()` - Split string by separator
+- `join(sep)` / `jn()` - Join array with separator
+- `startswith(s)` / `stw()` - Check if starts with string
+- `endswith(s)` / `edw()` - Check if ends with string
+- `ltrimstr(s)` / `ltrm()` - Remove prefix
+- `rtrimstr(s)` / `rtrm()` - Remove suffix
+- `tostring()` / `tstr()` - Convert to string
+- `tonumber()` / `tnum()` - Convert to number
+
+**Type & Inspection:**
+- `type()` / `typ()` - Get value type
+- `len()` - Get length
+- `count()` / `cnt()` - Count items
+- `isEmpty()` / `emp()` - Check if empty
+- `isNil()` / `nil()` - Check if null/undefined
+- `contains(val)` / `ctns()` - Check if contains value
+
+**Path Operations:**
+- `path()` / `pth()` - Get all paths in structure
+- `getpath(path)` / `gpth()` - Get value at path
+- `setpath(path)` / `spth()` - Set value at path
+- `recurse()` / `rec()` - Recursively collect all values
+
+**Control Flow:**
+- `select(fn)` / `sel()` - Filter by predicate (jq-style)
+- `empty()` - Return nothing
+- `error(msg)` - Throw error
+- `debug()` / `dbg()` - Debug output
+- `not()` - Boolean negation
+- `range(n)` / `rng()` - Generate range [0, n)
+
+**Composition:**
+- `pipe(expr1, expr2, ...)` - Apply expressions left-to-right
+- `compose(expr1, expr2, ...)` - Apply expressions right-to-left
+- `id()` - Identity function
+
+```bash
+# Builtin examples
+echo '[1, 2, 3, 4, 5]' | 1ls 'head()'      # 1
+echo '[1, 2, 3, 4, 5]' | 1ls 'take(3)'     # [1, 2, 3]
+echo '[1, 2, 2, 3]' | 1ls 'uniq()'         # [1, 2, 3]
+echo '{"a": 1, "b": 2}' | 1ls 'keys()'     # ["a", "b"]
+echo '[1, 2, 3]' | 1ls 'sum()'             # 6
+echo '"hello"' | 1ls 'split("")'           # ["h", "e", "l", "l", "o"]
+echo '42' | 1ls 'type()'                   # "number"
+echo 'null' | 1ls 'range(5)'               # [0, 1, 2, 3, 4]
+```
 
 ### Arrow Functions
 Full support for arrow functions in method calls:
@@ -520,6 +632,9 @@ MIT © Jeff Wainwright
 | Shortcuts | ✓ | x | x |
 | Arrow Functions | ✓ | x | ✓ |
 | File Operations | ✓ | x | x |
+| jq Builtins | ✓ | ✓ | x |
+| Recursive Descent (`..`) | ✓ | ✓ | x |
+| Null Coalescing (`??`) | ✓ | ✓ | x |
 
 ## Troubleshooting
 

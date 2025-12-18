@@ -34,14 +34,14 @@ test('Shortcuts: shorten chained methods', () => {
 });
 
 test('Shortcuts: expand complex expression', () => {
-  const input = '.users.mp(u => u.name).flt(n => n.lc().stsWith("j"))';
-  const expected = '.users.map(u => u.name).filter(n => n.toLowerCase().startsWith("j"))';
+  const input = '.users.mp(.name).flt(.lc().stsWith("j"))';
+  const expected = '.users.map(x => x.name).filter(x => x.toLowerCase().startsWith("j"))';
   expect(expandShortcuts(input)).toBe(expected);
 });
 
 test('Shortcuts: shorten complex expression', () => {
   const input = '.users.map(u => u.name).filter(n => n.toLowerCase().startsWith("j"))';
-  const expected = '.users.mp(u => u.name).flt(n => n.lc().stsWith("j"))';
+  const expected = '.users.mp(.name).flt(.lc().stsWith("j"))';
   expect(shortenExpression(input)).toBe(expected);
 });
 
@@ -119,4 +119,28 @@ test('Shortcuts: getShortcutHelp returns formatted help text', () => {
   expect(help).toContain('.mp');
   expect(help).toContain('.map');
   expect(help).toContain('Examples');
+});
+
+test('Shortcuts: expand implicit property access', () => {
+  expect(expandShortcuts('.mp(.name)')).toBe('.map(x => x.name)');
+  expect(expandShortcuts('.flt(.active)')).toBe('.filter(x => x.active)');
+  expect(expandShortcuts('.fnd(.id === 1)')).toBe('.find(x => x.id === 1)');
+});
+
+test('Shortcuts: expand implicit property with operators', () => {
+  expect(expandShortcuts('.flt(.age > 30)')).toBe('.filter(x => x.age > 30)');
+  expect(expandShortcuts('.flt(.active && .verified)')).toBe('.filter(x => x.active && x.verified)');
+});
+
+test('Shortcuts: shorten to implicit property access', () => {
+  expect(shortenExpression('.map(x => x.name)')).toBe('.mp(.name)');
+  expect(shortenExpression('.filter(u => u.active)')).toBe('.flt(.active)');
+  expect(shortenExpression('.find(item => item.id === 1)')).toBe('.fnd(.id === 1)');
+});
+
+test('Shortcuts: roundtrip implicit property access', () => {
+  const short = '.mp(.name).flt(.age > 30)';
+  const expanded = expandShortcuts(short);
+  const shortened = shortenExpression(expanded);
+  expect(shortened).toBe(short);
 });

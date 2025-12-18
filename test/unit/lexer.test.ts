@@ -76,3 +76,55 @@ test('Lexer: string literal', () => {
   expect(tokens[1].type).toBe(TokenType.STRING);
   expect(tokens[1].value).toBe('complex-key');
 });
+
+test('Lexer: recursive descent operator (..)', () => {
+  const lexer = new Lexer('..');
+  const tokens = lexer.tokenize();
+
+  expect(tokens).toHaveLength(2);
+  expect(tokens[0].type).toBe(TokenType.DOUBLE_DOT);
+  expect(tokens[0].value).toBe('..');
+  expect(tokens[1].type).toBe(TokenType.EOF);
+});
+
+test('Lexer: recursive descent with property access', () => {
+  const lexer = new Lexer('..name');
+  const tokens = lexer.tokenize();
+
+  expect(tokens).toHaveLength(3);
+  expect(tokens[0].type).toBe(TokenType.DOUBLE_DOT);
+  expect(tokens[1].type).toBe(TokenType.IDENTIFIER);
+  expect(tokens[1].value).toBe('name');
+});
+
+test('Lexer: optional access operator (?)', () => {
+  const lexer = new Lexer('.foo?');
+  const tokens = lexer.tokenize();
+
+  expect(tokens).toHaveLength(4);
+  expect(tokens[0].type).toBe(TokenType.DOT);
+  expect(tokens[1].type).toBe(TokenType.IDENTIFIER);
+  expect(tokens[2].type).toBe(TokenType.QUESTION);
+  expect(tokens[2].value).toBe('?');
+});
+
+test('Lexer: null coalescing operator (??)', () => {
+  const lexer = new Lexer('.foo ?? "default"');
+  const tokens = lexer.tokenize();
+
+  expect(tokens).toHaveLength(5);
+  expect(tokens[0].type).toBe(TokenType.DOT);
+  expect(tokens[1].type).toBe(TokenType.IDENTIFIER);
+  expect(tokens[2].type).toBe(TokenType.DOUBLE_QUESTION);
+  expect(tokens[2].value).toBe('??');
+  expect(tokens[3].type).toBe(TokenType.STRING);
+});
+
+test('Lexer: combined optional and null coalescing', () => {
+  const lexer = new Lexer('.foo? ?? "default"');
+  const tokens = lexer.tokenize();
+
+  expect(tokens).toHaveLength(6);
+  expect(tokens[2].type).toBe(TokenType.QUESTION);
+  expect(tokens[3].type).toBe(TokenType.DOUBLE_QUESTION);
+});

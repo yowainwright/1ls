@@ -39,10 +39,13 @@ export interface CliOptions
   version?: boolean;
   interactive?: boolean;
   strict?: boolean;
+  slurp?: boolean;
+  nullInput?: boolean;
 }
 
 export enum TokenType {
   DOT = "DOT",
+  DOUBLE_DOT = "DOUBLE_DOT",
   IDENTIFIER = "IDENTIFIER",
   LEFT_BRACKET = "LEFT_BRACKET",
   RIGHT_BRACKET = "RIGHT_BRACKET",
@@ -56,6 +59,8 @@ export enum TokenType {
   COMMA = "COMMA",
   ARROW = "ARROW",
   OPERATOR = "OPERATOR",
+  QUESTION = "QUESTION",
+  DOUBLE_QUESTION = "DOUBLE_QUESTION",
   EOF = "EOF",
 }
 
@@ -74,7 +79,10 @@ export type ASTNode =
   | ArraySpreadNode
   | LiteralNode
   | ArrowFunctionNode
-  | RootNode;
+  | RootNode
+  | RecursiveDescentNode
+  | OptionalAccessNode
+  | NullCoalescingNode;
 
 export interface PropertyAccessNode {
   type: "PropertyAccess";
@@ -129,4 +137,21 @@ export interface ArrowFunctionNode {
 export interface RootNode {
   type: "Root";
   expression?: ASTNode;
+}
+
+export interface RecursiveDescentNode {
+  type: "RecursiveDescent";
+  object?: ASTNode;
+}
+
+export interface OptionalAccessNode {
+  type: "OptionalAccess";
+  expression: ASTNode;
+  object?: ASTNode;
+}
+
+export interface NullCoalescingNode {
+  type: "NullCoalescing";
+  left: ASTNode;
+  right: ASTNode;
 }

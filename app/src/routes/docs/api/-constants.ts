@@ -5,6 +5,11 @@ export const API_PAGES = [
     description: 'map, filter, reduce, find, sort, and more.',
   },
   {
+    href: '/docs/api/builtins',
+    title: 'Builtin Functions',
+    description: 'jq-compatible builtins: head, tail, keys, sum, type, and more.',
+  },
+  {
     href: '/docs/api/shortcuts',
     title: 'Shortcuts',
     description: 'Abbreviations for common operations.',

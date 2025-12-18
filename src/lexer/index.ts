@@ -43,6 +43,26 @@ export class Lexer {
   private nextToken(): Token | null {
     const startPos = this.position;
 
+    const isDoubleDot = this.current === "." && this.peek() === ".";
+    if (isDoubleDot) {
+      this.advance();
+      this.advance();
+      return createToken(TokenType.DOUBLE_DOT, "..", startPos);
+    }
+
+    const isDoubleQuestion = this.current === "?" && this.peek() === "?";
+    if (isDoubleQuestion) {
+      this.advance();
+      this.advance();
+      return createToken(TokenType.DOUBLE_QUESTION, "??", startPos);
+    }
+
+    const isSingleQuestion = this.current === "?";
+    if (isSingleQuestion) {
+      this.advance();
+      return createToken(TokenType.QUESTION, "?", startPos);
+    }
+
     const tokenType = SINGLE_CHAR_TOKENS[this.current];
     if (tokenType) {
       const char = this.current;

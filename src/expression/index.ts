@@ -11,6 +11,9 @@ import {
   ArraySpreadNode,
   ArrowFunctionNode,
   RootNode,
+  RecursiveDescentNode,
+  OptionalAccessNode,
+  NullCoalescingNode,
 } from "../types";
 import { createLiteralNode, tryParseLiteralIdentifier } from "./utils";
 
@@ -70,6 +73,18 @@ export function createRootNode(expression?: ASTNode): RootNode {
   return { type: "Root", expression };
 }
 
+export function createRecursiveDescentNode(object?: ASTNode): RecursiveDescentNode {
+  return { type: "RecursiveDescent", object };
+}
+
+export function createOptionalAccessNode(expression: ASTNode, object?: ASTNode): OptionalAccessNode {
+  return { type: "OptionalAccess", expression, object };
+}
+
+export function createNullCoalescingNode(left: ASTNode, right: ASTNode): NullCoalescingNode {
+  return { type: "NullCoalescing", left, right };
+}
+
 export const VALID_OBJECT_OPERATIONS: readonly ObjectOperationType[] = [
   "keys",
   "values",
@@ -115,15 +130,24 @@ export class ExpressionParser {
   private parsePrimaryNode(): ASTNode {
     const currentType = this.current.type;
 
-    if (currentType === TokenType.DOT) {
+    const isDoubleDot = currentType === TokenType.DOUBLE_DOT;
+    if (isDoubleDot) {
       this.advance();
-      if (this.current.type === TokenType.EOF) {
+      return createRecursiveDescentNode();
+    }
+
+    const isDot = currentType === TokenType.DOT;
+    if (isDot) {
+      this.advance();
+      const isEndOfExpression = this.current.type === TokenType.EOF;
+      if (isEndOfExpression) {
         return createRootNode();
       }
       return this.parseAccessChain();
     }
 
-    if (currentType === TokenType.LEFT_BRACKET) {
+    const isLeftBracket = currentType === TokenType.LEFT_BRACKET;
+    if (isLeftBracket) {
       return this.parseArrayAccess();
     }
 
@@ -478,17 +502,42 @@ export class ExpressionParser {
     while (true) {
       const tokenType = this.current.type;
 
-      if (tokenType === TokenType.DOT) {
+      const isDoubleDot = tokenType === TokenType.DOUBLE_DOT;
+      if (isDoubleDot) {
+        this.advance();
+        current = createRecursiveDescentNode(current);
+        continue;
+      }
+
+      const isDot = tokenType === TokenType.DOT;
+      if (isDot) {
         current = this.parsePostfixDot(current);
         continue;
       }
 
-      if (tokenType === TokenType.LEFT_BRACKET) {
+      const isLeftBracket = tokenType === TokenType.LEFT_BRACKET;
+      if (isLeftBracket) {
         current = this.parseBracketAccess(current);
         continue;
       }
 
-      if (tokenType === TokenType.LEFT_PAREN) {
+      const isQuestion = tokenType === TokenType.QUESTION;
+      if (isQuestion) {
+        this.advance();
+        current = createOptionalAccessNode(current);
+        continue;
+      }
+
+      const isDoubleQuestion = tokenType === TokenType.DOUBLE_QUESTION;
+      if (isDoubleQuestion) {
+        this.advance();
+        const right = this.parsePrimary();
+        current = createNullCoalescingNode(current, right);
+        continue;
+      }
+
+      const isLeftParen = tokenType === TokenType.LEFT_PAREN;
+      if (isLeftParen) {
         const isPropertyAccess = current.type === "PropertyAccess";
         const hasNoObject = isPropertyAccess && !(current as PropertyAccessNode).object;
         if (hasNoObject) {
