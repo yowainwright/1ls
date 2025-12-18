@@ -1,5 +1,7 @@
-import { ASTNode, ArrowFunctionNode, MethodCallNode } from "../types";
+import { ASTNode, ArrowFunctionNode, MethodCallNode, RecursiveDescentNode, OptionalAccessNode, NullCoalescingNode } from "../types";
 import { EvaluationContext, OperatorFunction } from "./types";
+import { BUILTIN_FUNCTIONS } from "../utils/constants";
+import { isBuiltin, executeBuiltin } from "./builtins";
 
 export const OPERATORS: Readonly<Record<string, OperatorFunction>> = {
   "+": (left: unknown, right: unknown) => (left as number) + (right as number),
@@ -192,6 +194,15 @@ export class JsonNavigator {
       case "ArrowFunction":
         return this.createFunction(ast);
 
+      case "RecursiveDescent":
+        return this.evaluateRecursiveDescent(ast, data);
+
+      case "OptionalAccess":
+        return this.evaluateOptionalAccess(ast, data);
+
+      case "NullCoalescing":
+        return this.evaluateNullCoalescing(ast, data);
+
       default:
         throw new Error(`Unknown AST node type: ${(ast as ASTNode).type}`);
     }
@@ -218,7 +229,20 @@ export class JsonNavigator {
   }
 
   private evaluateMethodCall(ast: MethodCallNode, data: unknown): unknown {
+    if (ast.method === BUILTIN_FUNCTIONS.PIPE) {
+      return this.evaluatePipe(ast.args, data);
+    }
+
+    if (ast.method === BUILTIN_FUNCTIONS.COMPOSE) {
+      return this.evaluatePipe([...ast.args].reverse(), data);
+    }
+
     const target = ast.object ? this.evaluate(ast.object, data) : data;
+
+    if (isBuiltin(ast.method)) {
+      const evaluatedArgs = ast.args.map((arg) => this.evaluateArg(arg, data));
+      return executeBuiltin(ast.method, target, evaluatedArgs);
+    }
 
     const isOperator = isOperatorMethod(ast.method);
     if (isOperator) {
@@ -231,7 +255,48 @@ export class JsonNavigator {
     return callMethod(target, ast.method, evaluatedArgs);
   }
 
-  private createFunction(node: ArrowFunctionNode): Function {
+  private evaluatePipe(args: ASTNode[], data: unknown): unknown {
+    return args.reduce((result, arg) => this.evaluate(arg, result), data);
+  }
+
+  private evaluateRecursiveDescent(ast: RecursiveDescentNode, data: unknown): unknown[] {
+    const baseData = ast.object ? this.evaluate(ast.object, data) : data;
+    return this.collectAllValues(baseData);
+  }
+
+  private collectAllValues(data: unknown): unknown[] {
+    const isArrayData = Array.isArray(data);
+    const isObjectData = data !== null && typeof data === "object" && !isArrayData;
+    const self = [data];
+
+    if (isArrayData) {
+      const children = data.flatMap((item) => this.collectAllValues(item));
+      return [...self, ...children];
+    }
+
+    if (isObjectData) {
+      const children = Object.values(data as Record<string, unknown>).flatMap((val) => this.collectAllValues(val));
+      return [...self, ...children];
+    }
+
+    return self;
+  }
+
+  private evaluateOptionalAccess(ast: OptionalAccessNode, data: unknown): unknown {
+    try {
+      return this.evaluate(ast.expression, data);
+    } catch {
+      return null;
+    }
+  }
+
+  private evaluateNullCoalescing(ast: NullCoalescingNode, data: unknown): unknown {
+    const leftValue = this.evaluate(ast.left, data);
+    const isNullish = leftValue === null || leftValue === undefined;
+    return isNullish ? this.evaluate(ast.right, data) : leftValue;
+  }
+
+  private createFunction(node: ArrowFunctionNode): (...args: unknown[]) => unknown {
     return (...args: unknown[]) => {
       const context = createParameterContext(node.params, args);
       return this.evaluateFunctionBody(node.body, context);

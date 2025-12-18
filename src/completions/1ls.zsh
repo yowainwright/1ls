@@ -1,10 +1,8 @@
 #compdef 1ls
-# Zsh completion for 1ls
 
 _1ls() {
     local -a opts format_opts shortcuts json_paths
 
-    # Main options
     opts=(
         '--help[Show help]'
         '--version[Show version]'
@@ -24,10 +22,11 @@ _1ls() {
         '--shortcuts[Show all available shortcuts]'
         '--shorten[Convert expression to shorthand]:expression:'
         '--expand[Convert shorthand to full form]:expression:'
+        '--slurp[Read all inputs into array]'
+        '--null-input[Use null as input]'
         'readFile[Read from file]:file:_files'
     )
 
-    # Common shorthand methods
     shortcuts=(
         '.mp:map - Transform each element'
         '.flt:filter - Filter elements'
@@ -46,16 +45,79 @@ _1ls() {
         '.trm:trim - Remove whitespace'
     )
 
-    # JSON path examples
+    builtins=(
+        'head:hd - First element'
+        'last:lst - Last element'
+        'tail:tl - All but first'
+        'take:tk - Take n elements'
+        'drop:drp - Drop n elements'
+        'uniq:unq - Unique values'
+        'flatten:fltn - Flatten nested'
+        'rev:Reverse array'
+        'groupBy:grpBy - Group by key'
+        'sortBy:srtBy - Sort by key'
+        'chunk:chnk - Split into chunks'
+        'compact:cmpct - Remove falsy'
+        'pick:pk - Pick keys'
+        'omit:omt - Omit keys'
+        'keys:ks - Object keys'
+        'vals:Object values'
+        'merge:mrg - Shallow merge'
+        'deepMerge:dMrg - Deep merge'
+        'fromPairs:frPrs - Pairs to object'
+        'toPairs:toPrs - Object to pairs'
+        'sum:Sum array'
+        'mean:avg - Average'
+        'min:Minimum'
+        'max:Maximum'
+        'len:Length'
+        'count:cnt - Count items'
+        'isEmpty:emp - Check if empty'
+        'isNil:nil - Check if null/undefined'
+        'pluck:plk - Extract property'
+        'pipe:Compose left-to-right'
+        'compose:Compose right-to-left'
+        'id:Identity function'
+        'type:typ - Get value type'
+        'range:rng - Generate range'
+        'has:hs - Check if key exists'
+        'nth:Get nth element'
+        'contains:ctns - Check if contains'
+        'add:Concat/sum values'
+        'path:pth - Get all paths'
+        'getpath:gpth - Get value at path'
+        'setpath:spth - Set value at path'
+        'recurse:rec - Recurse all values'
+        'split:spl - Split string'
+        'join:jn - Join array'
+        'startswith:stw - Check prefix'
+        'endswith:edw - Check suffix'
+        'ltrimstr:ltrm - Trim prefix'
+        'rtrimstr:rtrm - Trim suffix'
+        'tostring:tstr - Convert to string'
+        'tonumber:tnum - Convert to number'
+        'floor:flr - Floor number'
+        'ceil:cl - Ceil number'
+        'round:rnd - Round number'
+        'abs:Absolute value'
+        'not:Boolean negation'
+        'select:sel - Filter by predicate'
+        'empty:Return nothing'
+        'error:Throw error'
+        'debug:dbg - Debug output'
+    )
+
     json_paths=(
         '.:Root object'
         '.[]:All array elements'
+        '..:Recursive descent'
         '.{keys}:Object keys'
         '.{values}:Object values'
         '.{entries}:Object entries'
+        '.foo?:Optional access'
+        '.foo ?? default:Null coalescing'
     )
 
-    # Check context and provide appropriate completions
     local curcontext="$curcontext" state line
     typeset -A opt_args
 
@@ -65,11 +127,11 @@ _1ls() {
 
     case $state in
         args)
-            # If typing starts with ., offer shortcuts and paths
             if [[ $words[$CURRENT] == .* ]]; then
                 _describe -t shortcuts 'shortcuts' shortcuts
                 _describe -t paths 'json paths' json_paths
             else
+                _describe -t builtins 'builtin functions' builtins
                 _arguments "${opts[@]}"
             fi
             ;;

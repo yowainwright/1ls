@@ -16,4 +16,6 @@ export const DEFAULT_OPTIONS: CliOptions = {
   ignoreCase: false,
   showLineNumbers: false,
   inputFormat: undefined,
+  slurp: false,
+  nullInput: false,
 };

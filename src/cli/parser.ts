@@ -1,6 +1,11 @@
 import { CliOptions } from "../types";
 import { DataFormat } from "../utils/types";
 import { VALID_OUTPUT_FORMATS, VALID_INPUT_FORMATS, DEFAULT_OPTIONS } from "./constants";
+import { BUILTIN_FUNCTIONS } from "../utils/constants";
+import { BUILTIN_SHORTCUTS } from "../utils/shortcuts";
+
+const BUILTIN_NAMES = Object.values(BUILTIN_FUNCTIONS);
+const SHORTCUT_NAMES = BUILTIN_SHORTCUTS.map((s) => s.short);
 
 export function parseArgs(args: string[]): CliOptions {
   const options: CliOptions = { ...DEFAULT_OPTIONS };
@@ -155,9 +160,21 @@ export function parseArgs(args: string[]): CliOptions {
         options.strict = true;
         break;
 
+      case "--slurp":
+      case "-S":
+        options.slurp = true;
+        break;
+
+      case "--null-input":
+      case "-N":
+        options.nullInput = true;
+        break;
+
       default:
-        const isExpressionStart = arg.startsWith(".") || arg.startsWith("[");
-        if (isExpressionStart) {
+        const isDotOrBracket = arg.startsWith(".") || arg.startsWith("[");
+        const isBuiltinFunction = BUILTIN_NAMES.some((name) => arg.startsWith(`${name}(`));
+        const isShortcutFunction = SHORTCUT_NAMES.some((name) => arg.startsWith(`${name}(`));
+        if (isDotOrBracket || isBuiltinFunction || isShortcutFunction) {
           options.expression = arg;
         }
         break;
