@@ -18,4 +18,10 @@ export const DOCS_NAV: NavSection[] = [
       { title: 'Multi-format', href: '/docs/api/formats' },
     ],
   },
+  {
+    title: 'Performance',
+    items: [
+      { title: 'Benchmarks', href: '/docs/benchmarks' },
+    ],
+  },
 ]
