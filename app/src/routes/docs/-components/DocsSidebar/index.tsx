@@ -1,38 +1,14 @@
 import { useState } from 'react'
 import { Link, useLocation } from '@tanstack/react-router'
-import { ChevronRight, Menu, X } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from '@/components/ui/sheet'
+import { ChevronRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { DOCS_NAV } from './constants'
 import type { NavSection, NavItem } from './types'
 
 export function DocsSidebar() {
   const location = useLocation()
-  const [mobileOpen, setMobileOpen] = useState(false)
 
-  return (
-    <>
-      <MobileSidebarTrigger open={mobileOpen} onOpenChange={setMobileOpen} pathname={location.pathname} />
-      <DesktopSidebar pathname={location.pathname} />
-    </>
-  )
-}
-
-interface MobileSidebarTriggerProps {
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  pathname: string
-}
-
-function MobileSidebarTrigger({ open, onOpenChange, pathname }: MobileSidebarTriggerProps) {
-  return null
+  return <DesktopSidebar pathname={location.pathname} />
 }
 
 interface DesktopSidebarProps {

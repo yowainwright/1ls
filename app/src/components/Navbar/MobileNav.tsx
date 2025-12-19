@@ -1,6 +1,7 @@
 import { useState } from "react"
 import { Link, useLocation } from "@tanstack/react-router"
-import { Menu, Home, FileText, Play, Github } from "lucide-react"
+import { Menu, Github } from "lucide-react"
+import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import {
   Sheet,
@@ -10,12 +11,6 @@ import {
   SheetDescription,
 } from "@/components/ui/sheet"
 import { NAV_LINKS, GITHUB_URL } from "./constants"
-
-const NAV_ICONS: Record<string, React.ReactNode> = {
-  "/": <Home className="h-5 w-5" />,
-  "/docs": <FileText className="h-5 w-5" />,
-  "/playground": <Play className="h-5 w-5" />,
-}
 
 export function MobileNav() {
   const [open, setOpen] = useState(false)
@@ -44,18 +39,20 @@ export function MobileNav() {
               <ul className="flex flex-col gap-1 px-4">
                 {NAV_LINKS.map((link) => {
                   const isActive = location.pathname === link.href
+                  const Icon = link.icon
                   return (
                     <li key={link.href}>
                       <Link
                         to={link.href}
                         onClick={() => setOpen(false)}
-                        className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                        className={cn(
+                          "flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors",
                           isActive
                             ? "bg-accent text-accent-foreground"
                             : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
-                        }`}
+                        )}
                       >
-                        {NAV_ICONS[link.href]}
+                        {Icon && <Icon className="h-5 w-5" />}
                         {link.label}
                       </Link>
                     </li>
