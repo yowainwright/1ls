@@ -5,7 +5,7 @@ import {
   getFullMethod,
   getShortMethod,
   isShortcut
-} from '../../src/utils/shortcuts';
+} from '../../src/shortcuts';
 
 test('Shortcuts: expand single shortcut', () => {
   expect(expandShortcuts('.mp')).toBe('.map');
@@ -108,7 +108,7 @@ test('Shortcuts: handle string methods correctly', () => {
 });
 
 test('Shortcuts: getShortcutHelp returns formatted help text', () => {
-  const { getShortcutHelp } = require('../../src/utils/shortcuts');
+  const { getShortcutHelp } = require('../../src/shortcuts');
   const help = getShortcutHelp();
 
   expect(typeof help).toBe('string');

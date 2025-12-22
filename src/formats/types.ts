@@ -1,3 +1,20 @@
+export type DataFormat =
+  | "json"
+  | "json5"
+  | "yaml"
+  | "toml"
+  | "xml"
+  | "ini"
+  | "csv"
+  | "tsv"
+  | "protobuf"
+  | "javascript"
+  | "typescript"
+  | "env"
+  | "ndjson"
+  | "lines"
+  | "text";
+
 export interface CSVOptions {
   delimiter: string;
 }

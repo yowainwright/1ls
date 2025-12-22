@@ -1,4 +1,4 @@
-import { DataFormat } from "./utils/types";
+import { DataFormat } from "./formats/types";
 
 export type OutputFormat = "json" | "yaml" | "csv" | "table";
 

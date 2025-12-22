@@ -1,4 +1,4 @@
-import type { DataFormat } from "../utils/types";
+import type { DataFormat } from "./types";
 import { DETECTION } from "./constants";
 
 export function parseLines(input: string): string[] {

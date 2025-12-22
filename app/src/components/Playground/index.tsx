@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react"
 import EditorModule from "react-simple-code-editor"
-import { Minimize2, Maximize2, Share2, Check } from "lucide-react"
+import { Share2, Check } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Codeblock, CopyButton, getHighlighter, THEME, LANGUAGES } from "@/components/Codeblock"
 import type { Highlighter } from "shiki"
@@ -119,7 +119,6 @@ export function Playground({ mode = "preset" }: PlaygroundProps) {
     format: "json",
     input: isSandbox ? SANDBOX_STARTER.json.data : FORMAT_CONFIGS.json.placeholder,
     expression: isSandbox ? SANDBOX_STARTER.json.expression : DEFAULT_EXPRESSION,
-    isMinified: false,
     showMinifiedExpression: false,
   }))
 
@@ -180,28 +179,8 @@ export function Playground({ mode = "preset" }: PlaygroundProps) {
       return {
         ...prev,
         format: newFormat,
-        input: prev.isMinified ? minifyInput(newInput, newFormat) : newInput,
+        input: newInput,
         expression: FORMAT_CONFIGS[newFormat].suggestions[0]?.expression || ".",
-      }
-    })
-  }, [isSandbox])
-
-  const handleMinifyToggle = useCallback(() => {
-    setState((prev) => {
-      const newMinified = !prev.isMinified
-      if (isSandbox) {
-        return {
-          ...prev,
-          isMinified: newMinified,
-          input: newMinified ? minifyInput(prev.input, prev.format) : prev.input,
-        }
-      }
-      return {
-        ...prev,
-        isMinified: newMinified,
-        input: newMinified
-          ? minifyInput(prev.input, prev.format)
-          : FORMAT_CONFIGS[prev.format].placeholder,
       }
     })
   }, [isSandbox])
@@ -239,12 +218,10 @@ export function Playground({ mode = "preset" }: PlaygroundProps) {
             format={state.format}
             input={state.input}
             expression={state.expression}
-            isMinified={state.isMinified}
             showMinifiedExpression={state.showMinifiedExpression}
             onFormatChange={handleFormatChange}
             onInputChange={handleInputChange}
             onExpressionChange={handleExpressionChange}
-            onMinifyToggle={handleMinifyToggle}
             onShowMinifiedToggle={handleShowMinifiedToggle}
             onSuggestionClick={handleExpressionChange}
           />
@@ -255,28 +232,15 @@ export function Playground({ mode = "preset" }: PlaygroundProps) {
   )
 }
 
-function minifyInput(input: string, format: Format): string {
-  if (format === "json") {
-    try {
-      return JSON.stringify(JSON.parse(input))
-    } catch {
-      return input
-    }
-  }
-  return input.split("\n").map(l => l.trim()).filter(Boolean).join("\n")
-}
-
 function InputPanel({
   mode,
   format,
   input,
   expression,
-  isMinified,
   showMinifiedExpression,
   onFormatChange,
   onInputChange,
   onExpressionChange,
-  onMinifyToggle,
   onShowMinifiedToggle,
   onSuggestionClick,
 }: InputPanelProps) {
@@ -300,19 +264,8 @@ function InputPanel({
     <div className="space-y-4">
       <FormatTabs format={format} onFormatChange={onFormatChange} />
       <div className="rounded-xl border border-border/10 bg-card shadow-md shadow-black/5 overflow-hidden dark:shadow-black/20">
-        <div className="flex items-center justify-between border-b border-border/10 bg-muted/50 px-4 py-2">
+        <div className="flex items-center justify-between border-b border-white/10 bg-white/5 px-4 py-2">
           <span className="text-sm font-medium text-muted-foreground">Input</span>
-          {!isSandbox && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={onMinifyToggle}
-              title={isMinified ? "Expand" : "Minify"}
-            >
-              {isMinified ? <Maximize2 /> : <Minimize2 />}
-              {isMinified ? "Expand" : "Minify"}
-            </Button>
-          )}
         </div>
         <Editor
           value={input}
@@ -331,10 +284,10 @@ function InputPanel({
         />
       </div>
       <div className="rounded-xl border border-border/10 bg-card shadow-md shadow-black/5 overflow-hidden dark:shadow-black/20 relative">
-        <div className="border-b border-border/10 bg-muted/50 px-4 py-2">
+        <div className="border-b border-white/10 bg-white/5 px-4 py-2">
           <span className="text-sm font-medium text-muted-foreground">Expression</span>
         </div>
-        <CopyButton code={expression} className="top-2 right-2" />
+        <CopyButton code={expression} className="top-12 right-3" />
         <Editor
           value={expression}
           onValueChange={onExpressionChange}
@@ -405,7 +358,7 @@ function OutputPanel({ output, error }: OutputPanelProps) {
     <div className="space-y-4">
       <div className="h-[42px]" />
       <div className="rounded-xl border border-border/10 bg-card shadow-md shadow-black/5 overflow-hidden dark:shadow-black/20">
-        <div className="border-b border-border/10 bg-muted/50 px-4 py-2">
+        <div className="border-b border-white/10 bg-white/5 px-4 py-2">
           <span className="text-sm font-medium text-muted-foreground">Output</span>
         </div>
         {error ? (

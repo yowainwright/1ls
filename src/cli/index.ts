@@ -2,8 +2,8 @@
 
 import { parseArgs } from "./parser";
 import { showHelp } from "./help";
-import { processInput } from "../utils/stream";
-import { readFile, listFiles, grep } from "../utils/file";
+import { processInput } from "./stream";
+import { readFile, listFiles, grep } from "../file";
 import { Lexer } from "../lexer";
 import { ExpressionParser } from "../expression";
 import { JsonNavigator } from "../navigator/json";
@@ -13,7 +13,7 @@ import {
   expandShortcuts,
   shortenExpression,
   getShortcutHelp,
-} from "../utils/shortcuts";
+} from "../shortcuts";
 import { detectFormat } from "../formats";
 import { CliOptions } from "../types";
 import { VERSION } from "../version";

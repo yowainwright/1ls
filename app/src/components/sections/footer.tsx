@@ -1,3 +1,4 @@
+import { useEffect } from "react"
 import { Github, Package } from "lucide-react"
 import { siteConfig } from "@/lib/config"
 import { LOGO_STYLES } from "@/lib/styles"
@@ -9,6 +10,12 @@ interface FooterProps {
 export default function Footer({ className = "" }: FooterProps) {
   const currentYear = new Date().getFullYear()
   const startYear = 2024
+
+  useEffect(() => {
+    const img = new Image()
+    img.referrerPolicy = "no-referrer-when-downgrade"
+    img.src = "https://static.scarf.sh/a.png?x-pxid=500dd7ce-0f58-4763-b6a7-fc992b6a12cb"
+  }, [])
 
   return (
     <footer className={`border-t border-border/10 ${className}`}>
@@ -61,12 +68,6 @@ export default function Footer({ className = "" }: FooterProps) {
             </a>
           </div>
         </div>
-        <img
-          referrerPolicy="no-referrer-when-downgrade"
-          src="https://static.scarf.sh/a.png?x-pxid=500dd7ce-0f58-4763-b6a7-fc992b6a12cb"
-          alt=""
-          className="hidden"
-        />
       </div>
     </footer>
   )

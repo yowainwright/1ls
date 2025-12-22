@@ -15,7 +15,7 @@ import {
 import { Lexer } from "../lexer";
 import { ExpressionParser } from "../expression";
 import { JsonNavigator } from "../navigator/json";
-import { expandShortcuts } from "../utils/shortcuts";
+import { expandShortcuts } from "../shortcuts";
 import type { State } from "./types";
 
 let isRawModeEnabled = false;

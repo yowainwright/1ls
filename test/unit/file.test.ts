@@ -21,7 +21,7 @@ import {
   createGrepResult,
   logVerboseError,
   extractMatchesFromLine,
-} from "../../src/utils/file";
+} from "../../src/file";
 
 describe("file utilities", () => {
   let testDir: string;

@@ -26,7 +26,7 @@ describe("stream utilities", () => {
       writable: true,
     });
 
-    const { processInput } = await import("../../src/utils/stream");
+    const { processInput } = await import("../../src/cli/stream");
     const result = await processInput();
     expect(result).toEqual({ foo: "bar", num: 42 });
   });
@@ -39,7 +39,7 @@ describe("stream utilities", () => {
       writable: true,
     });
 
-    const { processInput } = await import("../../src/utils/stream");
+    const { processInput } = await import("../../src/cli/stream");
     const result = await processInput();
     expect(result).toBeNull();
   });
@@ -53,7 +53,7 @@ describe("stream utilities", () => {
       writable: true,
     });
 
-    const { processInput } = await import("../../src/utils/stream");
+    const { processInput } = await import("../../src/cli/stream");
     const result = await processInput("yaml");
     expect(result).toEqual({ name: "test", value: 42 });
   });
@@ -67,7 +67,7 @@ describe("stream utilities", () => {
       writable: true,
     });
 
-    const { processInput } = await import("../../src/utils/stream");
+    const { processInput } = await import("../../src/cli/stream");
     const result = await processInput();
     expect(result).toEqual({ auto: "detect" });
   });
@@ -87,7 +87,7 @@ describe("stream utilities", () => {
       writable: true,
     });
 
-    const { processInput } = await import("../../src/utils/stream");
+    const { processInput } = await import("../../src/cli/stream");
     const result = await processInput();
     expect(result).toEqual([1, 2, 3]);
   });

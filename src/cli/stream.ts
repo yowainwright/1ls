@@ -1,5 +1,5 @@
 import { parseInput } from "../formats";
-import type { DataFormat } from "./types";
+import type { DataFormat } from "../formats/types";
 
 export async function processInput(format?: DataFormat): Promise<unknown> {
   const chunks: Buffer[] = [];

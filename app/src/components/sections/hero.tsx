@@ -1,10 +1,21 @@
+import { useState } from "react"
 import { motion } from "framer-motion"
 import { Logo } from "@/components/Logo"
 import { siteConfig } from "@/lib/config"
-import { GRADIENT_HEADER_STYLES, EASE_CURVE } from "@/lib/styles"
-import { Github } from "lucide-react"
+import { EASE_CURVE, GRADIENT_HEADER_STYLES } from "@/lib/styles"
+import { Github, Copy, Check } from "lucide-react"
+
+const INSTALL_COMMAND = "npm install -g 1ls"
 
 export default function Hero() {
+  const [copied, setCopied] = useState(false)
+
+  const handleCopy = async () => {
+    await navigator.clipboard.writeText(INSTALL_COMMAND)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
+
   return (
     <section className="relative flex min-h-[90vh] items-center justify-center overflow-hidden px-4 py-16 md:py-24">
       <div className="container mx-auto max-w-5xl">
@@ -46,14 +57,26 @@ export default function Hero() {
               href={siteConfig.hero.secondaryCtaHref}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-8 py-3 text-base font-medium text-primary-foreground shadow-md transition-all hover:bg-primary/90 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+              className="inline-flex items-center justify-center gap-2 rounded-lg px-8 py-3 text-base font-medium text-white shadow-md transition-all hover:opacity-90 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+              style={{
+                background: "linear-gradient(90deg, rgb(var(--primary)), rgb(var(--accent)), rgb(var(--primary)))",
+                backgroundSize: "200% auto",
+              }}
             >
               <Github className="h-5 w-5" />
               {siteConfig.hero.secondaryCta}
             </a>
-            <div className="rounded-lg border border-border/10 bg-card px-4 py-3 font-mono text-sm text-card-foreground shadow-md shadow-black/5 dark:shadow-black/20">
-              <code className="text-primary">npm install -g 1ls</code>
-            </div>
+            <button
+              onClick={handleCopy}
+              className="inline-flex items-center gap-3 rounded-lg border border-border/10 bg-card px-4 py-3 font-mono text-sm text-card-foreground shadow-md shadow-black/5 transition-all hover:bg-card/80 dark:shadow-black/20"
+            >
+              <code className="text-primary">{INSTALL_COMMAND}</code>
+              {copied ? (
+                <Check className="h-4 w-4 text-green-400" />
+              ) : (
+                <Copy className="h-4 w-4 text-muted-foreground" />
+              )}
+            </button>
           </motion.div>
         </div>
       </div>
