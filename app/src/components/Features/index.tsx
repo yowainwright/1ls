@@ -1,5 +1,5 @@
 import { motion } from "framer-motion"
-import { Code, Files, Zap, Layers, Command, Folder } from "lucide-react"
+import { Code, Files, Zap, Sparkles, Command, Folder } from "lucide-react"
 import { SectionHeader } from "@/components/SectionHeader"
 import { EASE_CURVE } from "@/lib/styles"
 import { FEATURES } from "./constants"
@@ -9,7 +9,7 @@ const iconMap: Record<string, typeof Code> = {
   code: Code,
   files: Files,
   zap: Zap,
-  layers: Layers,
+  sparkles: Sparkles,
   command: Command,
   folder: Folder,
 }

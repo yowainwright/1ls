@@ -1,5 +1,6 @@
 import { stdout } from "process";
 import { clearScreen, colors, colorize, highlightMatches } from "./terminal";
+import { evaluatePreview, formatPreview, MAX_PREVIEW_LINES } from "./preview";
 import type { State, JsonPath, Method } from "./types";
 import type { FuzzyMatch } from "./types";
 
@@ -195,6 +196,27 @@ const renderBuildHelp = (): string => {
   return colorize(help, colors.dim);
 };
 
+const renderPreview = (state: State): string => {
+  if (!state.builder) return "";
+
+  const expression = state.builder.expression;
+  const data = state.originalData;
+
+  const result = evaluatePreview(expression, data);
+  const formatted = formatPreview(result);
+
+  const lines = formatted.split("\n");
+  const limitedLines = lines.slice(0, MAX_PREVIEW_LINES);
+  const preview = limitedLines.join("\n");
+
+  const previewLabel = colorize("\n\nPreview:\n", colors.bright);
+  const previewContent = result.success
+    ? colorize(preview, colors.cyan)
+    : colorize(preview, colors.yellow);
+
+  return previewLabel.concat(previewContent);
+};
+
 export const renderBuildMode = (state: State): void => {
   clearScreen();
 
@@ -207,6 +229,9 @@ export const renderBuildMode = (state: State): void => {
   const methodCount = state.methodMatches.length;
   const moreIndicator = renderMoreIndicator(methodCount);
   stdout.write(moreIndicator);
+
+  const preview = renderPreview(state);
+  stdout.write(preview);
 
   const help = renderBuildHelp();
   stdout.write(help);
@@ -224,6 +249,9 @@ export const renderArrowFnMode = (state: State): void => {
   const propertyCount = state.propertyMatches.length;
   const moreIndicator = renderMoreIndicator(propertyCount);
   stdout.write(moreIndicator);
+
+  const preview = renderPreview(state);
+  stdout.write(preview);
 
   const help = renderBuildHelp();
   stdout.write(help);

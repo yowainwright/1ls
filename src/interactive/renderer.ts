@@ -1,7 +1,8 @@
 import { stdout } from "process";
 import { clearScreen, clearLine, clearToEnd, moveCursor, colors, colorize, highlightMatches } from "./terminal";
 import { renderBuildMode, renderArrowFnMode } from "./renderer-builder";
-import type { State, JsonPath } from "./types";
+import { isMethodComplete, getPreviewForExpression } from "./tooltip";
+import type { State, JsonPath, TooltipState, Method } from "./types";
 import type { FuzzyMatch } from "./fuzzy";
 
 const MAX_VISIBLE_ITEMS = 10;
@@ -115,6 +116,49 @@ const renderHelp = (): string => {
   return colorize(help, colors.dim);
 };
 
+const formatTooltipMethod = (
+  match: FuzzyMatch<Method>,
+  isSelected: boolean,
+): string => {
+  const method = match.item;
+  const prefix = isSelected ? colorize("›", colors.cyan) : " ";
+  const signature = colorize(method.signature, colors.bright);
+  const description = colorize(" - " + method.description, colors.dim);
+  const builtinTag = method.isBuiltin ? colorize(" [builtin]", colors.yellow) : "";
+
+  return prefix.concat(" ", signature, description, builtinTag);
+};
+
+const renderTooltipHints = (tooltip: TooltipState): string[] => {
+  const hasNoHints = !tooltip.visible || tooltip.methodHints.length === 0;
+  if (hasNoHints) return [];
+
+  const header = colorize("Method hints:", colors.dim);
+  const hints = tooltip.methodHints.map((match, index) => {
+    const isSelected = index === tooltip.selectedHintIndex;
+    return formatTooltipMethod(match, isSelected);
+  });
+
+  return ["", header, ...hints];
+};
+
+const renderExpressionPreview = (state: State): string[] => {
+  const hasQuery = state.query.length > 0;
+  const queryHasMethod = state.query.includes(".");
+  const methodComplete = isMethodComplete(state.query);
+
+  const shouldShowPreview = hasQuery && queryHasMethod && methodComplete;
+  if (!shouldShowPreview) return [];
+
+  const { success, preview } = getPreviewForExpression(state.query, state.originalData);
+  const previewTitle = colorize("\nResult:", colors.bright);
+  const previewColor = success ? colors.cyan : colors.yellow;
+  const previewLines = preview.split("\n").slice(0, 5);
+  const formattedPreview = previewLines.map((line) => colorize(line, previewColor));
+
+  return [previewTitle, ...formattedPreview];
+};
+
 const calculateVisibleRange = (selectedIndex: number, totalMatches: number): { start: number; end: number } => {
   const halfWindow = Math.floor(MAX_VISIBLE_ITEMS / 2);
   const initialStart = Math.max(0, selectedIndex - halfWindow);
@@ -164,16 +208,18 @@ const buildExploreContent = (state: State): string[] => {
   const header = [renderTitle(), "", "Search: " + state.query, ""];
   const matchLines = buildMatchLines(state);
   const remainingIndicator = buildRemainingIndicator(state.matches.length);
+  const tooltipHints = renderTooltipHints(state.tooltip);
+  const expressionPreview = renderExpressionPreview(state);
   const previewLines = buildPreviewLines(state);
   const footer = ["", renderHelp().trim()];
 
-  return [
-    ...header,
-    ...matchLines,
-    ...remainingIndicator,
-    ...previewLines,
-    ...footer,
-  ];
+  return header
+    .concat(matchLines)
+    .concat(remainingIndicator)
+    .concat(tooltipHints)
+    .concat(expressionPreview)
+    .concat(previewLines)
+    .concat(footer);
 };
 
 const renderFirstTime = (lines: string[]): void => {

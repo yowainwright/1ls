@@ -1,3 +1,8 @@
+export type { Method } from "./methods/types";
+export type { TooltipState } from "./tooltip/types";
+import type { Method } from "./methods/types";
+import type { TooltipState } from "./tooltip/types";
+
 export interface JsonPath {
   path: string;
   value: unknown;
@@ -24,14 +29,6 @@ export interface ArrowFnContext {
   expression: string;
 }
 
-export interface Method {
-  name: string;
-  signature: string;
-  description: string;
-  template?: string;
-  category?: string;
-}
-
 export interface State {
   mode: InteractiveMode;
   paths: JsonPath[];
@@ -42,6 +39,7 @@ export interface State {
   originalData: unknown;
   methodMatches: FuzzyMatch<Method>[];
   propertyMatches: FuzzyMatch<JsonPath>[];
+  tooltip: TooltipState;
 }
 
 export interface FuzzyMatch<T> {

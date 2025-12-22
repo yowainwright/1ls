@@ -18,7 +18,6 @@ export interface PlaygroundState {
   format: Format
   input: string
   expression: string
-  isMinified: boolean
   showMinifiedExpression: boolean
 }
 
@@ -36,12 +35,10 @@ export interface InputPanelProps {
   format: Format
   input: string
   expression: string
-  isMinified: boolean
   showMinifiedExpression: boolean
   onFormatChange: (format: Format) => void
   onInputChange: (input: string) => void
   onExpressionChange: (expression: string) => void
-  onMinifyToggle: () => void
   onShowMinifiedToggle: () => void
   onSuggestionClick: (expression: string) => void
 }

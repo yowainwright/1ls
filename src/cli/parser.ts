@@ -1,8 +1,8 @@
 import { CliOptions } from "../types";
-import { DataFormat } from "../utils/types";
+import { DataFormat } from "../formats/types";
 import { VALID_OUTPUT_FORMATS, VALID_INPUT_FORMATS, DEFAULT_OPTIONS } from "./constants";
-import { BUILTIN_FUNCTIONS } from "../utils/constants";
-import { BUILTIN_SHORTCUTS } from "../utils/shortcuts";
+import { BUILTIN_FUNCTIONS } from "../navigator/builtins/constants";
+import { BUILTIN_SHORTCUTS } from "../shortcuts";
 
 const BUILTIN_NAMES = Object.values(BUILTIN_FUNCTIONS);
 const SHORTCUT_NAMES = BUILTIN_SHORTCUTS.map((s) => s.short);

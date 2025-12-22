@@ -1,5 +1,5 @@
 import { describe, test, expect } from "bun:test";
-import { escapeRegExp } from "../../src/utils";
+import { escapeRegExp } from "../../src/shortcuts";
 
 describe("escapeRegExp", () => {
   test("escapes dot character", () => {

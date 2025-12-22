@@ -25,6 +25,40 @@ Navigate and search JSON paths.
 - **Live preview:** See values as you navigate
 - **Type information:** Shows String, Number, Array, Object, Boolean, or null
 
+## Smart Tooltips
+
+As you type expressions, 1ls provides intelligent assistance:
+
+### Method Hints
+
+When you type a `.` followed by characters, matching method signatures appear:
+
+```
+Search: .fil
+
+Method hints:
+› .filter(x => ...) - Filter by condition
+  .find(x => ...) - Find first match
+  .findIndex(x => ...) - Find first match index
+```
+
+- **Fuzzy matching:** Type partial names to find methods
+- **Type-aware:** Shows methods relevant to your data type (Array, String, Object, Number)
+- **Builtin tags:** Custom 1ls methods are marked with `[builtin]`
+
+### Live Result Preview
+
+After completing a method expression, see the evaluated result instantly:
+
+```
+Search: .filter(x => x > 2)
+
+Result:
+[3, 4, 5]
+```
+
+This helps you verify your expression works before executing it.
+
 ## Mode 2: Expression Builder
 
 Build complex expressions with guided method selection.

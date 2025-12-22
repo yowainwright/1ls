@@ -1,4 +1,15 @@
-import { LogLevel, LogLevelType, LogData } from "./types";
+export const LogLevel = {
+  ERROR: 0,
+  WARN: 1,
+  INFO: 2,
+  DEBUG: 3,
+} as const;
+
+export type LogLevelType = (typeof LogLevel)[keyof typeof LogLevel];
+
+export interface LogData {
+  [key: string]: unknown;
+}
 
 export class Logger {
   private level: LogLevelType;

@@ -1,6 +1,5 @@
 import { describe, test, expect, mock, beforeEach, afterEach, spyOn } from "bun:test";
-import { Logger, createLogger } from "../../src/utils/logger";
-import { LogLevel } from "../../src/utils/types";
+import { Logger, createLogger, LogLevel } from "../../src/logger";
 
 describe("Logger", () => {
   let consoleErrorSpy: ReturnType<typeof spyOn>;
@@ -193,9 +192,8 @@ describe("Logger", () => {
       const originalEnv = process.env.LOG_LEVEL;
       process.env.LOG_LEVEL = "ERROR";
 
-      // Need to reload the module to pick up new env var
-      delete require.cache[require.resolve("../../src/utils/logger")];
-      const { createLogger: createLoggerWithEnv } = require("../../src/utils/logger");
+      delete require.cache[require.resolve("../../src/logger")];
+      const { createLogger: createLoggerWithEnv } = require("../../src/logger");
 
       const logger = createLoggerWithEnv("env-test");
       logger.info("should not log");

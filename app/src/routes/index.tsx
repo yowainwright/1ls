@@ -5,6 +5,7 @@ import ExamplesCarousel from '@/components/ExamplesCarousel'
 import { Features } from '@/components/Features'
 import { Insights } from '@/components/Insights'
 import { Playground } from '@/components/Playground'
+import { TooltipDemo } from '@/components/TooltipDemo'
 
 export const Route = createFileRoute('/')({
   component: HomePage,
@@ -16,6 +17,7 @@ function HomePage() {
       <main className="relative z-10">
         <Hero />
         <Features />
+        <TooltipDemo />
         <ExamplesCarousel />
         <Insights />
         <Playground />

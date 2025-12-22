@@ -1,4 +1,5 @@
 import { fuzzySearch } from "./fuzzy";
+import { createTooltipState, updateTooltipFromQuery } from "./tooltip";
 import type { State, JsonPath } from "./types";
 
 export const createInitialState = (
@@ -18,19 +19,42 @@ export const createInitialState = (
       originalData,
       methodMatches: [],
       propertyMatches: [],
+      tooltip: createTooltipState(),
     },
   );
   return state;
+};
+
+const detectDataType = (data: unknown): string => {
+  if (data === null) return "null";
+  if (Array.isArray(data)) return "Array";
+  const type = typeof data;
+  const typeMap: Record<string, string> = {
+    string: "String",
+    number: "Number",
+    boolean: "Boolean",
+    object: "Object",
+  };
+  return typeMap[type] || "unknown";
 };
 
 export const updateQuery = (state: State, newQuery: string): State => {
   const matches = fuzzySearch(state.paths, newQuery, (item) => item.path);
   const selectedIndex = matches.length > 0 ? 0 : state.selectedIndex;
 
+  const dataType = detectDataType(state.originalData);
+  const tooltipContext = {
+    query: newQuery,
+    dataType,
+    originalData: state.originalData,
+  };
+  const tooltip = updateTooltipFromQuery(tooltipContext);
+
   const newState = Object.assign({}, state, {
     query: newQuery,
     matches,
     selectedIndex,
+    tooltip,
   });
 
   return newState;

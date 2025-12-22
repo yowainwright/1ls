@@ -17,9 +17,9 @@ export const FEATURES: Feature[] = [
     icon: "zap",
   },
   {
-    title: "Powerful Operations",
-    description: "Full support for array methods, arrow functions, and object operations",
-    icon: "layers",
+    title: "Smart Tooltips",
+    description: "Get method hints as you type with live result previews",
+    icon: "sparkles",
   },
   {
     title: "Shortcuts",
