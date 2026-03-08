@@ -35,16 +35,17 @@ const detectDataType = (data: unknown): string => {
 };
 
 export const createTooltipState = (): TooltipState =>
-  Object.assign({}, {
-    visible: false,
-    methodHints: [],
-    partialMethod: "",
-    selectedHintIndex: 0,
-  });
+  Object.assign(
+    {},
+    {
+      visible: false,
+      methodHints: [],
+      partialMethod: "",
+      selectedHintIndex: 0,
+    },
+  );
 
-export const updateTooltipFromQuery = (
-  context: TooltipContext,
-): TooltipState => {
+export const updateTooltipFromQuery = (context: TooltipContext): TooltipState => {
   const partialMethod = extractPartialMethod(context.query);
   const hasNoPartial = partialMethod === null;
   if (hasNoPartial) {
@@ -58,12 +59,15 @@ export const updateTooltipFromQuery = (
 
   const hasHints = methodHints.length > 0;
 
-  return Object.assign({}, {
-    visible: hasHints,
-    methodHints,
-    partialMethod,
-    selectedHintIndex: 0,
-  });
+  return Object.assign(
+    {},
+    {
+      visible: hasHints,
+      methodHints,
+      partialMethod,
+      selectedHintIndex: 0,
+    },
+  );
 };
 
 export const selectNextHint = (tooltip: TooltipState): TooltipState => {
@@ -88,8 +92,7 @@ export const getSelectedHint = (tooltip: TooltipState): Method | null => {
   if (hasNoHints) return null;
 
   const hasValidIndex =
-    tooltip.selectedHintIndex >= 0 &&
-    tooltip.selectedHintIndex < tooltip.methodHints.length;
+    tooltip.selectedHintIndex >= 0 && tooltip.selectedHintIndex < tooltip.methodHints.length;
   if (!hasValidIndex) return null;
 
   return tooltip.methodHints[tooltip.selectedHintIndex].item;

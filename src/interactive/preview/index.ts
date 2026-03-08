@@ -32,10 +32,7 @@ const formatPreviewValue = (value: unknown, truncated: boolean): string => {
   return json + suffix;
 };
 
-export const evaluatePreview = (
-  expression: string,
-  data: unknown,
-): PreviewResult => {
+export const evaluatePreview = (expression: string, data: unknown): PreviewResult => {
   if (expression === cachedExpression && cachedResult !== null) {
     return cachedResult;
   }

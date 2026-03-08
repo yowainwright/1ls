@@ -27,7 +27,7 @@
     "app"
   ],
   "scripts": {
-    "dev": "turbo dev --filter=1ls-app",
+    "dev": "bun build ./src/browser/index.ts --outdir dist/browser --target browser --format esm && turbo dev --filter=1ls-app",
     "dev:cli": "bun run ./src/cli/index.ts",
     "build": "bun scripts/sync-version.ts && rm -rf dist bin && bun build ./src/cli/index.ts --outdir dist --target bun --minify && bun build ./src/browser/index.ts --outdir dist/browser --target browser --minify --format esm && tsc --emitDeclarationOnly --outDir dist && cp -r src/completions dist/",
     "build:binary:all": "bun scripts/sync-version.ts && rm -rf dist bin && mkdir -p bin && bun build ./src/cli/index.ts --compile --minify --target=bun-darwin-arm64 --outfile bin/1ls-darwin-arm64 && bun build ./src/cli/index.ts --compile --minify --target=bun-darwin-x64 --outfile bin/1ls-darwin-x64 && bun build ./src/cli/index.ts --compile --minify --target=bun-linux-x64 --outfile bin/1ls-linux-x64 && bun build ./src/cli/index.ts --compile --minify --target=bun-linux-arm64 --outfile bin/1ls-linux-arm64",
@@ -40,7 +40,10 @@
     "test:integration": "bun test test/integration/",
     "test:bench": "docker build -f test/benchmarks/Dockerfile -t 1ls-bench . && docker run --rm 1ls-bench",
     "test:bench:update": "bash test/benchmarks/update.sh",
-    "lint": "bunx oxlint src/",
+    "lint": "oxlint src/",
+    "lint:fix": "oxlint src/ --fix",
+    "format": "oxfmt src/",
+    "format:fix": "oxfmt src/ --write",
     "typecheck": "tsc --noEmit",
     "release": "release-it",
     "prepare": "bash scripts/setup-hooks.sh"
@@ -64,12 +67,12 @@
   },
   "homepage": "https://github.com/yowainwright/1ls",
   "devDependencies": {
-    "@types/bun": "latest",
-    "react": "^19.1.1",
-    "react-dom": "^19.1.1",
-    "release-it": "^19.0.5",
-    "turbo": "^2.3.3",
-    "typescript": "5.9.2"
+    "@types/bun": "^1.3.10",
+    "oxfmt": "^0.36.0",
+    "oxlint": "^1.51.0",
+    "release-it": "^19.2.4",
+    "turbo": "^2.8.14",
+    "typescript": "5.9.3"
   },
   "packageManager": "bun@1.1.38",
   "release-it": {

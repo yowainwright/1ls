@@ -13,8 +13,7 @@ import {
 
 export const enterBuildMode = (state: State): State => {
   const hasMatches = state.matches.length > 0;
-  const hasValidIndex =
-    state.selectedIndex >= 0 && state.selectedIndex < state.matches.length;
+  const hasValidIndex = state.selectedIndex >= 0 && state.selectedIndex < state.matches.length;
 
   if (!hasMatches || !hasValidIndex) {
     return state;
@@ -89,9 +88,7 @@ export const selectMethod = (state: State, methodIndex: number): State => {
 
   if (needsArrowFn(template)) {
     const isArrayMethod = builder.baseType === "Array";
-    const paramValue = isArrayMethod
-      ? getArraySampleValue(builder.baseValue)
-      : builder.baseValue;
+    const paramValue = isArrayMethod ? getArraySampleValue(builder.baseValue) : builder.baseValue;
 
     const arrowFnContext: ArrowFnContext = {
       paramName: getParamName(template),
@@ -217,9 +214,7 @@ export const undoLastSegment = (state: State): State => {
   const lastOpenParenIndex = expression.lastIndexOf("(");
   const shouldRemoveMethod = lastOpenParenIndex > lastDotIndex;
 
-  const newExpression = shouldRemoveMethod
-    ? expression.substring(0, lastDotIndex)
-    : expression;
+  const newExpression = shouldRemoveMethod ? expression.substring(0, lastDotIndex) : expression;
 
   if (newExpression === builder.basePath) {
     return exitBuildMode(state);

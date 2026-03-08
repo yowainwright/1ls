@@ -1,16 +1,10 @@
 import type { ShortcutMapping } from "./types";
-import {
-  REGEX_SPECIAL_CHARS,
-  IMPLICIT_PROP,
-  BUILTIN_SHORTCUTS,
-  SHORTCUTS,
-} from "./constants";
+import { REGEX_SPECIAL_CHARS, IMPLICIT_PROP, BUILTIN_SHORTCUTS, SHORTCUTS } from "./constants";
 
 export type { ShortcutMapping } from "./types";
 export { BUILTIN_SHORTCUTS, SHORTCUTS } from "./constants";
 
-export const escapeRegExp = (str: string): string =>
-  str.replace(REGEX_SPECIAL_CHARS, "\\$&");
+export const escapeRegExp = (str: string): string => str.replace(REGEX_SPECIAL_CHARS, "\\$&");
 
 const shortToFull = new Map(SHORTCUTS.map((s) => [s.short, s.full]));
 const fullToShort = new Map(SHORTCUTS.map((s) => [s.full, s.short]));
@@ -124,9 +118,7 @@ export const getShortcutHelp = (): string => {
   };
 
   const formatBuiltinSection = () => {
-    const maxShortLen = Math.max(
-      ...BUILTIN_SHORTCUTS.map((s) => s.short.length),
-    );
+    const maxShortLen = Math.max(...BUILTIN_SHORTCUTS.map((s) => s.short.length));
     const maxFullLen = Math.max(...BUILTIN_SHORTCUTS.map((s) => s.full.length));
 
     const header = `\nBuiltin Functions:\n`;

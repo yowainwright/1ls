@@ -1,4 +1,4 @@
-import { STEPS } from './constants'
+import { STEPS } from "./constants";
 
 export function ExpressionBuilderSteps() {
   return (
@@ -9,5 +9,5 @@ export function ExpressionBuilderSteps() {
         ))}
       </ol>
     </div>
-  )
+  );
 }

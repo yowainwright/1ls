@@ -18,24 +18,17 @@ import {
 
 export { parseYAMLValue, findPreviousKey } from "./utils";
 
-const resolveAliasString = (
-  value: string,
-  anchors: AnchorStore,
-): unknown => {
+const resolveAliasString = (value: string, anchors: AnchorStore): unknown => {
   const alias = value.substring(1);
   const hasAnchor = anchors[alias] !== undefined;
   return hasAnchor ? anchors[alias] : value;
 };
 
-const resolveMergeAlias = (
-  value: string,
-  anchors: AnchorStore,
-): Record<string, unknown> | null => {
+const resolveMergeAlias = (value: string, anchors: AnchorStore): Record<string, unknown> | null => {
   const alias = value.substring(1);
   const merged = anchors[alias];
 
-  const isValidMerge =
-    typeof merged === "object" && merged !== null && !Array.isArray(merged);
+  const isValidMerge = typeof merged === "object" && merged !== null && !Array.isArray(merged);
 
   return isValidMerge ? (merged as Record<string, unknown>) : null;
 };
@@ -51,21 +44,18 @@ const resolveAliases = (obj: unknown, anchors: AnchorStore): unknown => {
   const isObject = typeof obj === "object" && obj !== null;
   if (!isObject) return obj;
 
-  return Object.entries(obj).reduce<Record<string, unknown>>(
-    (result, [key, value]) => {
-      const isMergeKey = key === "<<";
-      const isAliasValue = typeof value === "string" && value.startsWith("*");
-      const isMergeAlias = isMergeKey && isAliasValue;
+  return Object.entries(obj).reduce<Record<string, unknown>>((result, [key, value]) => {
+    const isMergeKey = key === "<<";
+    const isAliasValue = typeof value === "string" && value.startsWith("*");
+    const isMergeAlias = isMergeKey && isAliasValue;
 
-      if (!isMergeAlias) {
-        return { ...result, [key]: resolveAliases(value, anchors) };
-      }
+    if (!isMergeAlias) {
+      return { ...result, [key]: resolveAliases(value, anchors) };
+    }
 
-      const merged = resolveMergeAlias(value as string, anchors);
-      return merged ? { ...result, ...merged } : result;
-    },
-    {},
-  );
+    const merged = resolveMergeAlias(value as string, anchors);
+    return merged ? { ...result, ...merged } : result;
+  }, {});
 };
 
 const findFirstContentLine = (lines: string[]): string | undefined =>
@@ -74,21 +64,15 @@ const findFirstContentLine = (lines: string[]): string | undefined =>
     return trimmed && !isDocumentMarker(trimmed);
   });
 
-const createRootContainer = (
-  lines: string[],
-): Record<string, unknown> | unknown[] => {
+const createRootContainer = (lines: string[]): Record<string, unknown> | unknown[] => {
   const firstContent = findFirstContentLine(lines);
   const isRootArray = firstContent?.trim().startsWith("- ");
   return isRootArray ? [] : {};
 };
 
-const getTopFrame = (stack: StackFrame[]): StackFrame =>
-  stack[stack.length - 1];
+const getTopFrame = (stack: StackFrame[]): StackFrame => stack[stack.length - 1];
 
-const popFramesWhile = (
-  stack: StackFrame[],
-  predicate: (frame: StackFrame) => boolean,
-): void => {
+const popFramesWhile = (stack: StackFrame[], predicate: (frame: StackFrame) => boolean): void => {
   while (stack.length > 1 && predicate(getTopFrame(stack))) {
     stack.pop();
   }
@@ -274,16 +258,7 @@ const handleKeyValueLine = (
     return lineIndex;
   }
 
-  handleEmptyValue(
-    container,
-    parsed.key,
-    lines,
-    lineIndex,
-    indent,
-    stack,
-    anchors,
-    anchorName,
-  );
+  handleEmptyValue(container, parsed.key, lines, lineIndex, indent, stack, anchors, anchorName);
 
   return lineIndex;
 };

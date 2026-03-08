@@ -8,7 +8,7 @@ const HAS_BINARY = existsSync(QJS_BINARY);
 
 async function runQJS(
   input: string,
-  args: string[] = []
+  args: string[] = [],
 ): Promise<{ stdout: string; stderr: string; exitCode: number }> {
   const proc = spawn([QJS_BINARY, ...args], {
     stdin: "pipe",
@@ -30,7 +30,6 @@ async function runQJS(
 const describeQJS = HAS_BINARY ? describe : describe.skip;
 
 describeQJS("QuickJS Binary", () => {
-
   describe("CLI flags", () => {
     test("--help shows usage", async () => {
       const result = await runQJS("", ["--help"]);
@@ -137,7 +136,9 @@ describeQJS("QuickJS Binary", () => {
     });
 
     test("accesses mixed path", async () => {
-      const result = await runQJS('{"users":[{"name":"Alice"},{"name":"Bob"}]}', [".users[0].name"]);
+      const result = await runQJS('{"users":[{"name":"Alice"},{"name":"Bob"}]}', [
+        ".users[0].name",
+      ]);
       expect(result.exitCode).toBe(0);
       expect(result.stdout.trim()).toBe('"Alice"');
     });
@@ -209,7 +210,10 @@ describeQJS("QuickJS Binary", () => {
     test("{entries} returns key-value pairs", async () => {
       const result = await runQJS('{"a":1,"b":2}', [".{entries}"]);
       expect(result.exitCode).toBe(0);
-      expect(JSON.parse(result.stdout)).toEqual([["a", 1], ["b", 2]]);
+      expect(JSON.parse(result.stdout)).toEqual([
+        ["a", 1],
+        ["b", 2],
+      ]);
     });
 
     test("{length} returns array length", async () => {
@@ -253,19 +257,17 @@ describeQJS("QuickJS Binary", () => {
 
   describe("chained operations", () => {
     test("chains filter and map", async () => {
-      const result = await runQJS(
-        '[{"name":"Alice","age":30},{"name":"Bob","age":20}]',
-        [".filter(u => u.age > 25).map(u => u.name)"]
-      );
+      const result = await runQJS('[{"name":"Alice","age":30},{"name":"Bob","age":20}]', [
+        ".filter(u => u.age > 25).map(u => u.name)",
+      ]);
       expect(result.exitCode).toBe(0);
       expect(JSON.parse(result.stdout)).toEqual(["Alice"]);
     });
 
     test("chains with shortcuts", async () => {
-      const result = await runQJS(
-        '[{"name":"Alice","age":30},{"name":"Bob","age":20}]',
-        [".flt(u => u.age > 25).mp(u => u.name)"]
-      );
+      const result = await runQJS('[{"name":"Alice","age":30},{"name":"Bob","age":20}]', [
+        ".flt(u => u.age > 25).mp(u => u.name)",
+      ]);
       expect(result.exitCode).toBe(0);
       expect(JSON.parse(result.stdout)).toEqual(["Alice"]);
     });

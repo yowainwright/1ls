@@ -4,14 +4,9 @@ import { OPERATORS } from "./constants";
 export const isOperatorMethod = (method: string): boolean =>
   method.startsWith("__operator_") && method.endsWith("__");
 
-export const extractOperator = (method: string): string =>
-  method.slice(11, -2);
+export const extractOperator = (method: string): string => method.slice(11, -2);
 
-export const executeOperator = (
-  left: unknown,
-  operator: string,
-  right: unknown,
-): unknown => {
+export const executeOperator = (left: unknown, operator: string, right: unknown): unknown => {
   const operatorFn = OPERATORS[operator];
   if (!operatorFn) {
     throw new Error(`Unknown operator: ${operator}`);
@@ -22,23 +17,17 @@ export const executeOperator = (
 export const createParameterContext = (
   params: readonly string[],
   args: readonly unknown[],
-): EvaluationContext =>
-  Object.fromEntries(params.map((param, index) => [param, args[index]]));
+): EvaluationContext => Object.fromEntries(params.map((param, index) => [param, args[index]]));
 
 export const getImplicitParameter = (context: EvaluationContext): unknown => {
   const values = Object.values(context);
   return values[0];
 };
 
-export const isValidObject = (
-  value: unknown,
-): value is Record<string, unknown> =>
+export const isValidObject = (value: unknown): value is Record<string, unknown> =>
   value !== null && typeof value === "object";
 
-export const getPropertyFromObject = (
-  obj: unknown,
-  property: string,
-): unknown => {
+export const getPropertyFromObject = (obj: unknown, property: string): unknown => {
   if (!isValidObject(obj)) return undefined;
   return obj[property];
 };
@@ -61,10 +50,8 @@ export const sliceArray = (
   if (!Array.isArray(arr)) return undefined;
 
   const arrayLen = arr.length;
-  const normalizedStart =
-    start !== undefined ? normalizeArrayIndex(start, arrayLen) : 0;
-  const normalizedEnd =
-    end !== undefined ? normalizeArrayIndex(end, arrayLen) : arrayLen;
+  const normalizedStart = start !== undefined ? normalizeArrayIndex(start, arrayLen) : 0;
+  const normalizedEnd = end !== undefined ? normalizeArrayIndex(end, arrayLen) : arrayLen;
 
   return arr.slice(normalizedStart, normalizedEnd);
 };
@@ -104,11 +91,7 @@ const hasMethodOnTarget = (target: unknown, method: string): boolean => {
 const extractErrorMessage = (error: unknown): string =>
   error instanceof Error ? error.message : String(error);
 
-export const callMethod = (
-  target: unknown,
-  method: string,
-  args: readonly unknown[],
-): unknown => {
+export const callMethod = (target: unknown, method: string, args: readonly unknown[]): unknown => {
   const methodExists = hasMethodOnTarget(target, method);
   if (!methodExists) {
     throw new Error(`Method ${method} does not exist on ${typeof target}`);

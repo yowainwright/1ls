@@ -1,5 +1,13 @@
 import { stdout } from "process";
-import { clearScreen, clearLine, clearToEnd, moveCursor, colors, colorize, highlightMatches } from "./terminal";
+import {
+  clearScreen,
+  clearLine,
+  clearToEnd,
+  moveCursor,
+  colors,
+  colorize,
+  highlightMatches,
+} from "./terminal";
 import { renderBuildMode, renderArrowFnMode } from "./renderer-builder";
 import { isMethodComplete, getPreviewForExpression } from "./tooltip";
 import type { State, JsonPath, TooltipState, Method } from "./types";
@@ -10,8 +18,7 @@ const MAX_VISIBLE_ITEMS = 10;
 let lastRenderedLines: string[] = [];
 let isFirstRender = true;
 
-const formatPath = (path: string, matches: number[]): string =>
-  highlightMatches(path, matches);
+const formatPath = (path: string, matches: number[]): string => highlightMatches(path, matches);
 
 const formatType = (type: string): string => {
   const prefix = "[";
@@ -20,8 +27,7 @@ const formatType = (type: string): string => {
   return colorize(text, colors.dim);
 };
 
-const formatValue = (displayValue: string): string =>
-  colorize(displayValue, colors.gray);
+const formatValue = (displayValue: string): string => colorize(displayValue, colors.gray);
 
 const formatPrefix = (isSelected: boolean): string => {
   const selectedPrefix = colorize("❯", colors.green);
@@ -29,10 +35,7 @@ const formatPrefix = (isSelected: boolean): string => {
   return isSelected ? selectedPrefix : unselectedPrefix;
 };
 
-const formatPathEntry = (
-  match: FuzzyMatch<JsonPath>,
-  isSelected: boolean,
-): string => {
+const formatPathEntry = (match: FuzzyMatch<JsonPath>, isSelected: boolean): string => {
   const item = match.item;
   const matches = match.matches;
 
@@ -41,10 +44,7 @@ const formatPathEntry = (
   const typeText = formatType(item.type);
   const valueText = formatValue(item.displayValue);
 
-  const line = prefix
-    .concat(" ", pathText)
-    .concat(" ", typeText)
-    .concat(" ", valueText);
+  const line = prefix.concat(" ", pathText).concat(" ", typeText).concat(" ", valueText);
 
   return line;
 };
@@ -69,9 +69,7 @@ const formatComplexPreview = (value: unknown): string => {
   const hasMore = lines.length > MAX_PREVIEW_LINES;
   const preview = colorize(limited.join("\n"), colors.cyan);
 
-  return hasMore
-    ? preview.concat(colorize("\n... (truncated)", colors.dim))
-    : preview;
+  return hasMore ? preview.concat(colorize("\n... (truncated)", colors.dim)) : preview;
 };
 
 const formatPreviewContent = (selected: JsonPath): string => {
@@ -116,10 +114,7 @@ const renderHelp = (): string => {
   return colorize(help, colors.dim);
 };
 
-const formatTooltipMethod = (
-  match: FuzzyMatch<Method>,
-  isSelected: boolean,
-): string => {
+const formatTooltipMethod = (match: FuzzyMatch<Method>, isSelected: boolean): string => {
   const method = match.item;
   const prefix = isSelected ? colorize("›", colors.cyan) : " ";
   const signature = colorize(method.signature, colors.bright);
@@ -159,7 +154,10 @@ const renderExpressionPreview = (state: State): string[] => {
   return [previewTitle, ...formattedPreview];
 };
 
-const calculateVisibleRange = (selectedIndex: number, totalMatches: number): { start: number; end: number } => {
+const calculateVisibleRange = (
+  selectedIndex: number,
+  totalMatches: number,
+): { start: number; end: number } => {
   const halfWindow = Math.floor(MAX_VISIBLE_ITEMS / 2);
   const initialStart = Math.max(0, selectedIndex - halfWindow);
   const end = Math.min(totalMatches, initialStart + MAX_VISIBLE_ITEMS);
@@ -194,9 +192,7 @@ const buildRemainingIndicator = (totalMatches: number): string[] => {
   const remaining = totalMatches - MAX_VISIBLE_ITEMS;
   const hasMore = remaining > 0;
 
-  return hasMore
-    ? ["", colorize("... " + remaining + " more", colors.dim)]
-    : [];
+  return hasMore ? ["", colorize("... " + remaining + " more", colors.dim)] : [];
 };
 
 const buildPreviewLines = (state: State): string[] => {

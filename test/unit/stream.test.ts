@@ -16,10 +16,7 @@ describe("stream utilities", () => {
   });
 
   test("processInput reads from stdin and parses JSON", async () => {
-    const mockStdin = Readable.from([
-      Buffer.from('{"foo": "bar", '),
-      Buffer.from('"num": 42}'),
-    ]);
+    const mockStdin = Readable.from([Buffer.from('{"foo": "bar", '), Buffer.from('"num": 42}')]);
 
     Object.defineProperty(process, "stdin", {
       value: mockStdin,

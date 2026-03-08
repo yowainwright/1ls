@@ -1,16 +1,16 @@
-import * as std from 'std';
-import { evaluate } from './core.js';
+import * as std from "std";
+import { evaluate } from "./core.js";
 import {
   VERSION,
   VALID_OUTPUT_FORMATS,
   VALID_INPUT_FORMATS,
   HELP_TEXT,
   SHORTCUTS_TEXT,
-} from './constants.js';
+} from "./constants.js";
 
 export function parseArgs(args) {
   const options = {
-    format: 'json',
+    format: "json",
     pretty: false,
     raw: false,
     compact: false,
@@ -18,7 +18,7 @@ export function parseArgs(args) {
     help: false,
     version: false,
     shortcuts: false,
-    expression: '.',
+    expression: ".",
     inputFormat: undefined,
   };
 
@@ -27,57 +27,57 @@ export function parseArgs(args) {
     const arg = args[i];
 
     switch (arg) {
-      case '--help':
-      case '-h':
+      case "--help":
+      case "-h":
         options.help = true;
         break;
 
-      case '--version':
-      case '-v':
+      case "--version":
+      case "-v":
         options.version = true;
         break;
 
-      case '--raw':
-      case '-r':
+      case "--raw":
+      case "-r":
         options.raw = true;
         break;
 
-      case '--pretty':
-      case '-p':
+      case "--pretty":
+      case "-p":
         options.pretty = true;
         break;
 
-      case '--compact':
-      case '-c':
+      case "--compact":
+      case "-c":
         options.compact = true;
         break;
 
-      case '--type':
-      case '-t':
+      case "--type":
+      case "-t":
         options.type = true;
         break;
 
-      case '--format':
+      case "--format":
         i++;
         if (i < args.length && VALID_OUTPUT_FORMATS.includes(args[i])) {
           options.format = args[i];
         }
         break;
 
-      case '--input-format':
-      case '-if':
+      case "--input-format":
+      case "-if":
         i++;
         if (i < args.length && VALID_INPUT_FORMATS.includes(args[i])) {
           options.inputFormat = args[i];
         }
         break;
 
-      case '--shortcuts':
+      case "--shortcuts":
         options.shortcuts = true;
         break;
 
       default:
-        if (arg.startsWith('.') || arg.startsWith('[')) {
+        if (arg.startsWith(".") || arg.startsWith("[")) {
           options.expression = arg;
         }
         break;
@@ -90,11 +90,11 @@ export function parseArgs(args) {
 
 export function formatOutput(result, options) {
   if (options.type) {
-    const type = result === null ? 'null' : Array.isArray(result) ? 'array' : typeof result;
+    const type = result === null ? "null" : Array.isArray(result) ? "array" : typeof result;
     return type;
   }
 
-  if (options.raw && typeof result === 'string') {
+  if (options.raw && typeof result === "string") {
     return result;
   }
 
@@ -102,7 +102,7 @@ export function formatOutput(result, options) {
     return JSON.stringify(result);
   }
 
-  if (options.pretty || options.format === 'json') {
+  if (options.pretty || options.format === "json") {
     return JSON.stringify(result, null, 2);
   }
 
@@ -131,7 +131,7 @@ function main() {
   const input = std.in.readAsString().trim();
 
   if (!input) {
-    std.err.puts('Error: No input provided\n');
+    std.err.puts("Error: No input provided\n");
     std.exit(1);
   }
 

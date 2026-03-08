@@ -29,7 +29,11 @@ export function findMultiLineCommentEnd(chars: string[], startIndex: number): nu
   return offset;
 }
 
-export function handleStringChar(state: ParseState, char: string, nextChar: string | undefined): ParseState {
+export function handleStringChar(
+  state: ParseState,
+  char: string,
+  nextChar: string | undefined,
+): ParseState {
   state.result.push(char);
 
   const isEscaped = char === "\\" && nextChar;
@@ -46,7 +50,13 @@ export function handleStringChar(state: ParseState, char: string, nextChar: stri
   return state;
 }
 
-export function handleNormalChar(state: ParseState, char: string, nextChar: string | undefined, chars: string[], index: number): ParseState {
+export function handleNormalChar(
+  state: ParseState,
+  char: string,
+  nextChar: string | undefined,
+  chars: string[],
+  index: number,
+): ParseState {
   const isQuote = isQuoteChar(char);
   if (isQuote) {
     state.result.push(char);
@@ -56,13 +66,23 @@ export function handleNormalChar(state: ParseState, char: string, nextChar: stri
   const isSingleLineComment = char === "/" && nextChar === "/";
   if (isSingleLineComment) {
     const skipCount = findCommentEnd(chars, index, "\n");
-    return { result: state.result, inString: state.inString, delimiter: state.delimiter, skip: skipCount };
+    return {
+      result: state.result,
+      inString: state.inString,
+      delimiter: state.delimiter,
+      skip: skipCount,
+    };
   }
 
   const isMultiLineComment = char === "/" && nextChar === "*";
   if (isMultiLineComment) {
     const skipCount = findMultiLineCommentEnd(chars, index);
-    return { result: state.result, inString: state.inString, delimiter: state.delimiter, skip: skipCount };
+    return {
+      result: state.result,
+      inString: state.inString,
+      delimiter: state.delimiter,
+      skip: skipCount,
+    };
   }
 
   state.result.push(char);
@@ -73,20 +93,27 @@ export function stripJSComments(input: string): string {
   const chars = input.split("");
 
   return chars
-    .reduce((state: ParseState, char: string, index: number) => {
-      const shouldSkip = state.skip > 0;
-      if (shouldSkip) {
-        return { result: state.result, inString: state.inString, delimiter: state.delimiter, skip: state.skip - 1 };
-      }
+    .reduce(
+      (state: ParseState, char: string, index: number) => {
+        const shouldSkip = state.skip > 0;
+        if (shouldSkip) {
+          return {
+            result: state.result,
+            inString: state.inString,
+            delimiter: state.delimiter,
+            skip: state.skip - 1,
+          };
+        }
 
-      const nextChar = chars[index + 1];
+        const nextChar = chars[index + 1];
 
-      return state.inString
-        ? handleStringChar(state, char, nextChar)
-        : handleNormalChar(state, char, nextChar, chars, index);
-    }, { result: [], inString: false, delimiter: "", skip: 0 })
-    .result
-    .join("");
+        return state.inString
+          ? handleStringChar(state, char, nextChar)
+          : handleNormalChar(state, char, nextChar, chars, index);
+      },
+      { result: [], inString: false, delimiter: "", skip: 0 },
+    )
+    .result.join("");
 }
 
 export function parseJavaScript(input: string): unknown {

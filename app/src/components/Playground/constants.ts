@@ -1,12 +1,12 @@
-import type { Format, FormatConfig, DetectionResult } from "./types"
+import type { Format, FormatConfig, DetectionResult } from "./types";
 
 export interface ExpressionSuggestion {
-  label: string
-  expression: string
+  label: string;
+  expression: string;
 }
 
 export interface ExtendedFormatConfig extends FormatConfig {
-  suggestions: ExpressionSuggestion[]
+  suggestions: ExpressionSuggestion[];
 }
 
 export const FORMAT_CONFIGS: Record<Format, ExtendedFormatConfig> = {
@@ -32,8 +32,14 @@ export const FORMAT_CONFIGS: Record<Format, ExtendedFormatConfig> = {
     suggestions: [
       { label: "Public playlists", expression: ".spotify.playlists.filter(p => p.public)" },
       { label: "Playlist names", expression: ".spotify.playlists.map(p => p.name)" },
-      { label: "Total tracks", expression: ".spotify.playlists.reduce((sum, p) => sum + p.tracks, 0)" },
-      { label: "Longest playlist", expression: ".spotify.playlists.sort((a, b) => b.hours - a.hours)[0]" },
+      {
+        label: "Total tracks",
+        expression: ".spotify.playlists.reduce((sum, p) => sum + p.tracks, 0)",
+      },
+      {
+        label: "Longest playlist",
+        expression: ".spotify.playlists.sort((a, b) => b.hours - a.hours)[0]",
+      },
     ],
   },
   yaml: {
@@ -87,7 +93,10 @@ export const FORMAT_CONFIGS: Record<Format, ExtendedFormatConfig> = {
       { label: "All names", expression: ".pokemon.map(p => p.name)" },
       { label: "High level", expression: ".pokemon.filter(p => p.level >= 45)" },
       { label: "All moves", expression: ".pokemon.map(p => p.moves)" },
-      { label: "By attack", expression: ".pokemon.sort((a, b) => b.attack - a.attack).map(p => p.name)" },
+      {
+        label: "By attack",
+        expression: ".pokemon.sort((a, b) => b.attack - a.attack).map(p => p.name)",
+      },
     ],
   },
   csv: {
@@ -155,15 +164,57 @@ arrows = 999`,
       { label: "Line count", expression: ".{length}" },
     ],
   },
-}
+};
 
-export const DEFAULT_EXPRESSION = ".spotify.playlists.filter(p => p.public).map(p => p.name)"
+export const DEFAULT_EXPRESSION = ".spotify.playlists.filter(p => p.public).map(p => p.name)";
 
-export const FORMATS: Format[] = ["json", "yaml", "csv", "toml", "text"]
+export const FORMATS: Format[] = ["json", "yaml", "csv", "toml", "text"];
 
-export const TEXT_FALLBACK: DetectionResult = { format: "text", confidence: 0.5, reason: "Plain text" }
+export const TEXT_FALLBACK: DetectionResult = {
+  format: "text",
+  confidence: 0.5,
+  reason: "Plain text",
+};
 
-export const EMPTY_RESULT: DetectionResult = { format: "text", confidence: 1.0, reason: "Empty content" }
+export const EMPTY_RESULT: DetectionResult = {
+  format: "text",
+  confidence: 1.0,
+  reason: "Empty content",
+};
+
+export const States = {
+  INITIALIZING: "initializing",
+  READY: "ready",
+  SHARE_IDLE: "shareIdle",
+  SHARE_COPIED: "shareCopied",
+} as const;
+
+export const MachineEvents = {
+  FORMAT_CHANGE: "FORMAT_CHANGE",
+  INPUT_CHANGE: "INPUT_CHANGE",
+  EXPRESSION_CHANGE: "EXPRESSION_CHANGE",
+  TOGGLE_MINIFIED: "TOGGLE_MINIFIED",
+  SHARE: "SHARE",
+  FORMAT_DETECTED: "FORMAT_DETECTED",
+} as const;
+
+export const Actions = {
+  APPLY_INITIAL_STATE: "applyInitialState",
+  PERSIST_STATE: "persistState",
+  UPDATE_FORMAT: "updateFormat",
+} as const;
+
+export const Guards = {
+  IS_SANDBOX: "isSandbox",
+} as const;
+
+export const Actors = {
+  LOAD_INITIAL_STATE: "loadInitialState",
+} as const;
+
+export const Delays = {
+  SHARE_RESET: 2000,
+} as const;
 
 export const SANDBOX_STARTER: Record<Format, { data: string; expression: string }> = {
   json: {
@@ -215,4 +266,4 @@ WARN: Low memory
 INFO: User Charlie logged in`,
     expression: ".filter(line => line.includes('INFO'))",
   },
-}
+};

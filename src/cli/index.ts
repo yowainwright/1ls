@@ -9,11 +9,7 @@ import { ExpressionParser } from "../expression";
 import { JsonNavigator } from "../navigator/json";
 import { Formatter } from "../formatter/output";
 import { warning, info } from "../formatter/colors";
-import {
-  expandShortcuts,
-  shortenExpression,
-  getShortcutHelp,
-} from "../shortcuts";
+import { expandShortcuts, shortenExpression, getShortcutHelp } from "../shortcuts";
 import { detectFormat } from "../formats";
 import { CliOptions } from "../types";
 import { VERSION } from "../version";
@@ -65,10 +61,7 @@ export async function loadData(options: CliOptions, args: string[]): Promise<unk
   return null;
 }
 
-export async function processExpression(
-  options: CliOptions,
-  jsonData: unknown,
-): Promise<void> {
+export async function processExpression(options: CliOptions, jsonData: unknown): Promise<void> {
   if (!options.expression) {
     const formatter = new Formatter(options);
     console.log(formatter.format(jsonData));

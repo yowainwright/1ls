@@ -1,6 +1,6 @@
-import { Link } from '@tanstack/react-router'
-import { ArrowRight } from 'lucide-react'
-import type { DocsCardProps } from './types'
+import { Link } from "@tanstack/react-router";
+import { ArrowRight } from "lucide-react";
+import type { DocsCardProps } from "./types";
 
 export function DocsCard({ href, title, description }: DocsCardProps) {
   return (
@@ -17,5 +17,5 @@ export function DocsCard({ href, title, description }: DocsCardProps) {
         <ArrowRight className="ml-1 h-4 w-4" />
       </div>
     </Link>
-  )
+  );
 }

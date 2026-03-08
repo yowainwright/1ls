@@ -6,18 +6,15 @@ import type { FuzzyMatch } from "./types";
 
 const MAX_VISIBLE_ITEMS = 10;
 
-const formatMethodName = (
-  signature: string,
-  matches: number[],
-): string => highlightMatches(signature, matches);
+const formatMethodName = (signature: string, matches: number[]): string =>
+  highlightMatches(signature, matches);
 
 const formatCategory = (category: string): string => {
   const text = `[${category}]`;
   return colorize(text, colors.dim);
 };
 
-const formatDescription = (description: string): string =>
-  colorize(description, colors.gray);
+const formatDescription = (description: string): string => colorize(description, colors.gray);
 
 const formatPrefix = (isSelected: boolean): string => {
   const selectedPrefix = colorize("❯", colors.green);
@@ -25,11 +22,7 @@ const formatPrefix = (isSelected: boolean): string => {
   return isSelected ? selectedPrefix : unselectedPrefix;
 };
 
-const formatMethod = (
-  method: Method,
-  isSelected: boolean,
-  matches: number[],
-): string => {
+const formatMethod = (method: Method, isSelected: boolean, matches: number[]): string => {
   const prefix = formatPrefix(isSelected);
   const signature = formatMethodName(method.signature, matches);
   const category = method.category ? formatCategory(method.category) : "";
@@ -43,10 +36,7 @@ const formatMethod = (
   return line;
 };
 
-const formatPropertyEntry = (
-  match: FuzzyMatch<JsonPath>,
-  isSelected: boolean,
-): string => {
+const formatPropertyEntry = (match: FuzzyMatch<JsonPath>, isSelected: boolean): string => {
   const item = match.item;
   const matches = match.matches;
 
@@ -55,10 +45,7 @@ const formatPropertyEntry = (
   const typeText = colorize(`[${item.type}]`, colors.dim);
   const valueText = colorize(item.displayValue, colors.gray);
 
-  const line = prefix
-    .concat(" ", pathText)
-    .concat(" ", typeText)
-    .concat(" ", valueText);
+  const line = prefix.concat(" ", pathText).concat(" ", typeText).concat(" ", valueText);
 
   return line;
 };

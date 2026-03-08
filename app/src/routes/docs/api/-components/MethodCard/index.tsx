@@ -1,8 +1,8 @@
-import { Codeblock } from '@/components/Codeblock'
-import type { MethodCardProps } from './types'
+import { Codeblock } from "@/components/Codeblock";
+import type { MethodCardProps } from "./types";
 
 export function MethodCard({ name, description, example, output }: MethodCardProps) {
-  const code = output ? `${example}\n# Output: ${output}` : example
+  const code = output ? `${example}\n# Output: ${output}` : example;
 
   return (
     <div className="space-y-3">
@@ -12,5 +12,5 @@ export function MethodCard({ name, description, example, output }: MethodCardPro
       </div>
       <Codeblock code={code} language="bash" />
     </div>
-  )
+  );
 }

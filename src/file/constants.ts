@@ -1,9 +1,4 @@
-export const SUPPORTED_CODE_EXTENSIONS = [
-  ".ts",
-  ".js",
-  ".tsx",
-  ".jsx",
-] as const;
+export const SUPPORTED_CODE_EXTENSIONS = [".ts", ".js", ".tsx", ".jsx"] as const;
 
 export const SUPPORTED_DATA_EXTENSIONS = [".json", ".yml", ".yaml"] as const;
 
