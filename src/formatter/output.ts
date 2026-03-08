@@ -91,9 +91,7 @@ export class Formatter {
 
     if (Array.isArray(data)) {
       if (data.length === 0) return "[]";
-      return data
-        .map((item) => `${spaces}- ${this.toYaml(item, indent + 2).trim()}`)
-        .join("\n");
+      return data.map((item) => `${spaces}- ${this.toYaml(item, indent + 2).trim()}`).join("\n");
     }
 
     if (typeof data === "object") {
@@ -123,16 +121,10 @@ export class Formatter {
     }
 
     // Check if all items are objects with same keys
-    if (
-      typeof data[0] === "object" &&
-      data[0] !== null &&
-      !Array.isArray(data[0])
-    ) {
+    if (typeof data[0] === "object" && data[0] !== null && !Array.isArray(data[0])) {
       const keys = Object.keys(data[0]);
       const headers = keys.join(",");
-      const rows = data.map((item) =>
-        keys.map((key) => this.escapeCsvValue(item[key])).join(","),
-      );
+      const rows = data.map((item) => keys.map((key) => this.escapeCsvValue(item[key])).join(","));
       return [headers, ...rows].join("\n");
     }
 
@@ -161,18 +153,12 @@ export class Formatter {
     }
 
     // Check if all items are objects
-    if (
-      typeof data[0] === "object" &&
-      data[0] !== null &&
-      !Array.isArray(data[0])
-    ) {
+    if (typeof data[0] === "object" && data[0] !== null && !Array.isArray(data[0])) {
       return this.formatObjectTable(data);
     }
 
     // Simple list
-    return data
-      .map((item, index) => `${index}: ${this.formatRaw(item)}`)
-      .join("\n");
+    return data.map((item, index) => `${index}: ${this.formatRaw(item)}`).join("\n");
   }
 
   private formatObjectTable(data: Record<string, unknown>[]): string {
@@ -181,10 +167,7 @@ export class Formatter {
     // Calculate column widths
     const widths: Record<string, number> = {};
     keys.forEach((key) => {
-      widths[key] = Math.max(
-        key.length,
-        ...data.map((item) => String(item[key] ?? "").length),
-      );
+      widths[key] = Math.max(key.length, ...data.map((item) => String(item[key] ?? "").length));
     });
 
     // Create header
@@ -193,9 +176,7 @@ export class Formatter {
 
     // Create rows
     const rows = data.map((item) =>
-      keys
-        .map((key) => String(item[key] ?? "").padEnd(widths[key]))
-        .join(" | "),
+      keys.map((key) => String(item[key] ?? "").padEnd(widths[key])).join(" | "),
     );
 
     return [header, separator, ...rows].join("\n");

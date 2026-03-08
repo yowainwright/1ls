@@ -1,28 +1,20 @@
-import { motion } from "framer-motion"
-import { SectionHeader } from "@/components/SectionHeader"
-import { EASE_CURVE } from "@/lib/styles"
-import { TerminalCard } from "./components"
-import { TERMINAL_EXAMPLES } from "./constants"
+import { motion } from "framer-motion";
+import { SectionHeader } from "@/components/SectionHeader";
+import { EASE_CURVE } from "@/lib/styles";
+import { TerminalCard } from "./components";
+import { TERMINAL_EXAMPLES } from "./constants";
+
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: { opacity: 1, transition: { staggerChildren: 0.1 } },
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: EASE_CURVE } },
+};
 
 export default function TerminalDemoSection() {
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.1,
-      },
-    },
-  }
-
-  const itemVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: {
-      opacity: 1,
-      y: 0,
-      transition: { duration: 0.6, ease: EASE_CURVE },
-    },
-  }
 
   return (
     <section className="px-4 py-16 md:py-24">
@@ -46,5 +38,5 @@ export default function TerminalDemoSection() {
         </motion.div>
       </div>
     </section>
-  )
+  );
 }

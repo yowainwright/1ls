@@ -1,15 +1,15 @@
-import { createFileRoute } from '@tanstack/react-router'
-import Hero from '@/components/sections/hero'
-import Footer from '@/components/sections/footer'
-import ExamplesCarousel from '@/components/ExamplesCarousel'
-import { Features } from '@/components/Features'
-import { Insights } from '@/components/Insights'
-import { Playground } from '@/components/Playground'
-import { TooltipDemo } from '@/components/TooltipDemo'
+import { createFileRoute } from "@tanstack/react-router";
+import Hero from "@/components/sections/hero";
+import Footer from "@/components/sections/footer";
+import ExamplesCarousel from "@/components/ExamplesCarousel";
+import { Features } from "@/components/Features";
+import { Insights } from "@/components/Insights";
+import { Playground } from "@/components/Playground";
+import { TooltipDemo } from "@/components/TooltipDemo";
 
-export const Route = createFileRoute('/')({
+export const Route = createFileRoute("/")({
   component: HomePage,
-})
+});
 
 function HomePage() {
   return (
@@ -24,5 +24,5 @@ function HomePage() {
       </main>
       <Footer className="relative z-10" />
     </>
-  )
+  );
 }

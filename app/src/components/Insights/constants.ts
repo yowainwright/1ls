@@ -1,6 +1,24 @@
-import type { InsightStat } from "./types"
+import { SECTION, CONTAINER, CARD, CARD_OVERLAY } from "@/lib/classes";
+import type { InsightStat } from "./types";
 
-export const INSIGHT_STATS: InsightStat[] = [
+const styles = {
+  section: SECTION,
+  container: CONTAINER,
+  grid: "grid gap-6 sm:grid-cols-2 lg:grid-cols-4",
+  card: CARD,
+  cardOverlay: CARD_OVERLAY,
+  cardInner: "relative",
+  value: "mb-2 text-4xl font-bold tracking-tight",
+  label: "mb-1 text-sm font-semibold text-foreground",
+  description: "text-sm text-muted-foreground",
+};
+
+const text = {
+  sectionTitle: "Built for Speed",
+  sectionDescription: "Optimized from the ground up to be lightweight and blazing fast",
+};
+
+const items: InsightStat[] = [
   {
     label: "Zero Dependencies",
     value: "0",
@@ -21,4 +39,6 @@ export const INSIGHT_STATS: InsightStat[] = [
     value: "8+",
     description: "JSON, YAML, CSV, TOML, XML, INI, and more",
   },
-]
+];
+
+export const INSIGHTS_CONSTANTS = { styles, text, items };

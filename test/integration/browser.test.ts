@@ -92,7 +92,12 @@ describeBrowser("Browser Bundle Integration", () => {
 
       expect(evaluate(data, ".{keys}")).toEqual(["a", "b", "c", "d"]);
       expect(evaluate(data, ".{values}")).toEqual([1, 2, 3, 4]);
-      expect(evaluate(data, ".{entries}")).toEqual([["a", 1], ["b", 2], ["c", 3], ["d", 4]]);
+      expect(evaluate(data, ".{entries}")).toEqual([
+        ["a", 1],
+        ["b", 2],
+        ["c", 3],
+        ["d", 4],
+      ]);
       expect(evaluate(data, ".{length}")).toBe(4);
     });
 
@@ -111,7 +116,7 @@ describeBrowser("Browser Bundle Integration", () => {
 
       const result = evaluate(
         data,
-        ".users.filter(u => u.active).filter(u => u.age > 27).map(u => u.name)"
+        ".users.filter(u => u.active).filter(u => u.age > 27).map(u => u.name)",
       );
       expect(result).toEqual(["Alice", "Carol", "Dave"]);
     });

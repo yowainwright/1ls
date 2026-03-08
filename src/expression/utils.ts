@@ -17,18 +17,15 @@ import type {
 } from "../types";
 import { BOOLEAN_LITERALS, VALID_OBJECT_OPERATIONS } from "./constants";
 
-export const isBooleanLiteral = (
-  value: string,
-): value is (typeof BOOLEAN_LITERALS)[number] =>
+export const isBooleanLiteral = (value: string): value is (typeof BOOLEAN_LITERALS)[number] =>
   (BOOLEAN_LITERALS as readonly string[]).includes(value);
 
-export const createLiteralNode = (
-  value: string | number | boolean | null,
-): LiteralNode => ({ type: "Literal", value });
+export const createLiteralNode = (value: string | number | boolean | null): LiteralNode => ({
+  type: "Literal",
+  value,
+});
 
-export const tryParseLiteralIdentifier = (
-  identifier: string,
-): LiteralNode | undefined => {
+export const tryParseLiteralIdentifier = (identifier: string): LiteralNode | undefined => {
   if (identifier === "true") return createLiteralNode(true);
   if (identifier === "false") return createLiteralNode(false);
   if (identifier === "null") return createLiteralNode(null);
@@ -43,10 +40,11 @@ export const createPropertyAccessNode = (
   object?: ASTNode,
 ): PropertyAccessNode => ({ type: "PropertyAccess", property, object });
 
-export const createIndexAccessNode = (
-  index: number,
-  object?: ASTNode,
-): IndexAccessNode => ({ type: "IndexAccess", index, object });
+export const createIndexAccessNode = (index: number, object?: ASTNode): IndexAccessNode => ({
+  type: "IndexAccess",
+  index,
+  object,
+});
 
 export const createSliceAccessNode = (
   start: number | undefined,
@@ -70,31 +68,32 @@ export const createArraySpreadNode = (object?: ASTNode): ArraySpreadNode => ({
   object,
 });
 
-export const createArrowFunctionNode = (
-  params: string[],
-  body: ASTNode,
-): ArrowFunctionNode => ({ type: "ArrowFunction", params, body });
+export const createArrowFunctionNode = (params: string[], body: ASTNode): ArrowFunctionNode => ({
+  type: "ArrowFunction",
+  params,
+  body,
+});
 
 export const createRootNode = (expression?: ASTNode): RootNode => ({
   type: "Root",
   expression,
 });
 
-export const createRecursiveDescentNode = (
-  object?: ASTNode,
-): RecursiveDescentNode => ({ type: "RecursiveDescent", object });
+export const createRecursiveDescentNode = (object?: ASTNode): RecursiveDescentNode => ({
+  type: "RecursiveDescent",
+  object,
+});
 
 export const createOptionalAccessNode = (
   expression: ASTNode,
   object?: ASTNode,
 ): OptionalAccessNode => ({ type: "OptionalAccess", expression, object });
 
-export const createNullCoalescingNode = (
-  left: ASTNode,
-  right: ASTNode,
-): NullCoalescingNode => ({ type: "NullCoalescing", left, right });
+export const createNullCoalescingNode = (left: ASTNode, right: ASTNode): NullCoalescingNode => ({
+  type: "NullCoalescing",
+  left,
+  right,
+});
 
-export const isValidObjectOperation = (
-  value: string,
-): value is ObjectOperationType =>
+export const isValidObjectOperation = (value: string): value is ObjectOperationType =>
   VALID_OBJECT_OPERATIONS.includes(value as ObjectOperationType);

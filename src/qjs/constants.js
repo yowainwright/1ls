@@ -1,8 +1,8 @@
-export const VERSION = '__VERSION__';
+export const VERSION = "__VERSION__";
 
-export const VALID_OUTPUT_FORMATS = ['json', 'yaml', 'csv', 'table'];
+export const VALID_OUTPUT_FORMATS = ["json", "yaml", "csv", "table"];
 
-export const VALID_INPUT_FORMATS = ['json', 'yaml', 'toml', 'csv', 'tsv', 'lines', 'text'];
+export const VALID_INPUT_FORMATS = ["json", "yaml", "toml", "csv", "tsv", "lines", "text"];
 
 export const HELP_TEXT = `1ls - Lightweight JSON CLI with JavaScript syntax
 

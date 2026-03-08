@@ -120,9 +120,7 @@ export function parseArgs(args: string[]): CliOptions {
         i++;
         if (i < args.length) {
           const extensions = args[i].split(",");
-          options.extensions = extensions.map((ext) =>
-            ext.startsWith(".") ? ext : `.${ext}`,
-          );
+          options.extensions = extensions.map((ext) => (ext.startsWith(".") ? ext : `.${ext}`));
         }
         break;
 

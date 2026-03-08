@@ -2,10 +2,7 @@ import { fuzzySearch } from "./fuzzy";
 import { createTooltipState, updateTooltipFromQuery } from "./tooltip";
 import type { State, JsonPath } from "./types";
 
-export const createInitialState = (
-  paths: JsonPath[],
-  originalData: unknown,
-): State => {
+export const createInitialState = (paths: JsonPath[], originalData: unknown): State => {
   const matches = fuzzySearch(paths, "", (item) => item.path);
   const state = Object.assign(
     {},
@@ -91,8 +88,7 @@ export const updateSelection = (state: State, delta: number): State => {
 
 export const getSelectedPath = (state: State): JsonPath | null => {
   const hasMatches = state.matches.length > 0;
-  const hasValidIndex =
-    state.selectedIndex >= 0 && state.selectedIndex < state.matches.length;
+  const hasValidIndex = state.selectedIndex >= 0 && state.selectedIndex < state.matches.length;
 
   if (hasMatches && hasValidIndex) {
     return state.matches[state.selectedIndex].item;

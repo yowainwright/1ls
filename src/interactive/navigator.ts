@@ -15,11 +15,7 @@ const formatDisplayValue = (value: unknown, type: string): string => {
   return String(value);
 };
 
-const flattenJson = (
-  obj: unknown,
-  prefix: string = "",
-  result: JsonPath[] = [],
-): JsonPath[] => {
+const flattenJson = (obj: unknown, prefix: string = "", result: JsonPath[] = []): JsonPath[] => {
   if (obj === null || obj === undefined) {
     const type = getType(obj);
     const displayValue = formatDisplayValue(obj, type);

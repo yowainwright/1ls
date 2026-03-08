@@ -1,5 +1,5 @@
-import { Codeblock } from '@/components/Codeblock'
-import { CLI_COMMANDS } from './constants'
+import { Codeblock } from "@/components/Codeblock";
+import { CLI_COMMANDS } from "./constants";
 
 export function CliCommands() {
   return (
@@ -11,5 +11,5 @@ export function CliCommands() {
         </div>
       ))}
     </div>
-  )
+  );
 }

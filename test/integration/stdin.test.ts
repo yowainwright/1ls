@@ -8,7 +8,7 @@ const HAS_CLI = existsSync(CLI_PATH);
 
 async function runWithStdin(
   input: string,
-  args: string[] = []
+  args: string[] = [],
 ): Promise<{ stdout: string; stderr: string; exitCode: number }> {
   const proc = spawn(["bun", CLI_PATH, ...args], {
     stdin: "pipe",
@@ -199,7 +199,10 @@ describeStdin("CLI Stdin Pipe Integration", () => {
     test("{entries} returns entries", async () => {
       const result = await runWithStdin('{"a":1,"b":2}', [".{entries}"]);
       expect(result.exitCode).toBe(0);
-      expect(JSON.parse(result.stdout)).toEqual([["a", 1], ["b", 2]]);
+      expect(JSON.parse(result.stdout)).toEqual([
+        ["a", 1],
+        ["b", 2],
+      ]);
     });
 
     test("{length} returns array length", async () => {
@@ -267,20 +270,18 @@ describeStdin("CLI Stdin Pipe Integration", () => {
           { name: "Cherry", price: 3.0, inStock: true },
         ],
       });
-      const result = await runWithStdin(
-        input,
-        [".products.filter(p => p.inStock).map(p => p.name)"]
-      );
+      const result = await runWithStdin(input, [
+        ".products.filter(p => p.inStock).map(p => p.name)",
+      ]);
       expect(result.exitCode).toBe(0);
       expect(JSON.parse(result.stdout)).toEqual(["Apple", "Cherry"]);
     });
 
     test("map then filter then sort", async () => {
       const input = JSON.stringify([5, 2, 8, 1, 9, 3]);
-      const result = await runWithStdin(
-        input,
-        [".map(x => x * 2).filter(x => x > 5).sort((a,b) => b - a)"]
-      );
+      const result = await runWithStdin(input, [
+        ".map(x => x * 2).filter(x => x > 5).sort((a,b) => b - a)",
+      ]);
       expect(result.exitCode).toBe(0);
       expect(JSON.parse(result.stdout)).toEqual([18, 16, 10, 6]);
     });

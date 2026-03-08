@@ -1,13 +1,15 @@
-import { Link, useLocation } from "@tanstack/react-router"
-import { Github } from "lucide-react"
-import { LOGO_STYLES } from "@/lib/styles"
-import { NAV_LINKS, GITHUB_URL } from "./constants"
+import { Link, useLocation } from "@tanstack/react-router";
+import { Github } from "lucide-react";
+import { LOGO_STYLES } from "@/lib/styles";
+import { NAVBAR_CONSTANTS } from "./constants";
+
+const { styles, text, links, githubUrl } = NAVBAR_CONSTANTS;
 
 export function NavLogo() {
   return (
-    <Link to="/" className="flex items-center">
+    <Link to="/" className={styles.logoLink}>
       <span
-        className="text-xl font-bold tracking-tighter"
+        className={styles.logoText}
         style={{
           ...LOGO_STYLES,
           animation: undefined,
@@ -17,44 +19,41 @@ export function NavLogo() {
         1ls
       </span>
     </Link>
-  )
+  );
 }
 
 export function NavLinks() {
-  const location = useLocation()
+  const location = useLocation();
 
   return (
-    <nav className="hidden md:flex items-center gap-6">
-      {NAV_LINKS.map((link) => {
-        const isActive = location.pathname === link.href
+    <nav className={styles.links}>
+      {links.map((link) => {
+        const isActive = location.pathname === link.href;
         return (
           <Link
             key={link.href}
             to={link.href}
-            className={`text-sm font-medium transition-colors ${
-              isActive
-                ? "text-foreground"
-                : "text-muted-foreground hover:text-foreground"
-            }`}
+            className={isActive ? styles.linkActive : styles.linkInactive}
           >
             {link.label}
           </Link>
-        )
+        );
       })}
     </nav>
-  )
+  );
 }
 
 export function GithubButton() {
   return (
     <a
-      href={GITHUB_URL}
+      href={githubUrl}
       target="_blank"
       rel="noopener noreferrer"
-      className="flex items-center justify-center h-9 w-9 rounded-lg text-accent transition-colors hover:text-accent/80 hover:bg-accent/10"
+      className={styles.githubBtn}
+      aria-label={text.githubLabel}
     >
-      <Github className="h-5 w-5" />
-      <span className="sr-only">GitHub</span>
+      <Github className={styles.githubIcon} />
+      <span className="sr-only">{text.githubLabel}</span>
     </a>
-  )
+  );
 }

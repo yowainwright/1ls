@@ -7,14 +7,14 @@ export type Language =
   | "bash"
   | "shell"
   | "diff"
-  | "csv"
+  | "csv";
 
 export interface CodeblockProps {
-  code: string
-  language?: Language
-  className?: string
-  showLineNumbers?: boolean
-  showLanguage?: boolean
-  showCopy?: boolean
-  title?: string
+  code: string;
+  language?: string;
+  className?: string;
+  showLineNumbers?: boolean;
+  showLanguage?: boolean;
+  showCopy?: boolean;
+  title?: string;
 }

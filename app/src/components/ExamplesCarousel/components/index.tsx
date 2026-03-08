@@ -1,14 +1,17 @@
-import { Codeblock } from "@/components/Codeblock"
-import type { Language } from "@/components/Codeblock"
-import type { CodeExample } from "../types"
+import { Codeblock, CodeCard } from "@/components/Codeblock";
+import type { Language } from "@/components/Codeblock";
+import { EXAMPLES_CAROUSEL_CONSTANTS } from "../constants";
+import type { CodeExample } from "../types";
+
+const { styles, text } = EXAMPLES_CAROUSEL_CONSTANTS;
 
 interface SpotlightCardProps {
-  example: CodeExample
+  example: CodeExample;
 }
 
 export function SpotlightCard({ example }: SpotlightCardProps) {
   return (
-    <div className="h-full w-full space-y-4 rounded-lg border border-border/10 bg-card p-6 shadow-lg shadow-black/5 dark:shadow-black/20">
+    <CodeCard className={styles.card}>
       <SpotlightCardHeader
         title={example.title}
         description={example.description}
@@ -20,56 +23,54 @@ export function SpotlightCard({ example }: SpotlightCardProps) {
         command={example.command}
         language={example.language as Language}
       />
-    </div>
-  )
+    </CodeCard>
+  );
 }
 
 interface SpotlightCardHeaderProps {
-  title: string
-  description: string
-  format: string
+  title: string;
+  description: string;
+  format: string;
 }
 
 function SpotlightCardHeader({ title, description, format }: SpotlightCardHeaderProps) {
   return (
-    <div className="space-y-2">
-      <div className="flex items-center justify-between">
-        <h3 className="text-xl font-semibold">{title}</h3>
-        <span className="rounded-md bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary">
-          {format}
-        </span>
+    <div className={styles.cardHeader}>
+      <div className={styles.cardHeaderRow}>
+        <h3 className={styles.cardTitle}>{title}</h3>
+        <span className={styles.cardBadge}>{format}</span>
       </div>
-      <p className="text-sm text-muted-foreground">{description}</p>
+      <p className={styles.cardDescription}>{description}</p>
     </div>
-  )
+  );
 }
 
 interface SpotlightCardContentProps {
-  input: string
-  output: string
-  command: string
-  language: Language
+  input: string;
+  output: string;
+  command: string;
+  language: Language;
 }
 
 function SpotlightCardContent({ input, output, command, language }: SpotlightCardContentProps) {
   return (
-    <div className="space-y-4">
+    <div className={styles.cardContent}>
       <div>
-        <div className="mb-2 text-xs font-medium text-muted-foreground">Input:</div>
+        <div className={styles.label}>{text.inputLabel}</div>
         <Codeblock code={input} language={language} />
       </div>
 
-      <div className="flex items-center justify-center">
-        <div className="rounded-lg bg-muted px-3 py-1.5 font-mono text-sm">
-          <span className="text-muted-foreground">$</span>{" "}
-          <span className="text-primary">{command}</span>
+      <div className={styles.commandWrap}>
+        <div className={styles.commandInner}>
+          <span className={styles.commandPrompt}>{text.commandPrefix}</span>{" "}
+          <span className={styles.commandText}>{command}</span>
         </div>
       </div>
 
       <div>
-        <div className="mb-2 text-xs font-medium text-muted-foreground">Output:</div>
+        <div className={styles.label}>{text.outputLabel}</div>
         <Codeblock code={output} language="json" />
       </div>
     </div>
-  )
+  );
 }

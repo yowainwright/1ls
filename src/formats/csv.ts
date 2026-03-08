@@ -68,7 +68,7 @@ export function parseCSV(input: string, delimiter = ","): unknown[] {
     if (values.length === 0) return data;
 
     const row = Object.fromEntries(
-      headers.map((header, j) => [header, parseCSVValue(values[j] || "")])
+      headers.map((header, j) => [header, parseCSVValue(values[j] || "")]),
     );
 
     return [...data, row];

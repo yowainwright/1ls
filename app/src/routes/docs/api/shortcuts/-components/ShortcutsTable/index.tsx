@@ -1,4 +1,4 @@
-import { SHORTCUTS } from '../../-constants'
+import { SHORTCUTS } from "../../-constants";
 
 export function ShortcutsTable() {
   return (
@@ -14,7 +14,7 @@ export function ShortcutsTable() {
           {SHORTCUTS.map((s, i) => (
             <tr
               key={s.shortcut}
-              className={i < SHORTCUTS.length - 1 ? 'border-b border-border/10' : ''}
+              className={i < SHORTCUTS.length - 1 ? "border-b border-border/10" : ""}
             >
               <td className="py-2 pr-8 font-mono text-primary">{s.shortcut}</td>
               <td className="py-2 font-mono">{s.expands}</td>
@@ -23,5 +23,5 @@ export function ShortcutsTable() {
         </tbody>
       </table>
     </div>
-  )
+  );
 }

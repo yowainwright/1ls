@@ -12,20 +12,17 @@ import {
 } from "./builder";
 import type { State } from "./types";
 
-const KEYS = Object.assign(
-  {},
-  {
-    CTRL_C: "\x03",
-    ESCAPE: "\x1b",
-    ENTER: "\r",
-    TAB: "\t",
-    UP: "\x1b[A",
-    DOWN: "\x1b[B",
-    LEFT: "\x1b[D",
-    RIGHT: "\x1b[C",
-    BACKSPACE: "\x7f",
-  } as const,
-);
+const KEYS = Object.assign({}, {
+  CTRL_C: "\x03",
+  ESCAPE: "\x1b",
+  ENTER: "\r",
+  TAB: "\t",
+  UP: "\x1b[A",
+  DOWN: "\x1b[B",
+  LEFT: "\x1b[D",
+  RIGHT: "\x1b[C",
+  BACKSPACE: "\x7f",
+} as const);
 
 const isExitKey = (key: string): boolean => {
   const isCtrlC = key === KEYS.CTRL_C;
@@ -197,10 +194,7 @@ const handleArrowFnMode = (state: State, key: string): InputResult => {
   return { state, output: null };
 };
 
-const MODE_HANDLERS: Record<
-  State["mode"],
-  (state: State, key: string) => InputResult
-> = {
+const MODE_HANDLERS: Record<State["mode"], (state: State, key: string) => InputResult> = {
   explore: handleExploreMode,
   build: handleBuildMode,
   "build-arrow-fn": handleArrowFnMode,
@@ -210,8 +204,7 @@ export const handleInput = (state: State, data: Buffer): InputResult => {
   const key = data.toString();
 
   if (isExitKey(key)) {
-    const isInBuildMode =
-      state.mode === "build" || state.mode === "build-arrow-fn";
+    const isInBuildMode = state.mode === "build" || state.mode === "build-arrow-fn";
 
     if (isInBuildMode) {
       const newState = exitBuildMode(state);

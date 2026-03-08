@@ -1,29 +1,42 @@
-import { useEffect } from "react"
-import { Github, Package } from "lucide-react"
-import { siteConfig } from "@/lib/config"
-import { LOGO_STYLES } from "@/lib/styles"
+import { Github, Package } from "lucide-react";
+import { siteConfig } from "@/lib/config";
+import { LOGO_STYLES } from "@/lib/styles";
+
+const styles = {
+  footer: "border-t border-border/10",
+  container: "container mx-auto px-4 py-8",
+  inner: "flex flex-col items-center justify-between gap-4 md:flex-row",
+  left: "flex flex-col items-center md:items-start gap-2",
+  logoText: "text-2xl font-bold tracking-tighter",
+  credit: "text-sm text-muted-foreground",
+  creditLink: "font-medium underline underline-offset-4 hover:text-foreground",
+  copyright: "text-sm text-muted-foreground",
+  links: "flex gap-4",
+  link: "text-accent transition-colors hover:text-accent/80",
+  linkIcon: "h-5 w-5",
+};
+
+const text = {
+  credit: "Built by",
+  creditAuthor: "Jeff Wainwright",
+  creditHref: "https://jeffry.in",
+  startYear: 2024,
+};
 
 interface FooterProps {
-  className?: string
+  className?: string;
 }
 
 export default function Footer({ className = "" }: FooterProps) {
-  const currentYear = new Date().getFullYear()
-  const startYear = 2024
-
-  useEffect(() => {
-    const img = new Image()
-    img.referrerPolicy = "no-referrer-when-downgrade"
-    img.src = "https://static.scarf.sh/a.png?x-pxid=500dd7ce-0f58-4763-b6a7-fc992b6a12cb"
-  }, [])
+  const currentYear = new Date().getFullYear();
 
   return (
-    <footer className={`border-t border-border/10 ${className}`}>
-      <div className="container mx-auto px-4 py-8">
-        <div className="flex flex-col items-center justify-between gap-4 md:flex-row">
-          <div className="flex flex-col items-center md:items-start gap-2">
+    <footer className={`${styles.footer} ${className}`}>
+      <div className={styles.container}>
+        <div className={styles.inner}>
+          <div className={styles.left}>
             <span
-              className="text-2xl font-bold tracking-tighter"
+              className={styles.logoText}
               style={{
                 ...LOGO_STYLES,
                 animation: undefined,
@@ -32,43 +45,52 @@ export default function Footer({ className = "" }: FooterProps) {
             >
               1ls
             </span>
-            <p className="text-sm text-muted-foreground">
-              Built by{" "}
+            <p className={styles.credit}>
+              {text.credit}{" "}
               <a
-                href="https://jeffry.in"
+                href={text.creditHref}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="font-medium underline underline-offset-4 hover:text-foreground"
+                className={styles.creditLink}
               >
-                Jeff Wainwright
+                {text.creditAuthor}
               </a>
             </p>
-            <p className="text-sm text-muted-foreground">
-              © {startYear}–{currentYear} MIT License
+            <p className={styles.copyright}>
+              © {text.startYear}–{currentYear} MIT License
             </p>
           </div>
-          <div className="flex gap-4">
+          <div className={styles.links}>
+            <img
+              src="https://static.scarf.sh/a.png?x-pxid=500dd7ce-0f58-4763-b6a7-fc992b6a12cb"
+              referrerPolicy="no-referrer-when-downgrade"
+              aria-hidden="true"
+              alt=""
+              width={1}
+              height={1}
+              style={{ position: "absolute" }}
+            />
             <a
               href={siteConfig.links.github}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-accent transition-colors hover:text-accent/80"
+              className={styles.link}
               aria-label="GitHub"
             >
-              <Github className="h-5 w-5" />
+              <Github className={styles.linkIcon} />
             </a>
             <a
               href={siteConfig.links.npm}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-accent transition-colors hover:text-accent/80"
+              className={styles.link}
               aria-label="npm"
             >
-              <Package className="h-5 w-5" />
+              <Package className={styles.linkIcon} />
             </a>
           </div>
         </div>
       </div>
     </footer>
-  )
+  );
 }

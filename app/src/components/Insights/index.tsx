@@ -1,45 +1,44 @@
-import { motion } from "framer-motion"
-import { SectionHeader } from "@/components/SectionHeader"
-import { EASE_CURVE } from "@/lib/styles"
-import { INSIGHT_STATS } from "./constants"
-import type { InsightProps } from "./types"
+import { motion } from "framer-motion";
+import { SectionHeader } from "@/components/SectionHeader";
+import { EASE_CURVE } from "@/lib/styles";
+import { INSIGHTS_CONSTANTS } from "./constants";
+import type { InsightProps } from "./types";
+
+const { styles, text, items } = INSIGHTS_CONSTANTS;
 
 export function Insights({ className = "" }: InsightProps) {
   return (
-    <section className={`px-4 py-16 md:py-24 ${className}`}>
-      <div className="container mx-auto max-w-6xl">
-        <SectionHeader
-          title="Built for Speed"
-          description="Optimized from the ground up to be lightweight and blazing fast"
-        />
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-          {INSIGHT_STATS.map((stat, index) => (
+    <section className={`${styles.section} ${className}`}>
+      <div className={styles.container}>
+        <SectionHeader title={text.sectionTitle} description={text.sectionDescription} />
+        <div className={styles.grid}>
+          {items.map((stat, index) => (
             <StatCard key={stat.label} stat={stat} index={index} />
           ))}
         </div>
       </div>
     </section>
-  )
+  );
 }
 
 interface StatCardProps {
-  stat: typeof INSIGHT_STATS[number]
-  index: number
+  stat: (typeof items)[number];
+  index: number;
 }
 
 function StatCard({ stat, index }: StatCardProps) {
   return (
     <motion.div
-      className="group relative overflow-hidden rounded-xl border border-border/10 bg-card p-6 shadow-md shadow-black/5 transition-all hover:border-primary/20 hover:shadow-lg hover:shadow-primary/5 dark:shadow-black/20"
+      className={styles.card}
       initial={{ opacity: 0, y: 20 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
       transition={{ duration: 0.6, delay: index * 0.1, ease: EASE_CURVE }}
     >
-      <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
-      <div className="relative">
+      <div className={styles.cardOverlay} />
+      <div className={styles.cardInner}>
         <motion.div
-          className="mb-2 text-4xl font-bold tracking-tight"
+          className={styles.value}
           style={{
             background: "linear-gradient(135deg, rgb(var(--primary)) 0%, rgb(var(--accent)) 100%)",
             WebkitBackgroundClip: "text",
@@ -49,13 +48,9 @@ function StatCard({ stat, index }: StatCardProps) {
         >
           {stat.value}
         </motion.div>
-        <div className="mb-1 text-sm font-semibold text-foreground">
-          {stat.label}
-        </div>
-        <p className="text-sm text-muted-foreground">
-          {stat.description}
-        </p>
+        <div className={styles.label}>{stat.label}</div>
+        <p className={styles.description}>{stat.description}</p>
       </div>
     </motion.div>
-  )
+  );
 }

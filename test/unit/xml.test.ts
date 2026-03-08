@@ -1,5 +1,10 @@
 import { describe, test, expect } from "bun:test";
-import { parseXML, parseXMLValue, parseXMLAttributes, parseXMLElement } from "../../src/formats/xml";
+import {
+  parseXML,
+  parseXMLValue,
+  parseXMLAttributes,
+  parseXMLElement,
+} from "../../src/formats/xml";
 
 describe("XML Value Parser", () => {
   test("parses string values", () => {

@@ -73,10 +73,9 @@ function processENVLine(state: ENVParseState, line: string): ENVParseState {
 export function parseENV(input: string): Record<string, unknown> {
   const lines = input.trim().split("\n");
 
-  const finalState = lines.reduce(
-    (state, line) => processENVLine(state, line),
-    { result: {} } as ENVParseState
-  );
+  const finalState = lines.reduce((state, line) => processENVLine(state, line), {
+    result: {},
+  } as ENVParseState);
 
   return finalState.result;
 }

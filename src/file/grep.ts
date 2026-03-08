@@ -4,10 +4,7 @@ import { DEFAULT_SEARCH_EXTENSIONS } from "./constants";
 import { readFile } from "./io";
 import { listFiles } from "./walk";
 
-export const createRegexFromPattern = (
-  pattern: string | RegExp,
-  ignoreCase: boolean,
-): RegExp => {
+export const createRegexFromPattern = (pattern: string | RegExp, ignoreCase: boolean): RegExp => {
   const isString = typeof pattern === "string";
   if (!isString) return pattern;
 
@@ -42,15 +39,10 @@ export const createGrepResult = (
   };
 };
 
-export const logVerboseError = (
-  filePath: string,
-  error: unknown,
-  verbose: boolean,
-): void => {
+export const logVerboseError = (filePath: string, error: unknown, verbose: boolean): void => {
   if (!verbose) return;
 
-  const errorMessage =
-    error instanceof Error ? error.message : String(error);
+  const errorMessage = error instanceof Error ? error.message : String(error);
   console.error(`Failed to search ${filePath}: ${errorMessage}`);
 };
 
@@ -63,14 +55,7 @@ export const extractMatchesFromLine = (
   contextSize: number | undefined,
 ): GrepResult[] =>
   [...line.matchAll(regex)].map((match) =>
-    createGrepResult(
-      filePath,
-      lineIndex,
-      match.index!,
-      line,
-      allLines,
-      contextSize,
-    ),
+    createGrepResult(filePath, lineIndex, match.index!, line, allLines, contextSize),
   );
 
 export const shouldStopSearching = (
@@ -93,14 +78,7 @@ export const searchFileContent = async (
 
     const lines = content.split("\n");
     const allResults = lines.flatMap((line, index) =>
-      extractMatchesFromLine(
-        line,
-        index,
-        regex,
-        filePath,
-        lines,
-        options.context,
-      ),
+      extractMatchesFromLine(line, index, regex, filePath, lines, options.context),
     );
 
     const maxMatches = options.maxMatches ?? Infinity;
@@ -122,9 +100,7 @@ export const searchInDirectory = async (
   });
 
   const fileResults = await Promise.all(
-    files
-      .filter((file) => file.isFile)
-      .map((file) => searchFileContent(file.path, regex, options)),
+    files.filter((file) => file.isFile).map((file) => searchFileContent(file.path, regex, options)),
   );
 
   return fileResults.flat();

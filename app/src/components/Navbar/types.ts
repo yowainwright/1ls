@@ -1,11 +1,11 @@
-import type { LucideIcon } from "lucide-react"
+import type { LucideIcon } from "lucide-react";
 
 export interface NavLink {
-  href: string
-  label: string
-  icon?: LucideIcon
+  href: string;
+  label: string;
+  icon?: LucideIcon;
 }
 
 export interface NavbarProps {
-  className?: string
+  className?: string;
 }

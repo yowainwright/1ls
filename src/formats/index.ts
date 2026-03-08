@@ -97,8 +97,7 @@ const isValidJSONLine = (line: string): boolean => {
   }
 };
 
-const countMatches = (str: string, pattern: RegExp): number =>
-  (str.match(pattern) || []).length;
+const countMatches = (str: string, pattern: RegExp): number => (str.match(pattern) || []).length;
 
 function detectMultiline(trimmed: string): DataFormat {
   const lines = trimmed.split("\n");
@@ -153,7 +152,11 @@ const tryParseJSON = (trimmed: string): DataFormat | null => {
   }
 };
 
-const detectJSONLike = (trimmed: string, firstChar: string, lastChar: string): DataFormat | null => {
+const detectJSONLike = (
+  trimmed: string,
+  firstChar: string,
+  lastChar: string,
+): DataFormat | null => {
   const isObjectLike = firstChar === "{" && lastChar === "}";
   const isArrayLike = firstChar === "[" && lastChar === "]";
 
@@ -184,7 +187,11 @@ const detectJavaScriptOrTypeScript = (trimmed: string): DataFormat | null => {
   return hasTypeScriptFeatures(trimmed) ? "typescript" : "javascript";
 };
 
-const detectByFirstChar = (trimmed: string, firstChar: string, lastChar: string): DataFormat | null => {
+const detectByFirstChar = (
+  trimmed: string,
+  firstChar: string,
+  lastChar: string,
+): DataFormat | null => {
   switch (firstChar) {
     case "{":
     case "[":

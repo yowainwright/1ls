@@ -16,11 +16,14 @@ export function parseXMLValue(value: string): unknown {
 export function parseXMLAttributes(attrString: string): Record<string, unknown> {
   const matches = Array.from(attrString.matchAll(XML.ATTRIBUTES));
 
-  return matches.reduce((attrs, match) => {
-    const [, key, value] = match;
-    attrs[key] = parseXMLValue(value);
-    return attrs;
-  }, {} as Record<string, unknown>);
+  return matches.reduce(
+    (attrs, match) => {
+      const [, key, value] = match;
+      attrs[key] = parseXMLValue(value);
+      return attrs;
+    },
+    {} as Record<string, unknown>,
+  );
 }
 
 export function parseXMLElement(xml: string): unknown {
@@ -163,22 +166,16 @@ function splitXMLElements(content: string): string[] {
         skip: 0,
       };
     },
-    { elements: [], buffer: [], depth: 0, skip: 0 } as XMLElementState
+    { elements: [], buffer: [], depth: 0, skip: 0 } as XMLElementState,
   );
 
   const finalContent = finalState.buffer.join("").trim();
   const hasFinalContent = finalContent.length > 0;
 
-  return hasFinalContent
-    ? [...finalState.elements, finalContent]
-    : finalState.elements;
+  return hasFinalContent ? [...finalState.elements, finalContent] : finalState.elements;
 }
 
-function mergeXMLElement(
-  result: Record<string, unknown>,
-  key: string,
-  value: unknown
-): void {
+function mergeXMLElement(result: Record<string, unknown>, key: string, value: unknown): void {
   const existing = result[key];
   const hasExisting = existing !== undefined;
 
@@ -199,18 +196,21 @@ function mergeXMLElement(
 export function parseXMLChildren(content: string): Record<string, unknown> {
   const elements = splitXMLElements(content);
 
-  return elements.reduce((result, element) => {
-    const parsed = parseXMLElement(element);
-    const isObject = typeof parsed === "object" && parsed !== null;
+  return elements.reduce(
+    (result, element) => {
+      const parsed = parseXMLElement(element);
+      const isObject = typeof parsed === "object" && parsed !== null;
 
-    if (isObject) {
-      Object.entries(parsed).forEach(([key, value]) => {
-        mergeXMLElement(result, key, value);
-      });
-    }
+      if (isObject) {
+        Object.entries(parsed).forEach(([key, value]) => {
+          mergeXMLElement(result, key, value);
+        });
+      }
 
-    return result;
-  }, {} as Record<string, unknown>);
+      return result;
+    },
+    {} as Record<string, unknown>,
+  );
 }
 
 export function parseXML(input: string): unknown {

@@ -2,15 +2,7 @@ import type { ShortcutMapping } from "./shortcuts";
 
 export const VALID_OUTPUT_FORMATS = ["json", "yaml", "csv", "table"] as const;
 
-export const VALID_INPUT_FORMATS = [
-  "json",
-  "yaml",
-  "toml",
-  "csv",
-  "tsv",
-  "lines",
-  "text",
-] as const;
+export const VALID_INPUT_FORMATS = ["json", "yaml", "toml", "csv", "tsv", "lines", "text"] as const;
 
 export const SHORTCUTS: ShortcutMapping[] = [
   { short: ".mp", full: ".map", description: "Transform each element", type: "array" },
@@ -79,7 +71,9 @@ Shortcuts:
 
 const formatShortcutsByType = (type: string, title: string): string => {
   const filtered = SHORTCUTS.filter((s) => s.type === type);
-  const lines = filtered.map((s) => `  ${s.short.padEnd(6)} -> ${s.full.padEnd(14)} ${s.description}`);
+  const lines = filtered.map(
+    (s) => `  ${s.short.padEnd(6)} -> ${s.full.padEnd(14)} ${s.description}`,
+  );
   return `${title}:\n${lines.join("\n")}`;
 };
 

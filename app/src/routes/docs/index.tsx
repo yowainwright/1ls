@@ -1,11 +1,11 @@
-import { createFileRoute } from '@tanstack/react-router'
-import { PageHeader } from './-components/PageHeader'
-import { DocsCard } from './-components/DocsCard'
-import { CARDS } from './-constants'
+import { createFileRoute } from "@tanstack/react-router";
+import { PageHeader } from "./-components/PageHeader";
+import { DocsCard } from "./-components/DocsCard";
+import { CARDS } from "./-constants";
 
-export const Route = createFileRoute('/docs/')({
+export const Route = createFileRoute("/docs/")({
   component: DocsIndex,
-})
+});
 
 function DocsIndex() {
   return (
@@ -16,10 +16,16 @@ function DocsIndex() {
       />
       <div className="flex flex-wrap gap-2">
         <a href="https://github.com/yowainwright/1ls/actions/workflows/ci.yml">
-          <img src="https://github.com/yowainwright/1ls/actions/workflows/ci.yml/badge.svg" alt="CI" />
+          <img
+            src="https://github.com/yowainwright/1ls/actions/workflows/ci.yml/badge.svg"
+            alt="CI"
+          />
         </a>
         <a href="https://codecov.io/gh/yowainwright/1ls">
-          <img src="https://codecov.io/gh/yowainwright/1ls/branch/main/graph/badge.svg" alt="codecov" />
+          <img
+            src="https://codecov.io/gh/yowainwright/1ls/branch/main/graph/badge.svg"
+            alt="codecov"
+          />
         </a>
         <a href="https://www.npmjs.com/package/1ls">
           <img src="https://img.shields.io/npm/v/1ls.svg" alt="npm version" />
@@ -37,5 +43,5 @@ function DocsIndex() {
         ))}
       </div>
     </div>
-  )
+  );
 }

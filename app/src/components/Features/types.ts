@@ -1,9 +1,9 @@
 export interface Feature {
-  title: string
-  description: string
-  icon: string
+  title: string;
+  description: string;
+  icon: string;
 }
 
 export interface FeaturesProps {
-  className?: string
+  className?: string;
 }

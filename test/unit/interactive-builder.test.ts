@@ -104,9 +104,7 @@ describe("Arrow Function Builder", () => {
     expect(hasNamePath).toBe(true);
 
     const namePathIndex =
-      arrowFnState.builder?.arrowFnContext?.paramPaths.findIndex(
-        (p) => p.path === ".name",
-      ) || 0;
+      arrowFnState.builder?.arrowFnContext?.paramPaths.findIndex((p) => p.path === ".name") || 0;
 
     const newState = updateArrowFnExpression(arrowFnState, namePathIndex);
 
@@ -115,9 +113,7 @@ describe("Arrow Function Builder", () => {
 
   test("completes arrow function and returns to build mode", () => {
     const namePathIndex =
-      arrowFnState.builder?.arrowFnContext?.paramPaths.findIndex(
-        (p) => p.path === ".name",
-      ) || 0;
+      arrowFnState.builder?.arrowFnContext?.paramPaths.findIndex((p) => p.path === ".name") || 0;
     const withProperty = updateArrowFnExpression(arrowFnState, namePathIndex);
     const completed = completeArrowFn(withProperty);
 
@@ -300,9 +296,7 @@ describe("selectMethod edge cases", () => {
     const paths = navigateJson(testData);
     const initialState = createInitialState(paths, testData);
     const buildState = enterBuildMode(initialState);
-    const sortMethodIndex = buildState.methodMatches.findIndex(
-      (m) => m.item.name === "sort"
-    );
+    const sortMethodIndex = buildState.methodMatches.findIndex((m) => m.item.name === "sort");
     const hasSortMethod = sortMethodIndex >= 0;
     expect(hasSortMethod).toBe(true);
 
@@ -385,9 +379,7 @@ describe("completeArrowFn template replacements", () => {
   const buildState = enterBuildMode(initialState);
 
   test("replaces (a, b) => a - b pattern for sort", () => {
-    const sortIndex = buildState.methodMatches.findIndex(
-      (m) => m.item.name === "sort"
-    );
+    const sortIndex = buildState.methodMatches.findIndex((m) => m.item.name === "sort");
     const hasSortMethod = sortIndex >= 0;
     expect(hasSortMethod).toBe(true);
 
@@ -402,9 +394,7 @@ describe("completeArrowFn template replacements", () => {
   });
 
   test("replaces (acc, x) => acc pattern for reduce", () => {
-    const reduceIndex = buildState.methodMatches.findIndex(
-      (m) => m.item.name === "reduce"
-    );
+    const reduceIndex = buildState.methodMatches.findIndex((m) => m.item.name === "reduce");
     const hasReduceMethod = reduceIndex >= 0;
     expect(hasReduceMethod).toBe(true);
 

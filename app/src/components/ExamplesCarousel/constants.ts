@@ -1,6 +1,35 @@
-import type { CodeExample } from "./types"
+import { SECTION, CONTAINER } from "@/lib/classes";
+import type { CodeExample } from "./types";
 
-export const CODE_EXAMPLES: CodeExample[] = [
+const styles = {
+  section: SECTION,
+  container: CONTAINER,
+  sectionHeaderClassName: "mb-12",
+  carouselItem: "md:basis-1/2 lg:basis-1/3",
+  card: "h-full w-full p-6 space-y-4",
+  cardHeader: "space-y-2",
+  cardHeaderRow: "flex items-center justify-between",
+  cardTitle: "text-xl font-semibold",
+  cardBadge: "rounded-md bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary",
+  cardDescription: "text-sm text-muted-foreground",
+  cardContent: "space-y-4",
+  label: "mb-2 text-xs font-medium text-muted-foreground",
+  commandWrap: "flex items-center justify-center",
+  commandInner: "rounded-lg bg-muted px-3 py-1.5 font-mono text-sm",
+  commandPrompt: "text-muted-foreground",
+  commandText: "text-primary",
+};
+
+const text = {
+  sectionTitle: "Works With Any Format",
+  sectionDescription:
+    "JSON, YAML, CSV, TypeScript, plain text, and more - all with the same simple syntax",
+  inputLabel: "Input:",
+  outputLabel: "Output:",
+  commandPrefix: "$",
+};
+
+const items: CodeExample[] = [
   {
     title: "Shortcut Syntax",
     description: "Minified expressions: .fl = .filter, .mp = .map",
@@ -80,4 +109,6 @@ IN PROGRESS: Refactor`,
     output: `["TODO: Fix bug", "TODO: Add tests"]`,
     language: "text",
   },
-]
+];
+
+export const EXAMPLES_CAROUSEL_CONSTANTS = { styles, text, items };

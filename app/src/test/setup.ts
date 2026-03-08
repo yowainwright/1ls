@@ -1,13 +1,13 @@
-import { afterEach } from "bun:test"
-import { cleanup } from "@testing-library/react"
-import * as matchers from "@testing-library/jest-dom/matchers"
-import { expect } from "bun:test"
-import { GlobalRegistrator } from "@happy-dom/global-registrator"
+import { afterEach } from "bun:test";
+import { cleanup } from "@testing-library/react";
+import * as matchers from "@testing-library/jest-dom/matchers";
+import { expect } from "bun:test";
+import { GlobalRegistrator } from "@happy-dom/global-registrator";
 
-GlobalRegistrator.register()
+GlobalRegistrator.register();
 
-expect.extend(matchers)
+expect.extend(matchers);
 
 afterEach(() => {
-  cleanup()
-})
+  cleanup();
+});

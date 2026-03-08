@@ -2,13 +2,13 @@ export const TRUTHY_VALUES = ["true", "yes", "on"] as const;
 export const FALSY_VALUES = ["false", "no", "off"] as const;
 export const NULL_VALUES = ["null", "~", ""] as const;
 
-export const isTruthyValue = (value: string): value is typeof TRUTHY_VALUES[number] =>
+export const isTruthyValue = (value: string): value is (typeof TRUTHY_VALUES)[number] =>
   (TRUTHY_VALUES as readonly string[]).includes(value);
 
-export const isFalsyValue = (value: string): value is typeof FALSY_VALUES[number] =>
+export const isFalsyValue = (value: string): value is (typeof FALSY_VALUES)[number] =>
   (FALSY_VALUES as readonly string[]).includes(value);
 
-export const isNullValue = (value: string): value is typeof NULL_VALUES[number] =>
+export const isNullValue = (value: string): value is (typeof NULL_VALUES)[number] =>
   (NULL_VALUES as readonly string[]).includes(value);
 
 export const parseBooleanValue = (value: string): boolean | undefined => {
@@ -36,5 +36,4 @@ export const countQuotes = (line: string, endPos: number): number => {
   return count;
 };
 
-export const isQuoteBalanced = (quoteCount: number): boolean =>
-  quoteCount % 2 === 0;
+export const isQuoteBalanced = (quoteCount: number): boolean => quoteCount % 2 === 0;

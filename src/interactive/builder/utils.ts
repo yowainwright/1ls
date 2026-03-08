@@ -26,11 +26,7 @@ export const getArraySampleValue = (value: unknown): unknown => {
   return value[0];
 };
 
-export const replaceLastOccurrence = (
-  str: string,
-  find: string,
-  replace: string,
-): string => {
+export const replaceLastOccurrence = (str: string, find: string, replace: string): string => {
   const lastIndex = str.lastIndexOf(find);
   if (lastIndex === -1) return str;
   return str.substring(0, lastIndex) + replace + str.substring(lastIndex + find.length);
@@ -68,7 +64,5 @@ export const replaceTemplateWithExpression = (
   return expression;
 };
 
-export const buildArrowExpression = (
-  path: string,
-  paramName: string,
-): string => (path === "." ? paramName : `${paramName}${path}`);
+export const buildArrowExpression = (path: string, paramName: string): string =>
+  path === "." ? paramName : `${paramName}${path}`;

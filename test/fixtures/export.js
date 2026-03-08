@@ -4,7 +4,7 @@ export default {
   settings: {
     enableCache: true,
     timeout: 5000,
-    retries: 3
+    retries: 3,
   },
-  features: ["auth", "logging", "metrics"]
+  features: ["auth", "logging", "metrics"],
 };

@@ -204,7 +204,9 @@ describe("Interactive State", () => {
       const withQuery = updateQuery(state, ".hea");
 
       expect(withQuery.tooltip.visible).toBe(true);
-      const hasHead = withQuery.tooltip.methodHints.some((m) => m.item.name === "head" && m.item.isBuiltin);
+      const hasHead = withQuery.tooltip.methodHints.some(
+        (m) => m.item.name === "head" && m.item.isBuiltin,
+      );
       expect(hasHead).toBe(true);
     });
 
@@ -217,9 +219,7 @@ describe("Interactive State", () => {
   });
 
   describe("updateSelection in different modes", () => {
-    const paths: JsonPath[] = [
-      { path: ".", value: [1, 2], type: "Array", displayValue: "[1, 2]" },
-    ];
+    const paths: JsonPath[] = [{ path: ".", value: [1, 2], type: "Array", displayValue: "[1, 2]" }];
 
     test("uses matches.length in explore mode", () => {
       const state = createInitialState(paths, [1, 2]);
@@ -234,8 +234,28 @@ describe("Interactive State", () => {
       const buildState = Object.assign({}, baseState, {
         mode: "build" as const,
         methodMatches: [
-          { item: { name: "map", signature: ".map()", description: "Map", template: ".map()", category: "Transform" }, score: 100, matches: [] },
-          { item: { name: "filter", signature: ".filter()", description: "Filter", template: ".filter()", category: "Transform" }, score: 90, matches: [] },
+          {
+            item: {
+              name: "map",
+              signature: ".map()",
+              description: "Map",
+              template: ".map()",
+              category: "Transform",
+            },
+            score: 100,
+            matches: [],
+          },
+          {
+            item: {
+              name: "filter",
+              signature: ".filter()",
+              description: "Filter",
+              template: ".filter()",
+              category: "Transform",
+            },
+            score: 90,
+            matches: [],
+          },
         ],
       });
 
@@ -251,9 +271,26 @@ describe("Interactive State", () => {
       const arrowFnState = Object.assign({}, baseState, {
         mode: "build-arrow-fn" as const,
         propertyMatches: [
-          { item: { path: ".name", value: "test", type: "String", displayValue: '"test"' }, score: 100, matches: [] },
-          { item: { path: ".age", value: 25, type: "Number", displayValue: "25" }, score: 90, matches: [] },
-          { item: { path: ".email", value: "test@example.com", type: "String", displayValue: '"test@example.com"' }, score: 80, matches: [] },
+          {
+            item: { path: ".name", value: "test", type: "String", displayValue: '"test"' },
+            score: 100,
+            matches: [],
+          },
+          {
+            item: { path: ".age", value: 25, type: "Number", displayValue: "25" },
+            score: 90,
+            matches: [],
+          },
+          {
+            item: {
+              path: ".email",
+              value: "test@example.com",
+              type: "String",
+              displayValue: '"test@example.com"',
+            },
+            score: 80,
+            matches: [],
+          },
         ],
       });
 
@@ -273,8 +310,16 @@ describe("Interactive State", () => {
         mode: "build-arrow-fn" as const,
         selectedIndex: 0,
         propertyMatches: [
-          { item: { path: ".a", value: 1, type: "Number", displayValue: "1" }, score: 100, matches: [] },
-          { item: { path: ".b", value: 2, type: "Number", displayValue: "2" }, score: 90, matches: [] },
+          {
+            item: { path: ".a", value: 1, type: "Number", displayValue: "1" },
+            score: 100,
+            matches: [],
+          },
+          {
+            item: { path: ".b", value: 2, type: "Number", displayValue: "2" },
+            score: 90,
+            matches: [],
+          },
         ],
       });
 
