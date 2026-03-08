@@ -93,8 +93,8 @@ const renderArrowFnModeTitle = (state: State): string => {
 };
 
 const renderVisibleMethods = (state: State): string => {
-  const hasBuilder = state.builder === null;
-  if (hasBuilder) return "";
+  const hasNoBuilder = state.builder === null;
+  if (hasNoBuilder) return "";
 
   const methodMatches = state.methodMatches;
   const selectedIndex = state.selectedIndex;

@@ -8,6 +8,7 @@ import {
 import type { CodeblockProps } from "./types";
 import { THEME, LANGUAGES, CODEBLOCK_CLASSES } from "./constants";
 import { CopyButton } from "./CopyButton";
+import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
 function CodeblockContent({
@@ -76,7 +77,7 @@ export function Codeblock({
         </div>
       )}
 
-      {showLanguage && <span className={CODEBLOCK_CLASSES.languageBadge}>{language}</span>}
+      {showLanguage && <Badge variant="outline" className={CODEBLOCK_CLASSES.languageBadge}>{language}</Badge>}
 
       {showCopy && <CopyButton code={trimmedCode} />}
 
@@ -108,5 +109,4 @@ export function getHighlighter(): Promise<Highlighter> {
 export { THEME, LANGUAGES, CODEBLOCK_CLASSES } from "./constants";
 export { CopyButton } from "./CopyButton";
 export { CodeCard } from "./CodeCard";
-export type { CodeblockProps, Language } from "./types";
-export type { CodeCardProps } from "./CodeCard";
+export type { CodeblockProps, Language, CodeCardProps } from "./types";

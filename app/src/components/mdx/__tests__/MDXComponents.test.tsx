@@ -35,7 +35,7 @@ describe("MDXComponents.pre", () => {
         <code className="language-bash">ls -la</code>
       </Pre>,
     );
-    const badge = container.querySelector(".shiki-wrapper > span");
+    const badge = container.querySelector(".shiki-wrapper > div");
     expect(badge).not.toBeNull();
     expect(badge?.textContent).toBe("bash");
   });

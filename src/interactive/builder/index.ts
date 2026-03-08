@@ -7,6 +7,7 @@ import {
   getParamName,
   getParamType,
   getArraySampleValue,
+  replaceLastOccurrence,
   replaceTemplateWithExpression,
   buildArrowExpression,
 } from "./utils";
@@ -190,7 +191,7 @@ export const cancelArrowFn = (state: State): State => {
   const template = method.template || "";
 
   const newBuilder = Object.assign({}, builder, {
-    expression: builder.expression.replace(template, ""),
+    expression: replaceLastOccurrence(builder.expression, template, ""),
     arrowFnContext: null,
   });
 
@@ -206,17 +207,18 @@ export const undoLastSegment = (state: State): State => {
   const builder = state.builder;
   const expression = builder.expression;
 
+  if (expression === builder.basePath) {
+    return exitBuildMode(state);
+  }
+
   const lastDotIndex = expression.lastIndexOf(".");
   if (lastDotIndex === -1) {
     return exitBuildMode(state);
   }
 
-  const lastOpenParenIndex = expression.lastIndexOf("(");
-  const shouldRemoveMethod = lastOpenParenIndex > lastDotIndex;
+  const newExpression = expression.substring(0, lastDotIndex);
 
-  const newExpression = shouldRemoveMethod ? expression.substring(0, lastDotIndex) : expression;
-
-  if (newExpression === builder.basePath) {
+  if (!newExpression || newExpression === builder.basePath) {
     return exitBuildMode(state);
   }
 
