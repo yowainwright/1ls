@@ -8,6 +8,8 @@ import { SectionHeader } from "@/components/SectionHeader";
 import { EASE_CURVE } from "@/lib/styles";
 import { FULL_QUERY, DEMO_STEPS, BASE_STEP_DURATION, TOOLTIP_DEMO_CONSTANTS } from "./constants";
 import type { TooltipDemoProps, MethodHint, DemoContext, TerminalBodyProps, HintRowProps, FeatureDescriptionProps } from "./types";
+import { getSearchTerm, filterHints } from "./utils";
+export { getSearchTerm, filterHints } from "./utils";
 
 const { styles, text } = TOOLTIP_DEMO_CONSTANTS;
 
@@ -66,19 +68,6 @@ const tooltipDemoMachine = setup({
   },
 });
 
-function getSearchTerm(query: string, triggerAt: number): string {
-  const lastDotIndex = query.lastIndexOf(".");
-  return lastDotIndex === -1 ? query.slice(triggerAt) : query.slice(lastDotIndex + 1).toLowerCase();
-}
-
-function filterHints(hints: MethodHint[], searchTerm: string): MethodHint[] {
-  if (!searchTerm) return hints;
-  return hints.filter((hint) => {
-    const match = hint.signature.match(/^\.?(\w+)/);
-    const name = match?.[1].toLowerCase() ?? hint.signature.toLowerCase();
-    return name.startsWith(searchTerm);
-  });
-}
 
 export function TooltipDemo({ className = "" }: TooltipDemoProps) {
   const [snapshot] = useMachine(tooltipDemoMachine);
