@@ -3,8 +3,9 @@ import { useMachine } from "@xstate/react";
 import { Link, useLocation } from "@tanstack/react-router";
 import { ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 import { DOCS_NAV } from "./constants";
-import type { NavSection, NavItem } from "./types";
+import type { DesktopSidebarProps, SidebarNavContentProps, SidebarSectionProps, SidebarNavItemProps } from "./types";
 
 const sectionMachine = createMachine({
   id: "section",
@@ -21,10 +22,6 @@ export function DocsSidebar() {
   return <DesktopSidebar pathname={location.pathname} />;
 }
 
-interface DesktopSidebarProps {
-  pathname: string;
-}
-
 function DesktopSidebar({ pathname }: DesktopSidebarProps) {
   return (
     <aside className="hidden md:block w-72 border-r border-border/10">
@@ -33,11 +30,6 @@ function DesktopSidebar({ pathname }: DesktopSidebarProps) {
       </div>
     </aside>
   );
-}
-
-interface SidebarNavContentProps {
-  pathname: string;
-  onNavigate?: () => void;
 }
 
 function SidebarNavContent({ pathname, onNavigate }: SidebarNavContentProps) {
@@ -55,27 +47,22 @@ function SidebarNavContent({ pathname, onNavigate }: SidebarNavContentProps) {
   );
 }
 
-interface SidebarSectionProps {
-  section: NavSection;
-  pathname: string;
-  onNavigate?: () => void;
-}
-
 function SidebarSection({ section, pathname, onNavigate }: SidebarSectionProps) {
   const [snapshot, send] = useMachine(sectionMachine);
   const isOpen = snapshot.matches("open");
 
   return (
     <div>
-      <button
+      <Button
+        variant="ghost"
         onClick={() => send({ type: "TOGGLE" })}
-        className="flex w-full items-center justify-between px-2 py-1.5 text-sm font-semibold text-foreground/70 uppercase tracking-wide hover:text-foreground transition-colors"
+        className="flex h-auto w-full items-center justify-between px-2 py-1.5 text-sm font-semibold text-foreground/70 uppercase tracking-wide hover:bg-transparent hover:text-foreground"
       >
         <span>{section.title}</span>
         <ChevronRight
           className={cn("h-4 w-4 transition-transform duration-200", isOpen && "rotate-90")}
         />
-      </button>
+      </Button>
       {isOpen && (
         <div className="ml-2 mt-1 border-l-2 border-border/20">
           <ul className="space-y-1">
@@ -92,12 +79,6 @@ function SidebarSection({ section, pathname, onNavigate }: SidebarSectionProps) 
       )}
     </div>
   );
-}
-
-interface SidebarNavItemProps {
-  item: NavItem;
-  pathname: string;
-  onNavigate?: () => void;
 }
 
 function SidebarNavItem({ item, pathname, onNavigate }: SidebarNavItemProps) {

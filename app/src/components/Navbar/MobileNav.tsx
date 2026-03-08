@@ -66,16 +66,17 @@ export function MobileNav() {
               </ul>
             </div>
             <div className={styles.navFooter}>
-              <a
-                href={githubUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={() => send({ type: "CLOSE" })}
-                className={styles.navFooterLink}
-              >
-                <Github className={styles.githubIcon} />
-                {text.githubLabel}
-              </a>
+              <Button variant="ghost" asChild className={styles.navFooterLink}>
+                <a
+                  href={githubUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => send({ type: "CLOSE" })}
+                >
+                  <Github className={styles.githubIcon} />
+                  {text.githubLabel}
+                </a>
+              </Button>
             </div>
           </nav>
         </SheetContent>

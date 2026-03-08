@@ -6,11 +6,11 @@ _1ls_complete() {
     cur="${COMP_WORDS[COMP_CWORD]}"
     prev="${COMP_WORDS[COMP_CWORD-1]}"
 
-    opts="--help --version --raw --pretty --compact --type --format --list --grep --find --recursive --ignore-case --line-numbers --ext --max-depth --shortcuts --shorten --expand --slurp --null-input readFile"
+    opts="--help -h --version -v --raw -r --pretty -p --compact -c --type -t --format --input-format -if --detect --list -l --grep -g --find -f --recursive -R --ignore-case -i --line-numbers -n --ext --max-depth --shortcuts --shorten --expand --strict -s --slurp -S --null-input -N --interactive readFile"
     format_opts="json yaml csv table"
-    json_paths=". .[] .. .{keys} .{values} .{entries}"
-    shortcuts=".mp .flt .rd .fnd .sm .evr .srt .rvs .jn .kys .vls .ents .lc .uc .trm"
-    builtins="head hd last lst tail tl take tk drop drp uniq unq flatten fltn rev groupBy grpBy sortBy srtBy chunk chnk compact cmpct pick pk omit omt keys ks vals merge mrg deepMerge dMrg fromPairs frPrs toPairs toPrs sum mean avg min max len count cnt isEmpty emp isNil nil pluck plk pipe compose id type typ range rng has hs nth contains ctns add path pth getpath gpth setpath spth recurse rec split spl join jn startswith stw endswith edw ltrimstr ltrm rtrimstr rtrm tostring tstr tonumber tnum floor flr ceil cl round rnd abs not select sel empty error debug dbg"
+    json_paths=". .[] .. .{keys} .{values} .{entries} .foo? .foo ?? default"
+    shortcuts=".mp .flt .rd .fnd .fndIdx .sm .evr .srt .rvs .jn .slc .splt .psh .pp .shft .unshft .fltMap .flt1 .incl .idxOf .kys .vls .ents .len .lc .uc .trm .trmSt .trmEnd .rpl .rplAll .pdSt .pdEnd .stsWith .endsWith .sbstr .chr .chrCd .mtch .str .json .val"
+    builtins="pipe compose head last tail take drop uniq flatten rev groupBy sortBy chunk compact pick omit keys vals merge deepMerge fromPairs toPairs sum mean min max len count isEmpty isNil id pluck type range has nth contains add path getpath setpath recurse split join startswith endswith ltrimstr rtrimstr tostring tonumber floor ceil round abs not select empty error debug hd lst tl tk drp unq fltn grpBy srtBy chnk cmpct pk omt ks mrg dMrg frPrs toPrs avg cnt emp nil plk typ rng hs ctns pth gpth spth rec spl jn stw edw ltrm rtrm tstr tnum flr cl rnd sel dbg"
 
     case "${prev}" in
         --format)

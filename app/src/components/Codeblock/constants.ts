@@ -17,5 +17,5 @@ export const LANGUAGES: readonly Language[] = [
 export const CODEBLOCK_CLASSES = {
   wrapper: "shiki-wrapper group relative my-6 rounded-lg border border-border/10 overflow-hidden",
   languageBadge:
-    "absolute top-3 left-3 z-10 px-2 py-1 text-xs font-mono font-semibold uppercase tracking-wide rounded bg-white/10 text-muted-foreground border border-white/10",
+    "absolute top-3 left-3 z-10 px-1.5 py-0.5 text-[10px] font-mono uppercase tracking-wide rounded bg-white/10 text-muted-foreground/70 border-transparent",
 };

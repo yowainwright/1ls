@@ -216,6 +216,13 @@ export const Delays = {
   SHARE_RESET: 2000,
 } as const;
 
+export const PLAYGROUND_STYLES = {
+  tabBar: "flex gap-0.5 rounded-lg border border-border/10 bg-muted/60 p-0.5",
+  tabBase: "h-7 px-2.5 text-xs font-medium",
+  tabActive: "bg-white/10 text-foreground shadow-none",
+  tabInactive: "text-muted-foreground hover:text-foreground hover:bg-white/5",
+} as const;
+
 export const SANDBOX_STARTER: Record<Format, { data: string; expression: string }> = {
   json: {
     data: `{

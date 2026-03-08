@@ -12,10 +12,10 @@ export function DocsCard({ href, title, description }: DocsCardProps) {
         {title}
       </h3>
       <p className="mt-2 flex-1 text-sm text-muted-foreground">{description}</p>
-      <div className="mt-4 flex items-center text-sm font-medium text-primary opacity-0 transition-opacity group-hover:opacity-100">
+      <span className="mt-4 flex items-center text-sm font-medium text-primary opacity-0 transition-opacity group-hover:opacity-100">
         Learn more
         <ArrowRight className="ml-1 h-4 w-4" />
-      </div>
+      </span>
     </Link>
   );
 }

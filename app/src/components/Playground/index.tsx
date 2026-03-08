@@ -3,6 +3,7 @@ import { useMachine } from "@xstate/react";
 import { Effect, Fiber } from "effect";
 import { Share2, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import { Codeblock, CodeCard } from "@/components/Codeblock";
 import { CodeEditor } from "./CodeEditor";
 import { SectionHeader } from "@/components/SectionHeader";
@@ -17,7 +18,7 @@ import type {
   OutputPanelProps,
   PlaygroundHeaderProps,
 } from "./types";
-import { FORMAT_CONFIGS, FORMATS, States, MachineEvents } from "./constants";
+import { FORMAT_CONFIGS, FORMATS, States, MachineEvents, PLAYGROUND_STYLES } from "./constants";
 import { runEvaluation, detectFormat, minifyExpression, expandExpression } from "./utils";
 import { getShareableUrl } from "./storage";
 import { playgroundMachine } from "./machine";
@@ -180,13 +181,14 @@ function InputPanel({
 
 function FormatTabs({ format, onFormatChange }: FormatTabsProps) {
   return (
-    <div className="flex gap-1 rounded-xl border border-border/10 bg-muted p-1 shadow-sm">
+    <div className={PLAYGROUND_STYLES.tabBar}>
       {FORMATS.map((f) => (
         <Button
           key={f}
-          variant={format === f ? "outline" : "ghost"}
+          variant="ghost"
           size="sm"
           onClick={() => onFormatChange(f)}
+          className={cn(PLAYGROUND_STYLES.tabBase, format === f ? PLAYGROUND_STYLES.tabActive : PLAYGROUND_STYLES.tabInactive)}
         >
           {FORMAT_CONFIGS[f].label}
         </Button>
@@ -201,7 +203,7 @@ function OutputPanel({ output, error }: OutputPanelProps) {
       <div className="h-[42px]" />
       <CodeCard className="rounded-xl shadow-md">
         <div className="border-b border-white/10 bg-white/5 px-4 py-2">
-          <span className="text-sm font-medium text-muted-foreground">Output</span>
+          <h2 className="text-sm font-medium text-muted-foreground">Output</h2>
         </div>
         {error ? (
           <div className="p-4 font-mono text-sm text-red-400">{error}</div>
@@ -220,6 +222,8 @@ function PlaygroundHeader({
   shareStatus,
   onShare,
 }: PlaygroundHeaderProps) {
+  const isCopied = shareStatus === "copied";
+
   return (
     <div className="mb-8">
       <SectionHeader
@@ -230,12 +234,8 @@ function PlaygroundHeader({
       {showShare && (
         <div className="flex justify-center">
           <Button variant="outline" size="sm" onClick={onShare}>
-            {shareStatus === "copied" ? (
-              <Check className="h-4 w-4" />
-            ) : (
-              <Share2 className="h-4 w-4" />
-            )}
-            {shareStatus === "copied" ? "Copied!" : "Share"}
+            {isCopied ? <Check className="h-4 w-4" /> : <Share2 className="h-4 w-4" />}
+            {isCopied ? "Copied!" : "Share"}
           </Button>
         </div>
       )}

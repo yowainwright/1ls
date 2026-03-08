@@ -1,13 +1,9 @@
 import { Codeblock, CodeCard } from "@/components/Codeblock";
-import type { Language } from "@/components/Codeblock";
+import { Badge } from "@/components/ui/badge";
 import { EXAMPLES_CAROUSEL_CONSTANTS } from "../constants";
-import type { CodeExample } from "../types";
+import type { SpotlightCardProps, SpotlightCardHeaderProps, SpotlightCardContentProps } from "../types";
 
 const { styles, text } = EXAMPLES_CAROUSEL_CONSTANTS;
-
-interface SpotlightCardProps {
-  example: CodeExample;
-}
 
 export function SpotlightCard({ example }: SpotlightCardProps) {
   return (
@@ -27,29 +23,16 @@ export function SpotlightCard({ example }: SpotlightCardProps) {
   );
 }
 
-interface SpotlightCardHeaderProps {
-  title: string;
-  description: string;
-  format: string;
-}
-
 function SpotlightCardHeader({ title, description, format }: SpotlightCardHeaderProps) {
   return (
     <div className={styles.cardHeader}>
       <div className={styles.cardHeaderRow}>
         <h3 className={styles.cardTitle}>{title}</h3>
-        <span className={styles.cardBadge}>{format}</span>
+        <Badge className={styles.cardBadge}>{format}</Badge>
       </div>
       <p className={styles.cardDescription}>{description}</p>
     </div>
   );
-}
-
-interface SpotlightCardContentProps {
-  input: string;
-  output: string;
-  command: string;
-  language: Language;
 }
 
 function SpotlightCardContent({ input, output, command, language }: SpotlightCardContentProps) {

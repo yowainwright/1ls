@@ -46,10 +46,11 @@ export const replaceTemplateWithExpression = (
   }
 
   if (template.includes(TEMPLATE_REPLACEMENTS.SORT_COMPARE)) {
+    const bExpression = contextExpression === "a" ? "b" : contextExpression.replace(/^a\./, "b.");
     return replaceLastOccurrence(
       expression,
       TEMPLATE_REPLACEMENTS.SORT_COMPARE,
-      `(a, b) => ${contextExpression}`,
+      `(a, b) => ${contextExpression} - ${bExpression}`,
     );
   }
 

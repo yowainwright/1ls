@@ -10,7 +10,7 @@ const styles = {
   cardHeader: "space-y-2",
   cardHeaderRow: "flex items-center justify-between",
   cardTitle: "text-xl font-semibold",
-  cardBadge: "rounded-md bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary",
+  cardBadge: "border-transparent bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary shadow-none hover:bg-primary/10",
   cardDescription: "text-sm text-muted-foreground",
   cardContent: "space-y-4",
   label: "mb-2 text-xs font-medium text-muted-foreground",

@@ -1,6 +1,8 @@
 import { Github, Package } from "lucide-react";
 import { siteConfig } from "@/lib/config";
 import { LOGO_STYLES } from "@/lib/styles";
+import { Button } from "@/components/ui/button";
+import type { FooterProps, FooterLinkProps } from "./types";
 
 const styles = {
   footer: "border-t border-border/10",
@@ -23,8 +25,14 @@ const text = {
   startYear: 2024,
 };
 
-interface FooterProps {
-  className?: string;
+function FooterLink({ href, label, Icon }: FooterLinkProps) {
+  return (
+    <Button variant="ghost" size="icon" asChild className="text-accent hover:text-accent/80 hover:bg-transparent">
+      <a href={href} target="_blank" rel="noopener noreferrer" aria-label={label}>
+        <Icon className={styles.linkIcon} />
+      </a>
+    </Button>
+  );
 }
 
 export default function Footer({ className = "" }: FooterProps) {
@@ -70,24 +78,8 @@ export default function Footer({ className = "" }: FooterProps) {
               height={1}
               style={{ position: "absolute" }}
             />
-            <a
-              href={siteConfig.links.github}
-              target="_blank"
-              rel="noopener noreferrer"
-              className={styles.link}
-              aria-label="GitHub"
-            >
-              <Github className={styles.linkIcon} />
-            </a>
-            <a
-              href={siteConfig.links.npm}
-              target="_blank"
-              rel="noopener noreferrer"
-              className={styles.link}
-              aria-label="npm"
-            >
-              <Package className={styles.linkIcon} />
-            </a>
+            <FooterLink href={siteConfig.links.github} label="GitHub" Icon={Github} />
+            <FooterLink href={siteConfig.links.npm} label="npm" Icon={Package} />
           </div>
         </div>
       </div>

@@ -7,23 +7,21 @@ import { CodeCard } from "@/components/Codeblock";
 import { SectionHeader } from "@/components/SectionHeader";
 import { EASE_CURVE } from "@/lib/styles";
 import { FULL_QUERY, DEMO_STEPS, BASE_STEP_DURATION, TOOLTIP_DEMO_CONSTANTS } from "./constants";
-import type { TooltipDemoProps, MethodHint } from "./types";
+import type { TooltipDemoProps, MethodHint, DemoContext, TerminalBodyProps, HintRowProps, FeatureDescriptionProps } from "./types";
 
 const { styles, text } = TOOLTIP_DEMO_CONSTANTS;
-
-interface DemoContext {
-  stepIndex: number;
-  typedChars: number;
-  progress: number;
-  lastTime: number;
-}
 
 const tooltipDemoMachine = setup({
   types: { context: {} as DemoContext, events: {} as { type: "TICK" } },
   actors: {
     ticker: fromCallback(({ sendBack }) => {
-      const id = setInterval(() => sendBack({ type: "TICK" }), 50);
-      return () => clearInterval(id);
+      let rafId: number;
+      const loop = () => {
+        sendBack({ type: "TICK" });
+        rafId = requestAnimationFrame(loop);
+      };
+      rafId = requestAnimationFrame(loop);
+      return () => cancelAnimationFrame(rafId);
     }),
   },
 }).createMachine({
@@ -37,16 +35,31 @@ const tooltipDemoMachine = setup({
         TICK: {
           actions: assign(({ context }) => {
             const now = Date.now();
-            const progress = context.progress + (now - context.lastTime);
+            const elapsed = Math.min(now - context.lastTime, 100); // cap large gaps (tab blur etc)
+            const progress = context.progress + elapsed;
             const currentStep = DEMO_STEPS[context.stepIndex];
             const prevCharEnd = context.stepIndex > 0 ? DEMO_STEPS[context.stepIndex - 1].charEnd : 0;
             const typingProgress = Math.min(progress / BASE_STEP_DURATION, 1);
             const newTypedChars = prevCharEnd + Math.floor(typingProgress * (currentStep.charEnd - prevCharEnd));
-            const nextIndex = (context.stepIndex + 1) % DEMO_STEPS.length;
             return progress < BASE_STEP_DURATION
               ? { ...context, typedChars: newTypedChars, progress, lastTime: now }
-              : { stepIndex: nextIndex, typedChars: nextIndex === 0 ? 0 : newTypedChars, progress: 0, lastTime: now };
+              : { ...context, typedChars: currentStep.charEnd, progress: BASE_STEP_DURATION, lastTime: now };
           }),
+        },
+      },
+      always: {
+        guard: ({ context }) => context.progress >= BASE_STEP_DURATION,
+        target: "paused",
+      },
+    },
+    paused: {
+      after: {
+        1500: {
+          actions: assign(({ context }) => {
+            const nextIndex = (context.stepIndex + 1) % DEMO_STEPS.length;
+            return { stepIndex: nextIndex, typedChars: nextIndex === 0 ? 0 : context.typedChars, progress: 0, lastTime: Date.now() };
+          }),
+          target: "running",
         },
       },
     },
@@ -127,16 +140,6 @@ function TerminalHeader() {
   );
 }
 
-interface TerminalBodyProps {
-  displayedQuery: string;
-  hints: MethodHint[];
-  stepIndex: number;
-  result?: string;
-  isTypingComplete: boolean;
-  showTooltip: boolean;
-  searchTerm: string;
-}
-
 function TerminalBody({ displayedQuery, hints, stepIndex, result, isTypingComplete, showTooltip, searchTerm }: TerminalBodyProps) {
   const showResult = isTypingComplete && result;
   const [tooltipLeft, setTooltipLeft] = useState(0);
@@ -196,12 +199,6 @@ function TerminalBody({ displayedQuery, hints, stepIndex, result, isTypingComple
   );
 }
 
-interface HintRowProps {
-  hint: MethodHint;
-  isSelected: boolean;
-  searchTerm: string;
-}
-
 function highlightMatches(text: string, searchTerm: string): React.ReactNode {
   if (!searchTerm) return text;
   const match = text.match(/^(\.?)(\w+)(.*)$/);
@@ -233,15 +230,9 @@ function HintRow({ hint, isSelected, searchTerm }: HintRowProps) {
   );
 }
 
-interface FeatureDescriptionProps {
-  title: string;
-  text: string;
-  stepIndex: number;
-}
-
 function FeatureDescription({ title, text: descText, stepIndex }: FeatureDescriptionProps) {
   return (
-    <div className={styles.featureDescription}>
+    <article className={styles.featureDescription}>
       <AnimatePresence mode="wait">
         <motion.div
           key={stepIndex}
@@ -254,7 +245,7 @@ function FeatureDescription({ title, text: descText, stepIndex }: FeatureDescrip
           <p className={styles.featureText}>{descText}</p>
         </motion.div>
       </AnimatePresence>
-    </div>
+    </article>
   );
 }
 
