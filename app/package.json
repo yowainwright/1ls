@@ -5,14 +5,14 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "vite build && bun run scripts/prerender.ts",
     "lint": "oxlint src/",
     "lint:fix": "oxlint src/ --fix",
     "format": "oxfmt src/",
     "format:fix": "oxfmt src/ --write",
     "preview": "vite preview",
     "deploy": "bun run build && gh-pages -d dist",
-    "test": "bun test src/"
+    "test": "bun test src/ scripts/"
   },
   "dependencies": {
     "1ls": "^0.1.13",
