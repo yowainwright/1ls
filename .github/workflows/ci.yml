@@ -91,11 +91,15 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-bun-
 
+      - name: Install QuickJS
+        run: sudo apt-get install -y quickjs
+
       - run: bun install
       - run: bun run build
         env:
           TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
           TURBO_TEAM: ${{ secrets.TURBO_TEAM }}
+      - run: bun run build:qjs
 
       - name: Run Integration Tests
         run: bun run test:integration
