@@ -6,6 +6,25 @@ description: Ensure code is compatible with QuickJS NG runtime
 
 All code in the browser bundle (`src/browser/index.ts` entry) must run in both Bun and [QuickJS NG](https://github.com/quickjs-ng/quickjs). This skill covers what's safe and what's not.
 
+## Files to Touch
+
+This is an audit skill — it applies to any file in the browser bundle, not a specific location.
+
+Bundle files (must be QJS-safe): `src/lexer/`, `src/expression/`, `src/navigator/`, `src/formats/`, `src/shortcuts/`, `src/browser/`
+
+Bun-only files (exempt from QJS rules): `src/cli/`, `src/interactive/`, `src/file/`, `src/completions/`
+
+## Constraints
+
+- No `async/await`, `Promise`, or `dynamic import()` in bundle code
+- No `Intl`, `fetch`, `URL`, `URLSearchParams`, `TextEncoder`, `TextDecoder`
+- No `structuredClone`, `WeakRef`, `FinalizationRegistry`
+- No `setTimeout`, `setInterval`, `queueMicrotask`
+- No `Bun.*`, `process.*`, `require()`, Node built-ins
+- No regex lookbehind (`(?<=...)`)
+- No mutation of input — use `[...data].sort()`, `Object.fromEntries`, `reduce`
+- Use `console.error` for debug output — never `console.log` (conflicts with QJS stdout)
+
 ## Build Pipeline
 
 ```

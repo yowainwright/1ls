@@ -19,9 +19,9 @@ import { spawnSync } from "child_process";
 const ROOT = resolve(import.meta.dir, "..");
 const SKILLS_DIR = join(ROOT, "skills");
 
-const SKILL_DIRS = ["add-builtin", "add-format", "add-test", "qjs-compat"];
+const SKILL_DIRS = ["add-builtin", "add-format", "add-test", "add-method", "qjs-compat"];
 const REQUIRED_FILES = ["SKILL.md", "good-example.ts", "bad-example.ts"];
-const REQUIRED_SECTIONS = ["## See Examples", "## Links", "## Run"];
+const REQUIRED_SECTIONS = ["## Files to Touch", "## Constraints", "## See Examples", "## Links", "## Run"];
 const AGENTS_SECTIONS = ["## Code Style", "## Testing", "## Benchmarking", "## Project Intent"];
 
 let passed = 0;

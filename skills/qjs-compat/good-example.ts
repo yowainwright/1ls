@@ -75,11 +75,11 @@ function groupBy<T>(arr: T[], keyFn: (item: T) => string): Record<string, T[]> {
 }
 
 // GOOD: Map for caching (basic Map usage is QJS-safe)
+// Use cache.has() — not !== undefined — so cached undefined values aren't re-computed
 function memoize<T>(fn: (key: string) => T): (key: string) => T {
   const cache = new Map<string, T>();
   return (key: string): T => {
-    const cached = cache.get(key);
-    if (cached !== undefined) return cached;
+    if (cache.has(key)) return cache.get(key) as T;
     const result = fn(key);
     cache.set(key, result);
     return result;
