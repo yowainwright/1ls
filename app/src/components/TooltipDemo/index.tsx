@@ -130,7 +130,12 @@ function TerminalBody({ displayedQuery, hints, stepIndex, result, isTypingComple
   const [tooltipLeft, setTooltipLeft] = useState(0);
 
   useLayoutEffect(() => {
-    setTooltipLeft(textRef.current?.offsetWidth ?? 0);
+    const el = textRef.current;
+    if (!el) return;
+    setTooltipLeft(el.offsetWidth);
+    const observer = new ResizeObserver(() => setTooltipLeft(el.offsetWidth));
+    observer.observe(el);
+    return () => observer.disconnect();
   }, [displayedQuery]);
 
   return (

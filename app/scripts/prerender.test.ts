@@ -1,10 +1,28 @@
-import { describe, test, expect } from "bun:test";
-import { mkdtempSync, readFileSync, existsSync } from "fs";
+import { describe, test, expect, beforeEach, afterEach } from "bun:test";
+import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, existsSync, rmSync } from "fs";
 import { join } from "path";
 import { tmpdir } from "os";
 import { isSkipped, toRoutePath, collectRoutes, writeRoutes } from "./prerender";
 
-const ROUTES_DIR = join(import.meta.dir, "../src/routes");
+function makeRoutesFixture(base: string): void {
+  const mk = (p: string) => mkdirSync(join(base, p), { recursive: true });
+  const touch = (p: string) => writeFileSync(join(base, p), "");
+  touch("index.tsx");
+  touch("playground.tsx");
+  touch("__root.tsx");
+  touch("route.tsx");
+  mk("docs");
+  touch("docs/index.tsx");
+  touch("docs/route.tsx");
+  mk("docs/-components");
+  mk("docs/guides");
+  touch("docs/guides/index.tsx");
+  touch("docs/guides/installation.tsx");
+  mk("docs/api");
+  touch("docs/api/builtins.tsx");
+}
+
+let routesDir = "";
 
 describe("isSkipped", () => {
   test("skips private dirs starting with -", () => {
@@ -42,35 +60,44 @@ describe("toRoutePath", () => {
 });
 
 describe("collectRoutes", () => {
+  beforeEach(() => {
+    routesDir = mkdtempSync(join(tmpdir(), "prerender-routes-"));
+    makeRoutesFixture(routesDir);
+  });
+
+  afterEach(() => {
+    rmSync(routesDir, { recursive: true, force: true });
+  });
+
   test("includes root route", () => {
-    expect(collectRoutes(ROUTES_DIR)).toContain("/");
+    expect(collectRoutes(routesDir)).toContain("/");
   });
 
   test("includes top-level routes", () => {
-    const routes = collectRoutes(ROUTES_DIR);
+    const routes = collectRoutes(routesDir);
     expect(routes).toContain("/playground");
     expect(routes).toContain("/docs");
   });
 
   test("includes nested routes", () => {
-    const routes = collectRoutes(ROUTES_DIR);
+    const routes = collectRoutes(routesDir);
     expect(routes).toContain("/docs/guides/installation");
-    expect(routes).toContain("/docs/guides/quick-start");
-    expect(routes).toContain("/docs/guides/interactive-mode");
+    expect(routes).toContain("/docs/guides");
     expect(routes).toContain("/docs/api/builtins");
-    expect(routes).toContain("/docs/api/formats");
-    expect(routes).toContain("/docs/api/shortcuts");
-    expect(routes).toContain("/docs/api/array-methods");
-    expect(routes).toContain("/docs/benchmarks");
+  });
+
+  test("all routes start with /", () => {
+    const routes = collectRoutes(routesDir);
+    expect(routes.every((r) => r.startsWith("/"))).toBe(true);
   });
 
   test("excludes private component dirs", () => {
-    const routes = collectRoutes(ROUTES_DIR);
+    const routes = collectRoutes(routesDir);
     expect(routes.every((r) => !r.includes("-components"))).toBe(true);
   });
 
   test("excludes layout and special files", () => {
-    const routes = collectRoutes(ROUTES_DIR);
+    const routes = collectRoutes(routesDir);
     expect(routes.every((r) => !r.includes("__root"))).toBe(true);
     expect(routes.every((r) => !r.includes("/route"))).toBe(true);
   });
