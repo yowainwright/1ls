@@ -21,7 +21,7 @@ bun build "$ROOT_DIR/src/browser/index.ts" \
 cp "$ROOT_DIR/src/qjs/cli.js" "$OUT_DIR/cli.js"
 cp "$ROOT_DIR/src/qjs/constants.js" "$OUT_DIR/constants.js"
 
-sed -i '' "s/__VERSION__/$VERSION/g" "$OUT_DIR/constants.js"
+perl -i -pe "s/__VERSION__/$VERSION/g" "$OUT_DIR/constants.js"
 
 echo "Bundle created at $OUT_DIR"
 echo "  - core.js (evaluate function)"
