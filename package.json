@@ -37,7 +37,7 @@
     "build:qjs:bundle": "mkdir -p dist/qjs && bun build ./src/browser/index.ts --outfile dist/qjs/core.js --target browser --minify --format esm",
     "clean": "rm -rf dist bin",
     "prepublishOnly": "bun run build && bun run lint && bun test",
-    "test": "bun test",
+    "test": "bun run build && bun run build:qjs && bun test",
     "test:coverage": "bun test --coverage --coverage-reporter=lcov",
     "test:integration": "bun test test/integration/",
     "test:bench": "docker build -f test/benchmarks/Dockerfile -t 1ls-bench . && docker run --rm 1ls-bench",

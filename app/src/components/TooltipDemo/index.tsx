@@ -1,4 +1,4 @@
-import { useMemo, useCallback, useState } from "react";
+import { useMemo, useRef, useState, useLayoutEffect } from "react";
 import { setup, assign, fromCallback } from "xstate";
 import { useMachine } from "@xstate/react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -17,13 +17,8 @@ const tooltipDemoMachine = setup({
   types: { context: {} as DemoContext, events: {} as { type: "TICK" } },
   actors: {
     ticker: fromCallback(({ sendBack }) => {
-      let rafId: number;
-      const loop = () => {
-        sendBack({ type: "TICK" });
-        rafId = requestAnimationFrame(loop);
-      };
-      rafId = requestAnimationFrame(loop);
-      return () => cancelAnimationFrame(rafId);
+      const id = setInterval(() => sendBack({ type: "TICK" }), 50);
+      return () => clearInterval(id);
     }),
   },
 }).createMachine({
@@ -131,14 +126,17 @@ function TerminalHeader() {
 
 function TerminalBody({ displayedQuery, hints, stepIndex, result, isTypingComplete, showTooltip, searchTerm }: TerminalBodyProps) {
   const showResult = isTypingComplete && result;
+  const textRef = useRef<HTMLSpanElement | null>(null);
   const [tooltipLeft, setTooltipLeft] = useState(0);
 
-  const textRef = useCallback((node: HTMLSpanElement | null) => {
-    if (!node) return;
-    const ro = new ResizeObserver(() => setTooltipLeft(node.offsetWidth));
-    ro.observe(node);
-    return () => ro.disconnect();
-  }, []);
+  useLayoutEffect(() => {
+    const el = textRef.current;
+    if (!el) return;
+    setTooltipLeft(el.offsetWidth);
+    const observer = new ResizeObserver(() => setTooltipLeft(el.offsetWidth));
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [displayedQuery]);
 
   return (
     <div className={styles.terminalBody}>

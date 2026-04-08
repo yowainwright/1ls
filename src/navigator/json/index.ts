@@ -150,24 +150,18 @@ export class JsonNavigator {
     return this.collectAllValues(baseData);
   }
 
-  private collectAllValues(data: unknown): unknown[] {
-    const isArrayData = Array.isArray(data);
-    const isObjectData = data !== null && typeof data === "object" && !isArrayData;
-    const self = [data];
+  private collectAllValues(data: unknown, result: unknown[] = []): unknown[] {
+    result.push(data);
 
-    if (isArrayData) {
-      const children = data.flatMap((item) => this.collectAllValues(item));
-      return [...self, ...children];
-    }
-
-    if (isObjectData) {
-      const children = Object.values(data as Record<string, unknown>).flatMap((val) =>
-        this.collectAllValues(val),
+    if (Array.isArray(data)) {
+      data.forEach((item) => this.collectAllValues(item, result));
+    } else if (data !== null && typeof data === "object") {
+      Object.values(data as Record<string, unknown>).forEach((val) =>
+        this.collectAllValues(val, result),
       );
-      return [...self, ...children];
     }
 
-    return self;
+    return result;
   }
 
   private evaluateOptionalAccess(ast: OptionalAccessNode, data: unknown): unknown {

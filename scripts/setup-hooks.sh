@@ -27,8 +27,7 @@ else
   cat > "$PRE_COMMIT" << 'EOF'
 #!/bin/sh
 bun run lint
-bun run build
-bun test
+bun run test
 EOF
   chmod +x "$PRE_COMMIT"
   echo "✓ Created pre-commit hook"

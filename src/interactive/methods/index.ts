@@ -25,19 +25,12 @@ import {
 } from "./constants";
 import type { Method } from "./types";
 
-export const getMethodsForType = (type: string): Method[] => {
-  const universal = UNIVERSAL_BUILTINS;
+const METHOD_MAP = new Map<string, Method[]>([
+  ["Array", [...ARRAY_METHODS, ...ARRAY_BUILTINS, ...UNIVERSAL_BUILTINS]],
+  ["String", [...STRING_METHODS, ...STRING_BUILTINS, ...UNIVERSAL_BUILTINS]],
+  ["Object", [...OBJECT_OPERATIONS, ...OBJECT_BUILTINS, ...UNIVERSAL_BUILTINS]],
+  ["Number", [...NUMBER_METHODS, ...NUMBER_BUILTINS, ...UNIVERSAL_BUILTINS]],
+]);
 
-  switch (type) {
-    case "Array":
-      return [...ARRAY_METHODS, ...ARRAY_BUILTINS, ...universal];
-    case "String":
-      return [...STRING_METHODS, ...STRING_BUILTINS, ...universal];
-    case "Object":
-      return [...OBJECT_OPERATIONS, ...OBJECT_BUILTINS, ...universal];
-    case "Number":
-      return [...NUMBER_METHODS, ...NUMBER_BUILTINS, ...universal];
-    default:
-      return universal;
-  }
-};
+export const getMethodsForType = (type: string): Method[] =>
+  METHOD_MAP.get(type) ?? UNIVERSAL_BUILTINS;
