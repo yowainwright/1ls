@@ -25,6 +25,8 @@ export const CLI_FLAGS = [
   { long: "--interactive", short: null, description: "Interactive mode" },
 ] as const;
 
+export type CliFlag = (typeof CLI_FLAGS)[number];
+
 export const JSON_PATH_PATTERNS = [
   { pattern: ".", description: "Root object" },
   { pattern: ".[]", description: "All array elements" },
@@ -35,3 +37,5 @@ export const JSON_PATH_PATTERNS = [
   { pattern: ".foo?", description: "Optional access" },
   { pattern: ".foo ?? default", description: "Null coalescing" },
 ] as const;
+
+export type JsonPathPattern = (typeof JSON_PATH_PATTERNS)[number];

@@ -2,6 +2,8 @@ import { SHORTCUTS, BUILTIN_SHORTCUTS } from "../shortcuts/constants";
 import { BUILTIN_FUNCTIONS } from "../navigator/builtins/constants";
 import { VALID_OUTPUT_FORMATS } from "../constants";
 import { CLI_FLAGS, JSON_PATH_PATTERNS } from "./constants";
+import type { CliFlag, JsonPathPattern } from "./constants";
+import type { ShortcutMapping } from "../shortcuts/types";
 
 export function getFlags(): string[] {
   return CLI_FLAGS.flatMap((f) => (f.short ? [f.long, f.short] : [f.long]));
@@ -25,12 +27,116 @@ export function getBuiltinCompletions(): string[] {
   return [...new Set([...builtinFns, ...shortcutShorts])];
 }
 
+export function formatZshFlag(flag: CliFlag): string {
+  const desc = flag.description.replace(/'/g, "\\'");
+  if (flag.long === "--format") {
+    return `        '${flag.long}[${desc}]:format:(${getFormatOptions().join(" ")})'`;
+  }
+  if (flag.long === "--list") {
+    return `        '${flag.long}[${desc}]:directory:_files -/'`;
+  }
+  if (flag.long === "--find") {
+    return `        '${flag.long}[${desc}]:path:_files'`;
+  }
+  return `        '${flag.long}[${desc}]'`;
+}
+
+export function formatZshShortcut(s: ShortcutMapping): string {
+  return `        '${s.short}:${s.full} - ${s.description}'`;
+}
+
+export function formatZshBuiltin(fn: string): string {
+  const alias = BUILTIN_SHORTCUTS.find((s) => s.full === fn);
+  const desc = alias ? `${alias.short} - ${alias.description}` : fn;
+  return `        '${fn}:${desc}'`;
+}
+
+export function formatZshPath(p: JsonPathPattern): string {
+  return `        '${p.pattern}:${p.description}'`;
+}
+
+export function generateZshOptsBlock(): string {
+  return CLI_FLAGS.map(formatZshFlag).join("\n");
+}
+
+export function generateZshShortcutsBlock(): string {
+  return SHORTCUTS.map(formatZshShortcut).join("\n");
+}
+
+export function generateZshBuiltinsBlock(): string {
+  return Object.values(BUILTIN_FUNCTIONS).map(formatZshBuiltin).join("\n");
+}
+
+export function generateZshPathsBlock(): string {
+  return JSON_PATH_PATTERNS.map(formatZshPath).join("\n");
+}
+
+export function generateZshCompletions(): string {
+  return `#compdef 1ls
+
+_1ls() {
+    local -a opts shortcuts json_paths builtin_fns subcmds
+
+    opts=(
+${generateZshOptsBlock()}
+    )
+
+    subcmds=(
+        'readFile:Read from file'
+    )
+
+    shortcuts=(
+${generateZshShortcutsBlock()}
+    )
+
+    builtin_fns=(
+${generateZshBuiltinsBlock()}
+    )
+
+    json_paths=(
+${generateZshPathsBlock()}
+    )
+
+    local curcontext="$curcontext" state line
+    typeset -A opt_args
+
+    _arguments -C \\
+        "\${opts[@]}" \\
+        '1: :->subcmd' \\
+        '*:: :->args'
+
+    case $state in
+        subcmd)
+            _describe -t subcmds 'subcommands' subcmds
+            ;;
+        args)
+            case $words[1] in
+                readFile)
+                    _files
+                    ;;
+                *)
+                    if [[ $words[$CURRENT] == .* ]]; then
+                        _describe -t shortcuts 'shortcuts' shortcuts
+                        _describe -t paths 'json paths' json_paths
+                    else
+                        _describe -t builtin_fns 'builtin functions' builtin_fns
+                    fi
+                    ;;
+            esac
+            ;;
+    esac
+}
+
+_1ls "$@"
+`;
+}
+
 export function generateBashCompletions(): string {
   const opts = [...getFlags(), "readFile"].join(" ");
   const formatOpts = getFormatOptions().join(" ");
   const jsonPaths = getJsonPaths().join(" ");
   const shortcuts = getShortcutCompletions().join(" ");
-  const builtins = getBuiltinCompletions().join(" ");
+  const builtinFns = getBuiltinCompletions().join(" ");
 
   return `#!/bin/bash
 
@@ -44,7 +150,7 @@ _1ls_complete() {
     format_opts="${formatOpts}"
     json_paths="${jsonPaths}"
     shortcuts="${shortcuts}"
-    builtins="${builtins}"
+    builtin_fns="${builtinFns}"
 
     case "\${prev}" in
         --format)
@@ -79,90 +185,13 @@ _1ls_complete() {
     fi
 
     if [[ \${cur} =~ ^[a-zA-Z] ]]; then
-        COMPREPLY=( $(compgen -W "\${builtins}" -- \${cur}) )
+        COMPREPLY=( $(compgen -W "\${builtin_fns}" -- \${cur}) )
         return 0
     fi
 
-    COMPREPLY=( $(compgen -W "\${opts} \${builtins}" -- \${cur}) )
+    COMPREPLY=( $(compgen -W "\${opts} \${builtin_fns}" -- \${cur}) )
 }
 
 complete -F _1ls_complete 1ls
-`;
-}
-
-export function generateZshCompletions(): string {
-  const optsLines = CLI_FLAGS.map((f) => {
-    const desc = f.description.replace(/'/g, "\\'");
-    if (f.long === "--format") {
-      return `        '${f.long}[${desc}]:format:(${getFormatOptions().join(" ")})'`;
-    }
-    if (f.long === "--list") {
-      return `        '${f.long}[${desc}]:directory:_files -/'`;
-    }
-    if (f.long === "--find") {
-      return `        '${f.long}[${desc}]:path:_files'`;
-    }
-    return `        '${f.long}[${desc}]'`;
-  }).join("\n");
-
-  const shortcutLines = SHORTCUTS.map(
-    (s) => `        '${s.short}:${s.full} - ${s.description}'`,
-  ).join("\n");
-
-  const builtinFns = Object.values(BUILTIN_FUNCTIONS);
-  const builtinShortcuts = BUILTIN_SHORTCUTS;
-  const builtinLines = builtinFns.map((fn) => {
-    const alias = builtinShortcuts.find((s) => s.full === fn);
-    const desc = alias ? `${alias.short} - ${alias.description}` : fn;
-    return `        '${fn}:${desc}'`;
-  }).join("\n");
-
-  const jsonPathLines = JSON_PATH_PATTERNS.map(
-    (p) => `        '${p.pattern}:${p.description}'`,
-  ).join("\n");
-
-  return `#compdef 1ls
-
-_1ls() {
-    local -a opts format_opts shortcuts json_paths
-
-    opts=(
-${optsLines}
-        'readFile[Read from file]:file:_files'
-    )
-
-    shortcuts=(
-${shortcutLines}
-    )
-
-    builtins=(
-${builtinLines}
-    )
-
-    json_paths=(
-${jsonPathLines}
-    )
-
-    local curcontext="$curcontext" state line
-    typeset -A opt_args
-
-    _arguments -C \\
-        "\${opts[@]}" \\
-        '*:: :->args'
-
-    case $state in
-        args)
-            if [[ $words[$CURRENT] == .* ]]; then
-                _describe -t shortcuts 'shortcuts' shortcuts
-                _describe -t paths 'json paths' json_paths
-            else
-                _describe -t builtins 'builtin functions' builtins
-                _arguments "\${opts[@]}"
-            fi
-            ;;
-    esac
-}
-
-_1ls "$@"
 `;
 }

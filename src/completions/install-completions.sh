@@ -2,13 +2,10 @@
 
 echo "Installing 1ls shell completions..."
 
-# Detect shell
-if [ -n "$BASH_VERSION" ]; then
-    SHELL_NAME="bash"
-elif [ -n "$ZSH_VERSION" ]; then
-    SHELL_NAME="zsh"
-else
-    echo "Unsupported shell. Only bash and zsh are supported."
+# Detect shell from user's $SHELL, not the script interpreter
+SHELL_NAME="$(basename "$SHELL")"
+if [ "$SHELL_NAME" != "bash" ] && [ "$SHELL_NAME" != "zsh" ]; then
+    echo "Unsupported shell: $SHELL_NAME. Only bash and zsh are supported."
     exit 1
 fi
 
