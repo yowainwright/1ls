@@ -1,7 +1,7 @@
 #compdef 1ls
 
 _1ls() {
-    local -a opts format_opts shortcuts json_paths
+    local -a opts shortcuts json_paths builtin_fns subcmds
 
     opts=(
         '--help[Show help]'
@@ -28,7 +28,10 @@ _1ls() {
         '--slurp[Read all inputs into array]'
         '--null-input[Use null as input]'
         '--interactive[Interactive mode]'
-        'readFile[Read from file]:file:_files'
+    )
+
+    subcmds=(
+        'readFile:Read from file'
     )
 
     shortcuts=(
@@ -76,7 +79,7 @@ _1ls() {
         '.val:.valueOf - Get primitive value'
     )
 
-    builtins=(
+    builtin_fns=(
         'pipe:pipe'
         'compose:compose'
         'head:hd - First element'
@@ -154,17 +157,27 @@ _1ls() {
 
     _arguments -C \
         "${opts[@]}" \
+        '1: :->subcmd' \
         '*:: :->args'
 
     case $state in
+        subcmd)
+            _describe -t subcmds 'subcommands' subcmds
+            ;;
         args)
-            if [[ $words[$CURRENT] == .* ]]; then
-                _describe -t shortcuts 'shortcuts' shortcuts
-                _describe -t paths 'json paths' json_paths
-            else
-                _describe -t builtins 'builtin functions' builtins
-                _arguments "${opts[@]}"
-            fi
+            case $words[1] in
+                readFile)
+                    _files
+                    ;;
+                *)
+                    if [[ $words[$CURRENT] == .* ]]; then
+                        _describe -t shortcuts 'shortcuts' shortcuts
+                        _describe -t paths 'json paths' json_paths
+                    else
+                        _describe -t builtin_fns 'builtin functions' builtin_fns
+                    fi
+                    ;;
+            esac
             ;;
     esac
 }

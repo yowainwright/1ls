@@ -61,10 +61,13 @@ const handleExploreMode = (state: State, key: string): InputResult => {
 
   if (isEnterKey(key)) {
     const selected = getSelectedPath(state);
-    if (!selected) return { state: null, output: null };
-
-    const output = JSON.stringify(selected.value, null, 2);
-    return { state: null, output };
+    if (selected) {
+      const output = JSON.stringify(selected.value, null, 2);
+      return { state: null, output };
+    }
+    const hasQuery = state.query.length > 0;
+    if (hasQuery) return { state: null, output: state.query };
+    return { state: null, output: null };
   }
 
   if (isUpKey(key)) {
