@@ -1,7 +1,7 @@
 import { describe, test, expect, mock, beforeEach, afterEach, spyOn } from "bun:test";
-import { createInitialState, updateQuery } from "../../src/interactive/state";
-import { createTooltipState, updateTooltipFromQuery } from "../../src/interactive/tooltip";
-import type { State, JsonPath, TooltipState } from "../../src/interactive/types";
+import { createInitialState, updateQuery } from "../../src/tui/state";
+import { createTooltipState, updateTooltipFromQuery } from "../../src/tui/tooltip";
+import type { State, JsonPath, TooltipState } from "../../src/tui/types";
 
 describe("Interactive Renderer - Tooltip Integration", () => {
   const arrayData = [1, 2, 3, 4, 5];

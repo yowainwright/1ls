@@ -1,0 +1,6 @@
+procs:
+  daemon:
+    shell: bun run ./src/tooltip/index.ts
+
+  shell:
+    shell: zsh -c "source ./src/tooltip/shell/1ls-tooltip.zsh && zsh -i"

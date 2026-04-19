@@ -4,8 +4,8 @@ import {
   updateQuery,
   updateSelection,
   getSelectedPath,
-} from "../../src/interactive/state";
-import type { JsonPath } from "../../src/interactive/types";
+} from "../../src/tui/state";
+import type { JsonPath } from "../../src/tui/types";
 
 describe("Interactive State", () => {
   const mockPaths: JsonPath[] = [

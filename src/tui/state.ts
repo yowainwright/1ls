@@ -1,6 +1,9 @@
 import { fuzzySearch } from "./fuzzy";
 import { createTooltipState, updateTooltipFromQuery } from "./tooltip";
 import type { State, JsonPath } from "./types";
+import { appendFileSync } from "fs";
+
+const debug = (msg: string) => appendFileSync("/tmp/1ls-debug.log", msg + "\n");
 
 export const createInitialState = (
   paths: JsonPath[],
@@ -39,6 +42,7 @@ const detectDataType = (data: unknown): string => {
 };
 
 export const updateQuery = (state: State, newQuery: string): State => {
+  debug(`updateQuery called with: "${newQuery}"`);
   const matches = fuzzySearch(state.paths, newQuery, (item) => item.path);
   const selectedIndex = matches.length > 0 ? 0 : state.selectedIndex;
 
@@ -49,6 +53,7 @@ export const updateQuery = (state: State, newQuery: string): State => {
     originalData: state.originalData,
   };
   const tooltip = updateTooltipFromQuery(tooltipContext);
+  debug(`tooltip.visible: ${tooltip.visible}, hints: ${tooltip.methodHints.length}`);
 
   const newState = Object.assign({}, state, {
     query: newQuery,

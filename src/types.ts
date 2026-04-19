@@ -41,6 +41,7 @@ export interface CliOptions
   strict?: boolean;
   slurp?: boolean;
   nullInput?: boolean;
+  daemon?: boolean;
 }
 
 export enum TokenType {

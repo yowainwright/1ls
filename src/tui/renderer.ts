@@ -2,7 +2,7 @@ import { stdout } from "process";
 import { clearScreen, clearLine, clearToEnd, moveCursor, colors, colorize, highlightMatches } from "./terminal";
 import { renderBuildMode, renderArrowFnMode } from "./renderer-builder";
 import { isMethodComplete, getPreviewForExpression } from "./tooltip";
-import type { State, JsonPath, TooltipState, Method } from "./types";
+import type { State, JsonPath } from "./types";
 import type { FuzzyMatch } from "./fuzzy";
 
 const MAX_VISIBLE_ITEMS = 10;
@@ -116,31 +116,6 @@ const renderHelp = (): string => {
   return colorize(help, colors.dim);
 };
 
-const formatTooltipMethod = (
-  match: FuzzyMatch<Method>,
-  isSelected: boolean,
-): string => {
-  const method = match.item;
-  const prefix = isSelected ? colorize("›", colors.cyan) : " ";
-  const signature = colorize(method.signature, colors.bright);
-  const description = colorize(" - " + method.description, colors.dim);
-  const builtinTag = method.isBuiltin ? colorize(" [builtin]", colors.yellow) : "";
-
-  return prefix.concat(" ", signature, description, builtinTag);
-};
-
-const renderTooltipHints = (tooltip: TooltipState): string[] => {
-  const hasNoHints = !tooltip.visible || tooltip.methodHints.length === 0;
-  if (hasNoHints) return [];
-
-  const header = colorize("Method hints:", colors.dim);
-  const hints = tooltip.methodHints.map((match, index) => {
-    const isSelected = index === tooltip.selectedHintIndex;
-    return formatTooltipMethod(match, isSelected);
-  });
-
-  return ["", header, ...hints];
-};
 
 const renderExpressionPreview = (state: State): string[] => {
   const hasQuery = state.query.length > 0;
@@ -205,19 +180,18 @@ const buildPreviewLines = (state: State): string[] => {
 };
 
 const buildExploreContent = (state: State): string[] => {
-  const header = [renderTitle(), "", "Search: " + state.query, ""];
+  const header = [renderTitle(), "", "Search: " + state.query];
+  const expressionPreview = renderExpressionPreview(state);
   const matchLines = buildMatchLines(state);
   const remainingIndicator = buildRemainingIndicator(state.matches.length);
-  const tooltipHints = renderTooltipHints(state.tooltip);
-  const expressionPreview = renderExpressionPreview(state);
   const previewLines = buildPreviewLines(state);
   const footer = ["", renderHelp().trim()];
 
   return header
+    .concat(expressionPreview)
+    .concat([""])
     .concat(matchLines)
     .concat(remainingIndicator)
-    .concat(tooltipHints)
-    .concat(expressionPreview)
     .concat(previewLines)
     .concat(footer);
 };
@@ -243,7 +217,9 @@ const renderDiff = (newLines: string[]): void => {
 
   newLines.forEach((line, i) => {
     const hasChanged = lastRenderedLines[i] !== line;
-    if (hasChanged) renderChangedLine(line, i);
+    if (hasChanged) {
+      renderChangedLine(line, i);
+    }
   });
 
   const hasShrunk = newLines.length < lastRenderedLines.length;

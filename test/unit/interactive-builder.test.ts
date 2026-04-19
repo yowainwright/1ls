@@ -9,10 +9,10 @@ import {
   updateBuildQuery,
   updateArrowFnQuery,
   undoLastSegment,
-} from "../../src/interactive/builder";
-import { createInitialState } from "../../src/interactive/state";
-import { navigateJson } from "../../src/interactive/navigator";
-import type { State } from "../../src/interactive/types";
+} from "../../src/tui/builder";
+import { createInitialState } from "../../src/tui/state";
+import { navigateJson } from "../../src/tui/navigator";
+import type { State } from "../../src/tui/types";
 
 describe("Expression Builder", () => {
   const testData = {

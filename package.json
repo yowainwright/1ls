@@ -42,6 +42,7 @@
     "test:bench:update": "bash test/benchmarks/update.sh",
     "lint": "bunx oxlint src/",
     "typecheck": "tsc --noEmit",
+    "daemon": "bun run ./src/tooltip/index.ts",
     "release": "release-it",
     "prepare": "bash scripts/setup-hooks.sh"
   },
@@ -64,6 +65,7 @@
   },
   "homepage": "https://github.com/yowainwright/1ls",
   "devDependencies": {
+    "@total-typescript/ts-reset": "^0.6.1",
     "@types/bun": "latest",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",

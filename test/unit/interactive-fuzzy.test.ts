@@ -1,5 +1,5 @@
 import { describe, test, expect } from "bun:test";
-import { fuzzySearch } from "../../src/interactive/fuzzy";
+import { fuzzySearch } from "../../src/completion";
 
 describe("Fuzzy Search", () => {
   const items = [

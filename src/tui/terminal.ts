@@ -1,7 +1,8 @@
 import { stdout } from "process";
+import { ANSI } from "../formatting";
 
 export const clearScreen = (): void => {
-  stdout.write("\x1b[2J\x1b[H");
+  stdout.write(ANSI.clearScreen);
 };
 
 export const moveCursor = (row: number, col: number = 1): void => {
@@ -9,19 +10,19 @@ export const moveCursor = (row: number, col: number = 1): void => {
 };
 
 export const clearLine = (): void => {
-  stdout.write("\x1b[2K");
+  stdout.write(ANSI.clearLine);
 };
 
 export const clearToEnd = (): void => {
-  stdout.write("\x1b[J");
+  stdout.write(ANSI.clearToEnd);
 };
 
 export const hideCursor = (): void => {
-  stdout.write("\x1b[?25l");
+  stdout.write(ANSI.hideCursor);
 };
 
 export const showCursor = (): void => {
-  stdout.write("\x1b[?25h");
+  stdout.write(ANSI.showCursor);
 };
 
 export const enableRawMode = (): void => {
@@ -40,30 +41,16 @@ export const disableRawMode = (): void => {
   process.stdin.pause();
 };
 
-export const colors = Object.assign(
-  {},
-  {
-    reset: "\x1b[0m",
-    bright: "\x1b[1m",
-    dim: "\x1b[2m",
-    cyan: "\x1b[36m",
-    green: "\x1b[32m",
-    yellow: "\x1b[33m",
-    blue: "\x1b[34m",
-    magenta: "\x1b[35m",
-    gray: "\x1b[90m",
-  },
-);
+export const colors = ANSI;
 
 export const colorize = (text: string, color: string): string => {
-  const resetCode = colors.reset;
-  const colorized = color.concat(text, resetCode);
+  const colorized = color.concat(text, ANSI.reset);
   return colorized;
 };
 
 export const highlightMatches = (text: string, matches: number[]): string => {
   const chars = text.split("");
-  const highlightColor = colors.bright.concat(colors.cyan);
+  const highlightColor = ANSI.bright.concat(ANSI.cyan);
 
   const mapper = (char: string, idx: number): string => {
     const shouldHighlight = matches.includes(idx);

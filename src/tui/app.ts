@@ -17,6 +17,9 @@ import { ExpressionParser } from "../expression";
 import { JsonNavigator } from "../navigator/json";
 import { expandShortcuts } from "../shortcuts";
 import type { State } from "./types";
+import { appendFileSync } from "fs";
+
+const debug = (msg: string) => appendFileSync("/tmp/1ls-debug.log", msg + "\n");
 
 let isRawModeEnabled = false;
 
@@ -60,9 +63,11 @@ const processInput = (
 
 const runEventLoop = async (initialState: State): Promise<string | null> => {
   let state = initialState;
+  debug("runEventLoop started");
 
   return new Promise((resolve) => {
     const onData = (data: Buffer): void => {
+      debug(`onData received: ${JSON.stringify(data.toString())}`);
       const { state: newState, output } = processInput(state, data);
 
       const hasOutput = output !== null;
@@ -80,6 +85,7 @@ const runEventLoop = async (initialState: State): Promise<string | null> => {
       }
 
       state = newState;
+      debug(`state.query is now: "${state.query}"`);
       render(state);
     };
 

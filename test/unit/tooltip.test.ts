@@ -10,7 +10,7 @@ import {
   getPreviewForExpression,
   MAX_TOOLTIP_HINTS,
   METHOD_TRIGGER_CHAR,
-} from "../../src/interactive/tooltip";
+} from "../../src/tui/tooltip";
 
 describe("tooltip", () => {
   describe("createTooltipState", () => {
@@ -293,7 +293,7 @@ describe("tooltip", () => {
     });
 
     test("detects String type and shows string methods", () => {
-      const context = { query: ".to", dataType: "", originalData: "hello" };
+      const context = { query: ".toUp", dataType: "", originalData: "hello" };
       const state = updateTooltipFromQuery(context);
 
       expect(state.visible).toBe(true);

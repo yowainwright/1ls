@@ -31,7 +31,7 @@ export const enterBuildMode = (state: State): State => {
     arrowFnContext: null,
   };
 
-  const methods = getMethodsForType(selected.type);
+  const methods = getMethodsForType();
   const methodMatches = fuzzySearch(methods, "", (method: Method) => method.signature);
 
   return Object.assign({}, state, {
@@ -53,8 +53,7 @@ export const exitBuildMode = (state: State): State =>
 export const updateBuildQuery = (state: State, query: string): State => {
   if (!state.builder) return state;
 
-  const builder = state.builder;
-  const methods = getMethodsForType(builder.baseType);
+  const methods = getMethodsForType();
   const methodMatches = fuzzySearch(methods, query, (method: Method) => method.signature);
 
   return Object.assign({}, state, {
@@ -161,7 +160,7 @@ export const completeArrowFn = (state: State): State => {
   const hasValidContext = context && context.expression;
   if (!hasValidContext) return state;
 
-  const methods = getMethodsForType(builder.baseType);
+  const methods = getMethodsForType();
   const method = methods[builder.currentMethodIndex];
   const template = method.template || "";
 
@@ -188,7 +187,7 @@ export const cancelArrowFn = (state: State): State => {
   if (!state.builder) return state;
 
   const builder = state.builder;
-  const methods = getMethodsForType(builder.baseType);
+  const methods = getMethodsForType();
   const method = methods[builder.currentMethodIndex];
   const template = method.template || "";
 
@@ -229,7 +228,7 @@ export const undoLastSegment = (state: State): State => {
     expression: newExpression,
   });
 
-  const methods = getMethodsForType(builder.baseType);
+  const methods = getMethodsForType();
   const methodMatches = fuzzySearch(methods, "", (method: Method) => method.signature);
 
   return Object.assign({}, state, {

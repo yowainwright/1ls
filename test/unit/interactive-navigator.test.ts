@@ -1,5 +1,5 @@
 import { describe, test, expect } from "bun:test";
-import { navigateJson } from "../../src/interactive/navigator";
+import { navigateJson } from "../../src/tui/navigator";
 
 describe("JSON Navigator", () => {
   test("flattens simple object", () => {

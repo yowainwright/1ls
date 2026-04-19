@@ -21,19 +21,6 @@ const extractPartialMethod = (query: string): string | null => {
   return afterDot;
 };
 
-const detectDataType = (data: unknown): string => {
-  if (data === null) return "null";
-  if (Array.isArray(data)) return "Array";
-  const type = typeof data;
-  const typeMap: Record<string, string> = {
-    string: "String",
-    number: "Number",
-    boolean: "Boolean",
-    object: "Object",
-  };
-  return typeMap[type] || "unknown";
-};
-
 export const createTooltipState = (): TooltipState =>
   Object.assign({}, {
     visible: false,
@@ -51,8 +38,7 @@ export const updateTooltipFromQuery = (
     return createTooltipState();
   }
 
-  const dataType = context.dataType || detectDataType(context.originalData);
-  const methods = getMethodsForType(dataType);
+  const methods = getMethodsForType();
   const allMatches = fuzzySearch(methods, partialMethod, (m: Method) => m.name);
   const methodHints = allMatches.slice(0, MAX_TOOLTIP_HINTS);
 

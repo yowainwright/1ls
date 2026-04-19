@@ -7,8 +7,8 @@ import { readFile, listFiles, grep } from "../file";
 import { Lexer } from "../lexer";
 import { ExpressionParser } from "../expression";
 import { JsonNavigator } from "../navigator/json";
-import { Formatter } from "../formatter/output";
-import { warning, info } from "../formatter/colors";
+import { Formatter } from "../formatting/output";
+import { warning, info } from "../formatting/colors";
 import {
   expandShortcuts,
   shortenExpression,
@@ -18,7 +18,8 @@ import { detectFormat } from "../formats";
 import { CliOptions } from "../types";
 import { VERSION } from "../version";
 
-export const getInteractive = () => import("../interactive/app");
+export const getInteractive = () => import("../tui/app");
+export const getDaemon = () => import("../tooltip/index");
 
 export async function handleGrepOperation(options: CliOptions): Promise<void> {
   const results = await grep(options.grep!, options.find!, {
@@ -43,9 +44,12 @@ export async function handleGrepOperation(options: CliOptions): Promise<void> {
 
 export async function loadData(options: CliOptions, args: string[]): Promise<unknown> {
   if (options.readFile) {
-    const filePath = args[args.indexOf("readFile") + 1];
+    const rfIndex = args.indexOf("rf");
+    const readFileIndex = args.indexOf("readFile");
+    const commandIndex = rfIndex !== -1 ? rfIndex : readFileIndex;
+    const filePath = args[commandIndex + 1];
     const data = await readFile(filePath);
-    options.expression = args[args.indexOf("readFile") + 2] || ".";
+    options.expression = args[commandIndex + 2] || ".";
     return data;
   }
 
@@ -113,6 +117,12 @@ export async function main(args: string[]): Promise<void> {
     process.exit(0);
   }
 
+  if (options.daemon) {
+    const { startDaemon } = await getDaemon();
+    await startDaemon();
+    return;
+  }
+
   if (options.shorten) {
     console.log(shortenExpression(options.shorten));
     process.exit(0);
@@ -151,9 +161,12 @@ export async function main(args: string[]): Promise<void> {
   }
 
   if (options.readFile) {
-    const filePath = args[args.indexOf("readFile") + 1];
+    const rfIndex = args.indexOf("rf");
+    const readFileIndex = args.indexOf("readFile");
+    const commandIndex = rfIndex !== -1 ? rfIndex : readFileIndex;
+    const filePath = args[commandIndex + 1];
     const data = await readFile(filePath);
-    const expression = args[args.indexOf("readFile") + 2] || ".";
+    const expression = args[commandIndex + 2] || ".";
 
     const hasNoExpression = expression === ".";
     const shouldUseInteractive = options.interactive || hasNoExpression;
@@ -179,8 +192,9 @@ export async function main(args: string[]): Promise<void> {
 }
 
 if (import.meta.main) {
-  main(process.argv.slice(2)).catch((err) => {
-    console.error("Error:", err.message);
+  main(process.argv.slice(2)).catch((err: unknown) => {
+    const message = err instanceof Error ? err.message : String(err);
+    console.error("Error:", message);
     process.exit(1);
   });
 }
