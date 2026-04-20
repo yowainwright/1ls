@@ -8,26 +8,16 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
-    strategy:
-      matrix:
-        node-version: [24.x]
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
-      - name: Install Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 24
 
       - uses: oven-sh/setup-bun@v2
         name: Install Bun
 
       - name: Get Bun cache directory
         id: bun-cache
-        run: |
-          echo "bun_cache_dir=$(bun pm cache dir)" >> $GITHUB_OUTPUT
+        run: echo "bun_cache_dir=$(bun pm cache dir)" >> $GITHUB_OUTPUT
 
       - uses: actions/cache@v4
         name: Setup Bun cache
@@ -38,14 +28,22 @@ jobs:
             ${{ runner.os }}-bun-
 
       - run: bun install
+
+      - name: Socket Security Check
+        run: npx --yes @socketsecurity/cli check
+        env:
+          SOCKET_SECURITY_API_KEY: ${{ secrets.SOCKET_SECURITY_API_KEY }}
+
       - run: bun run build
         env:
           TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
           TURBO_TEAM: ${{ secrets.TURBO_TEAM }}
+
       - run: bun run lint
         env:
           TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
           TURBO_TEAM: ${{ secrets.TURBO_TEAM }}
+
       - run: bun run test:coverage
         env:
           CI: true
@@ -62,6 +60,13 @@ jobs:
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
+      - name: Upload dist artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+          retention-days: 1
+
   integration:
     runs-on: ubuntu-latest
     needs: build
@@ -70,18 +75,12 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 24
-
       - uses: oven-sh/setup-bun@v2
         name: Install Bun
 
       - name: Get Bun cache directory
         id: bun-cache
-        run: |
-          echo "bun_cache_dir=$(bun pm cache dir)" >> $GITHUB_OUTPUT
+        run: echo "bun_cache_dir=$(bun pm cache dir)" >> $GITHUB_OUTPUT
 
       - uses: actions/cache@v4
         name: Setup Bun cache
@@ -91,14 +90,17 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-bun-
 
+      - run: bun install
+
+      - name: Download dist artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
       - name: Install QuickJS
         run: sudo apt-get install -y quickjs
 
-      - run: bun install
-      - run: bun run build
-        env:
-          TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
-          TURBO_TEAM: ${{ secrets.TURBO_TEAM }}
       - run: bun run build:qjs
 
       - name: Run Integration Tests
