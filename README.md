@@ -104,6 +104,14 @@ brew install yowainwright/tap/1ls
 curl -fsSL https://raw.githubusercontent.com/yowainwright/1ls/main/scripts/install.sh | bash
 ```
 
+### Shell Completions (zsh)
+
+```bash
+bash <(curl -fsSL https://raw.githubusercontent.com/yowainwright/1ls/main/dist/completions/install-completions.sh)
+```
+
+> TODO: bash and fish shell completions are not yet supported.
+
 ## Quick Start
 
 ```bash

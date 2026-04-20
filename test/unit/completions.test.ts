@@ -173,4 +173,22 @@ describe("generateZshCompletions", () => {
       expect(zsh).toContain(f);
     }
   });
+
+  it("does not use reserved zsh variable name 'builtins'", () => {
+    const zsh = generateZshCompletions();
+    expect(zsh).not.toContain("builtins=(");
+    expect(zsh).not.toContain("local -a builtins");
+  });
+
+  it("does not pass readFile to _arguments as a flag", () => {
+    const zsh = generateZshCompletions();
+    const argsBlock = zsh.match(/_arguments[^;]*/s)?.[0] ?? "";
+    expect(argsBlock).not.toContain("readFile[");
+  });
+
+  it("handles readFile as a subcommand with file completion", () => {
+    const zsh = generateZshCompletions();
+    expect(zsh).toContain("readFile");
+    expect(zsh).toContain("_files");
+  });
 });

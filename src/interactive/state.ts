@@ -1,5 +1,6 @@
 import { fuzzySearch } from "./fuzzy";
 import { createTooltipState, updateTooltipFromQuery } from "./tooltip";
+import { evaluatePreview } from "./preview";
 import type { State, JsonPath } from "./types";
 
 export const createInitialState = (paths: JsonPath[], originalData: unknown): State => {
@@ -39,7 +40,10 @@ export const updateQuery = (state: State, newQuery: string): State => {
   const matches = fuzzySearch(state.paths, newQuery, (item) => item.path);
   const selectedIndex = matches.length > 0 ? 0 : state.selectedIndex;
 
-  const dataType = detectDataType(state.originalData);
+  const lastDotIndex = newQuery.lastIndexOf(".");
+  const prefix = lastDotIndex > 0 ? newQuery.slice(0, lastDotIndex) : "";
+  const prefixResult = prefix ? evaluatePreview(prefix, state.originalData) : null;
+  const dataType = prefixResult?.success ? detectDataType(prefixResult.value) : detectDataType(state.originalData);
   const tooltipContext = {
     query: newQuery,
     dataType,

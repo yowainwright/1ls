@@ -10,7 +10,7 @@ _1ls_complete() {
     format_opts="json yaml csv table"
     json_paths=". .[] .. .{keys} .{values} .{entries} .foo? .foo ?? default"
     shortcuts=".mp .flt .rd .fnd .fndIdx .sm .evr .srt .rvs .jn .slc .splt .psh .pp .shft .unshft .fltMap .flt1 .incl .idxOf .kys .vls .ents .len .lc .uc .trm .trmSt .trmEnd .rpl .rplAll .pdSt .pdEnd .stsWith .endsWith .sbstr .chr .chrCd .mtch .str .json .val"
-    builtins="pipe compose head last tail take drop uniq flatten rev groupBy sortBy chunk compact pick omit keys vals merge deepMerge fromPairs toPairs sum mean min max len count isEmpty isNil id pluck type range has nth contains add path getpath setpath recurse split join startswith endswith ltrimstr rtrimstr tostring tonumber floor ceil round abs not select empty error debug hd lst tl tk drp unq fltn grpBy srtBy chnk cmpct pk omt ks mrg dMrg frPrs toPrs avg cnt emp nil plk typ rng hs ctns pth gpth spth rec spl jn stw edw ltrm rtrm tstr tnum flr cl rnd sel dbg"
+    builtin_fns="pipe compose head last tail take drop uniq flatten rev groupBy sortBy chunk compact pick omit keys vals merge deepMerge fromPairs toPairs sum mean min max len count isEmpty isNil id pluck type range has nth contains add path getpath setpath recurse split join startswith endswith ltrimstr rtrimstr tostring tonumber floor ceil round abs not select empty error debug hd lst tl tk drp unq fltn grpBy srtBy chnk cmpct pk omt ks mrg dMrg frPrs toPrs avg cnt emp nil plk typ rng hs ctns pth gpth spth rec spl jn stw edw ltrm rtrm tstr tnum flr cl rnd sel dbg"
 
     case "${prev}" in
         --format)
@@ -45,11 +45,11 @@ _1ls_complete() {
     fi
 
     if [[ ${cur} =~ ^[a-zA-Z] ]]; then
-        COMPREPLY=( $(compgen -W "${builtins}" -- ${cur}) )
+        COMPREPLY=( $(compgen -W "${builtin_fns}" -- ${cur}) )
         return 0
     fi
 
-    COMPREPLY=( $(compgen -W "${opts} ${builtins}" -- ${cur}) )
+    COMPREPLY=( $(compgen -W "${opts} ${builtin_fns}" -- ${cur}) )
 }
 
 complete -F _1ls_complete 1ls

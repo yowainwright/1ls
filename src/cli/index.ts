@@ -41,7 +41,8 @@ export async function loadData(options: CliOptions, args: string[]): Promise<unk
   if (options.readFile) {
     const filePath = args[args.indexOf("readFile") + 1];
     const data = await readFile(filePath);
-    options.expression = args[args.indexOf("readFile") + 2] || ".";
+    const candidate = args[args.indexOf("readFile") + 2];
+    options.expression = candidate?.startsWith("-") ? "." : candidate || ".";
     return data;
   }
 
@@ -146,7 +147,8 @@ export async function main(args: string[]): Promise<void> {
   if (options.readFile) {
     const filePath = args[args.indexOf("readFile") + 1];
     const data = await readFile(filePath);
-    const expression = args[args.indexOf("readFile") + 2] || ".";
+    const candidate = args[args.indexOf("readFile") + 2];
+    const expression = candidate?.startsWith("-") ? "." : candidate || ".";
 
     const hasNoExpression = expression === ".";
     const shouldUseInteractive = options.interactive || hasNoExpression;
