@@ -38,7 +38,8 @@ jobs:
       - run: bun install
 
       - name: Socket Security Check
-        run: npx --yes @socketsecurity/cli check
+        if: ${{ secrets.SOCKET_SECURITY_API_KEY != '' }}
+        run: npx --yes @socketsecurity/cli ci
         env:
           SOCKET_SECURITY_API_KEY: ${{ secrets.SOCKET_SECURITY_API_KEY }}
 
