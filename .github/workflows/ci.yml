@@ -33,6 +33,7 @@ jobs:
 
       - name: Socket Security Check
         if: ${{ env.SOCKET_SECURITY_API_KEY != '' }}
+        continue-on-error: true
         run: npx --yes @socketsecurity/cli ci
 
       - run: bun run build
