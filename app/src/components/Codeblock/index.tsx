@@ -1,15 +1,36 @@
 import { use, Suspense } from "react";
-import { createHighlighter, type Highlighter } from "shiki";
+import { createBundledHighlighter, type HighlighterGeneric } from "shiki/core";
+import { createJavaScriptRegexEngine } from "shiki/engine/javascript";
 import {
   transformerNotationDiff,
   transformerNotationHighlight,
   transformerNotationFocus,
 } from "@shikijs/transformers";
-import type { CodeblockProps } from "./types";
+import type { CodeblockProps, Language } from "./types";
 import { THEME, LANGUAGES, CODEBLOCK_CLASSES } from "./constants";
 import { CopyButton } from "./CopyButton";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+
+export type CodeHighlighter = HighlighterGeneric<Language, typeof THEME>;
+
+const createHighlighter = createBundledHighlighter<Language, typeof THEME>({
+  langs: {
+    bash: () => import("shiki/langs/bash.mjs"),
+    csv: () => import("shiki/langs/csv.mjs"),
+    diff: () => import("shiki/langs/diff.mjs"),
+    javascript: () => import("shiki/langs/javascript.mjs"),
+    json: () => import("shiki/langs/json.mjs"),
+    shell: () => import("shiki/langs/shell.mjs"),
+    toml: () => import("shiki/langs/toml.mjs"),
+    typescript: () => import("shiki/langs/typescript.mjs"),
+    yaml: () => import("shiki/langs/yaml.mjs"),
+  },
+  themes: {
+    dracula: () => import("shiki/themes/dracula.mjs"),
+  },
+  engine: () => createJavaScriptRegexEngine(),
+});
 
 function CodeblockContent({
   code,
@@ -94,9 +115,9 @@ export function Codeblock({
   );
 }
 
-let highlighterPromise: Promise<Highlighter> | null = null;
+let highlighterPromise: Promise<CodeHighlighter> | null = null;
 
-export function getHighlighter(): Promise<Highlighter> {
+export function getHighlighter(): Promise<CodeHighlighter> {
   if (!highlighterPromise) {
     highlighterPromise = createHighlighter({
       themes: [THEME],

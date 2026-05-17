@@ -7,6 +7,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      SOCKET_SECURITY_API_KEY: ${{ secrets.SOCKET_API_KEY }}
 
     steps:
       - name: Checkout
@@ -23,17 +25,16 @@ jobs:
         name: Setup Bun cache
         with:
           path: ${{ steps.bun-cache.outputs.bun_cache_dir }}
-          key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lockb') }}
+          key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lock') }}
           restore-keys: |
             ${{ runner.os }}-bun-
 
       - run: bun install
 
       - name: Socket Security Check
-        if: ${{ secrets.SOCKET_SECURITY_API_KEY != '' }}
+        if: ${{ env.SOCKET_SECURITY_API_KEY != '' }}
+        continue-on-error: true
         run: npx --yes @socketsecurity/cli ci
-        env:
-          SOCKET_SECURITY_API_KEY: ${{ secrets.SOCKET_SECURITY_API_KEY }}
 
       - run: bun run build
         env:
@@ -44,6 +45,12 @@ jobs:
         env:
           TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
           TURBO_TEAM: ${{ secrets.TURBO_TEAM }}
+
+      - name: Install QuickJS
+        run: |
+          sudo apt-get update && sudo apt-get install -y build-essential
+          git clone --depth 1 https://github.com/bellard/quickjs.git /tmp/quickjs
+          cd /tmp/quickjs && make && sudo make install
 
       - run: bun run test:coverage
         env:
@@ -87,7 +94,7 @@ jobs:
         name: Setup Bun cache
         with:
           path: ${{ steps.bun-cache.outputs.bun_cache_dir }}
-          key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lockb') }}
+          key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lock') }}
           restore-keys: |
             ${{ runner.os }}-bun-
 
@@ -100,7 +107,10 @@ jobs:
           path: dist/
 
       - name: Install QuickJS
-        run: sudo apt-get install -y quickjs
+        run: |
+          sudo apt-get update && sudo apt-get install -y build-essential
+          git clone --depth 1 https://github.com/bellard/quickjs.git /tmp/quickjs
+          cd /tmp/quickjs && make && sudo make install
 
       - run: bun run build:qjs
 

@@ -1,10 +1,24 @@
 import { describe, expect, test } from "bun:test";
-import { spawn } from "bun";
+import { spawn, spawnSync } from "bun";
 import { join } from "path";
 import { existsSync } from "fs";
 
-const QJS_BINARY = join(import.meta.dir, "../../bin/1ls-qjs");
-const HAS_BINARY = existsSync(QJS_BINARY);
+const ROOT_DIR = join(import.meta.dir, "../..");
+const QJS_BINARY = join(ROOT_DIR, "bin/1ls-qjs");
+
+function hasQjsBinary(): boolean {
+  if (existsSync(QJS_BINARY)) return true;
+
+  const result = spawnSync(["bun", "run", "build:qjs"], {
+    cwd: ROOT_DIR,
+    stdout: "pipe",
+    stderr: "pipe",
+  });
+
+  return result.exitCode === 0 && existsSync(QJS_BINARY);
+}
+
+const qjsAvailable = hasQjsBinary();
 
 async function runQJS(
   input: string,
@@ -27,9 +41,7 @@ async function runQJS(
   return { stdout, stderr, exitCode };
 }
 
-const describeQJS = HAS_BINARY ? describe : describe.skip;
-
-describeQJS("QuickJS Binary", () => {
+describe.skipIf(!qjsAvailable)("QuickJS Binary", () => {
   describe("CLI flags", () => {
     test("--help shows usage", async () => {
       const result = await runQJS("", ["--help"]);

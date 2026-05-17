@@ -1,5 +1,6 @@
-import { describe, test, expect, mock } from "bun:test";
-import { render, fireEvent, waitFor } from "@testing-library/react";
+import { describe, test, expect, mock, beforeAll, beforeEach } from "bun:test";
+import { act, render, fireEvent, waitFor, type RenderResult } from "@testing-library/react";
+import type { ReactElement } from "react";
 
 mock.module("1ls/browser", () => ({
   evaluate: (data: unknown, expr: string) => {
@@ -15,38 +16,78 @@ mock.module("1ls/browser", () => ({
 
 import { Playground, FORMAT_CONFIGS, FORMATS } from "../index";
 import { SANDBOX_STARTER } from "../constants";
+import { getHighlighter } from "@/components/Codeblock";
+
+beforeAll(async () => {
+  await act(async () => {
+    await getHighlighter();
+    await Promise.resolve();
+  });
+});
+
+async function resetPlaygroundStorage(): Promise<void> {
+  if (!window.indexedDB) {
+    return;
+  }
+  await new Promise<void>((resolve) => {
+    const request = window.indexedDB.deleteDatabase("1ls-playground");
+    request.onsuccess = () => resolve();
+    request.onerror = () => resolve();
+    request.onblocked = () => resolve();
+  });
+}
+
+beforeEach(async () => {
+  window.location.href = "http://localhost/";
+  await resetPlaygroundStorage();
+});
+
+async function renderPlayground(ui: ReactElement = <Playground />): Promise<RenderResult> {
+  let result: RenderResult | undefined;
+  await act(async () => {
+    result = render(ui);
+    await getHighlighter();
+  });
+  await waitFor(
+    () => {
+      expect(result!.container.textContent).not.toContain("// Result will appear here");
+    },
+    { timeout: 3000 },
+  );
+  return result!;
+}
 
 describe("Playground - Preset Mode", () => {
-  test("renders section header with 'Try It Live'", () => {
-    const { container } = render(<Playground />);
+  test("renders section header with 'Try It Live'", async () => {
+    const { container } = await renderPlayground();
     expect(container.textContent).toContain("Try It Live");
   });
 
-  test("renders format tabs for all formats", () => {
-    const { container } = render(<Playground />);
+  test("renders format tabs for all formats", async () => {
+    const { container } = await renderPlayground();
     for (const format of FORMATS) {
       expect(container.textContent).toContain(FORMAT_CONFIGS[format].label);
     }
   });
 
-  test("renders input and expression editors", () => {
-    const { container } = render(<Playground />);
+  test("renders input and expression editors", async () => {
+    const { container } = await renderPlayground();
     expect(container.textContent).toContain("Input");
     expect(container.textContent).toContain("Expression");
   });
 
-  test("renders output panel", () => {
-    const { container } = render(<Playground />);
+  test("renders output panel", async () => {
+    const { container } = await renderPlayground();
     expect(container.textContent).toContain("Output");
   });
 
-  test("shows preset data on initial render", () => {
-    const { container } = render(<Playground />);
+  test("shows preset data on initial render", async () => {
+    const { container } = await renderPlayground();
     expect(container.textContent).toContain("spotify");
   });
 
   test("evaluates expression and shows output", async () => {
-    const { container } = render(<Playground />);
+    const { container } = await renderPlayground();
     await waitFor(
       () => {
         expect(container.textContent).toContain("Chill Vibes");
@@ -56,7 +97,7 @@ describe("Playground - Preset Mode", () => {
   });
 
   test("changes format when tab is clicked", async () => {
-    const { container } = render(<Playground />);
+    const { container } = await renderPlayground();
     const buttons = container.querySelectorAll("button");
     const yamlButton = Array.from(buttons).find((b) => b.textContent === "YAML");
     if (yamlButton) {
@@ -67,37 +108,37 @@ describe("Playground - Preset Mode", () => {
     });
   });
 
-  test("shows suggestion buttons in preset mode", () => {
-    const { container } = render(<Playground />);
+  test("shows suggestion buttons in preset mode", async () => {
+    const { container } = await renderPlayground();
     expect(container.textContent).toContain("Try:");
   });
 });
 
 describe("Playground - Sandbox Mode", () => {
-  test("renders section header with 'Playground'", () => {
-    const { container } = render(<Playground mode="sandbox" />);
+  test("renders section header with 'Playground'", async () => {
+    const { container } = await renderPlayground(<Playground mode="sandbox" />);
     expect(container.textContent).toContain("Playground");
   });
 
-  test("shows sandbox starter data for JSON", () => {
-    const { container } = render(<Playground mode="sandbox" />);
+  test("shows sandbox starter data for JSON", async () => {
+    const { container } = await renderPlayground(<Playground mode="sandbox" />);
     expect(container.textContent).toContain("Alice");
     expect(container.textContent).toContain("Bob");
     expect(container.textContent).toContain("Charlie");
   });
 
-  test("shows sandbox starter expression", () => {
-    const { container } = render(<Playground mode="sandbox" />);
+  test("shows sandbox starter expression", async () => {
+    const { container } = await renderPlayground(<Playground mode="sandbox" />);
     expect(container.textContent).toContain(".users.filter");
   });
 
-  test("does not show suggestion buttons in sandbox mode", () => {
-    const { container } = render(<Playground mode="sandbox" />);
+  test("does not show suggestion buttons in sandbox mode", async () => {
+    const { container } = await renderPlayground(<Playground mode="sandbox" />);
     expect(container.textContent).not.toContain("Try:");
   });
 
   test("changes to YAML starter data when YAML tab clicked", async () => {
-    const { container } = render(<Playground mode="sandbox" />);
+    const { container } = await renderPlayground(<Playground mode="sandbox" />);
     const buttons = container.querySelectorAll("button");
     const yamlButton = Array.from(buttons).find((b) => b.textContent === "YAML");
     if (yamlButton) {
@@ -109,7 +150,7 @@ describe("Playground - Sandbox Mode", () => {
   });
 
   test("changes to CSV starter data when CSV tab clicked", async () => {
-    const { container } = render(<Playground mode="sandbox" />);
+    const { container } = await renderPlayground(<Playground mode="sandbox" />);
     const buttons = container.querySelectorAll("button");
     const csvButton = Array.from(buttons).find((b) => b.textContent === "CSV");
     if (csvButton) {
@@ -121,7 +162,7 @@ describe("Playground - Sandbox Mode", () => {
   });
 
   test("changes to TOML starter data when TOML tab clicked", async () => {
-    const { container } = render(<Playground mode="sandbox" />);
+    const { container } = await renderPlayground(<Playground mode="sandbox" />);
     const buttons = container.querySelectorAll("button");
     const tomlButton = Array.from(buttons).find((b) => b.textContent === "TOML");
     if (tomlButton) {
@@ -133,7 +174,7 @@ describe("Playground - Sandbox Mode", () => {
   });
 
   test("changes to Text starter data when Text tab clicked", async () => {
-    const { container } = render(<Playground mode="sandbox" />);
+    const { container } = await renderPlayground(<Playground mode="sandbox" />);
     const buttons = container.querySelectorAll("button");
     const textButton = Array.from(buttons).find((b) => b.textContent === "Text");
     if (textButton) {
@@ -146,13 +187,13 @@ describe("Playground - Sandbox Mode", () => {
 });
 
 describe("Playground - Minify Feature", () => {
-  test("renders minify button", () => {
-    const { container } = render(<Playground mode="sandbox" />);
+  test("renders minify button", async () => {
+    const { container } = await renderPlayground(<Playground mode="sandbox" />);
     expect(container.textContent).toContain("Minify");
   });
 
   test("shows minified expression when minify button clicked", async () => {
-    const { container } = render(<Playground mode="sandbox" />);
+    const { container } = await renderPlayground(<Playground mode="sandbox" />);
     const buttons = container.querySelectorAll("button");
     const minifyButton = Array.from(buttons).find((b) => b.textContent === "Minify");
     if (minifyButton) {
@@ -165,7 +206,7 @@ describe("Playground - Minify Feature", () => {
   });
 
   test("hides minified expression when hide button clicked", async () => {
-    const { container } = render(<Playground mode="sandbox" />);
+    const { container } = await renderPlayground(<Playground mode="sandbox" />);
     const buttons = container.querySelectorAll("button");
     const minifyButton = Array.from(buttons).find((b) => b.textContent === "Minify");
     if (minifyButton) {
@@ -209,7 +250,7 @@ describe("SANDBOX_STARTER", () => {
 
 describe("Playground - Syntax Highlighting", () => {
   test("applies Shiki highlighting to input after highlighter loads", async () => {
-    const { container } = render(<Playground />);
+    const { container } = await renderPlayground();
 
     await waitFor(
       () => {
@@ -221,7 +262,7 @@ describe("Playground - Syntax Highlighting", () => {
   });
 
   test("highlights JSON input with appropriate syntax colors", async () => {
-    const { container } = render(<Playground />);
+    const { container } = await renderPlayground();
 
     await waitFor(
       () => {
@@ -233,7 +274,7 @@ describe("Playground - Syntax Highlighting", () => {
   });
 
   test("highlights expression editor with JavaScript syntax", async () => {
-    const { container } = render(<Playground />);
+    const { container } = await renderPlayground();
 
     await waitFor(
       () => {
@@ -245,7 +286,7 @@ describe("Playground - Syntax Highlighting", () => {
   });
 
   test("updates highlighting when format changes to YAML", async () => {
-    const { container } = render(<Playground />);
+    const { container } = await renderPlayground();
     const buttons = container.querySelectorAll("button");
     const yamlButton = Array.from(buttons).find((b) => b.textContent === "YAML");
 
@@ -264,7 +305,7 @@ describe("Playground - Syntax Highlighting", () => {
   });
 
   test("updates highlighting when format changes to TOML", async () => {
-    const { container } = render(<Playground />);
+    const { container } = await renderPlayground();
     const buttons = container.querySelectorAll("button");
     const tomlButton = Array.from(buttons).find((b) => b.textContent === "TOML");
 

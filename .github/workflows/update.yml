@@ -7,6 +7,8 @@ on:
 jobs:
   udpate-deps:
     runs-on: ubuntu-latest
+    env:
+      SOCKET_SECURITY_API_KEY: ${{ secrets.SOCKET_SECURITY_API_KEY }}
 
     strategy:
       matrix:
@@ -31,17 +33,15 @@ jobs:
         name: Setup Bun cache
         with:
           path: ${{ steps.bun-cache.outputs.bun_cache_dir }}
-          key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lockb') }}
+          key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lock') }}
           restore-keys: |
             ${{ runner.os }}-bun-
 
       - run: bun install
 
       - name: Socket Security Check
-        if: ${{ secrets.SOCKET_SECURITY_API_KEY != '' }}
+        if: ${{ env.SOCKET_SECURITY_API_KEY != '' }}
         run: npx --yes @socketsecurity/cli ci
-        env:
-          SOCKET_SECURITY_API_KEY: ${{ secrets.SOCKET_SECURITY_API_KEY }}
 
       - run: bun run build
       - run: bun run test
