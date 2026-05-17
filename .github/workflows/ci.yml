@@ -8,7 +8,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     env:
-      SOCKET_SECURITY_API_KEY: ${{ secrets.SOCKET_SECURITY_API_KEY }}
+      SOCKET_SECURITY_API_KEY: ${{ secrets.SOCKET_API_KEY }}
 
     steps:
       - name: Checkout
