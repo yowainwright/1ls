@@ -11,6 +11,7 @@ export const GRADIENT_HEADER_STYLES: CSSProperties = {
   WebkitTextStroke: "0.5px rgb(220 200 150 / 0.4)",
 };
 
+
 export const LOGO_STYLES: CSSProperties = {
   background:
     "linear-gradient(90deg, rgb(var(--primary)), rgb(var(--accent)), rgb(var(--primary)))",

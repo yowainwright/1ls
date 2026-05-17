@@ -28,16 +28,14 @@ echo "  - core.js (evaluate function)"
 echo "  - cli.js (CLI entry point)"
 echo "  - constants.js (version: $VERSION)"
 
-if command -v qjsc &> /dev/null; then
+if ! command -v qjsc &> /dev/null; then
   echo ""
-  echo "Compiling to native binary..."
-  if qjsc -m -o "$ROOT_DIR/bin/1ls-qjs" "$OUT_DIR/cli.js"; then
-    echo "Binary created at bin/1ls-qjs"
-  else
-    echo "Note: binary compilation failed (missing dev headers)"
-  fi
-else
-  echo ""
-  echo "Note: qjsc not found. Install QuickJS to compile native binary:"
-  echo "  brew install quickjs"
+  echo "Error: qjsc not found. Install QuickJS to compile native binary:" >&2
+  echo "  brew install quickjs" >&2
+  exit 1
 fi
+
+echo ""
+echo "Compiling to native binary..."
+qjsc -m -o "$ROOT_DIR/bin/1ls-qjs" "$OUT_DIR/cli.js"
+echo "Binary created at bin/1ls-qjs"

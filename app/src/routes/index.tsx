@@ -15,18 +15,14 @@ function HomePage() {
   return (
     <>
       <main className="relative z-10">
-        <div className="relative z-20">
-          <Hero />
-          <Features />
-        </div>
-        <div className="post-features-background">
-          <TooltipDemo />
-          <ExamplesCarousel />
-          <Insights />
-          <Playground />
-        </div>
+        <Hero />
+        <Features />
+        <TooltipDemo />
+        <ExamplesCarousel />
+        <Insights />
+        <Playground />
       </main>
-      <Footer className="relative z-10 post-features-footer" />
+      <Footer className="relative z-10" />
     </>
   );
 }

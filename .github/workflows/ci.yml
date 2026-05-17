@@ -45,6 +45,9 @@ jobs:
           TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
           TURBO_TEAM: ${{ secrets.TURBO_TEAM }}
 
+      - name: Install QuickJS
+        run: sudo apt-get update && sudo apt-get install -y quickjs
+
       - run: bun run test:coverage
         env:
           CI: true
@@ -100,7 +103,7 @@ jobs:
           path: dist/
 
       - name: Install QuickJS
-        run: sudo apt-get install -y quickjs
+        run: sudo apt-get update && sudo apt-get install -y quickjs
 
       - run: bun run build:qjs
 
