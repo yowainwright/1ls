@@ -37,5 +37,8 @@ fi
 
 echo ""
 echo "Compiling to native binary..."
-qjsc -m -o "$ROOT_DIR/bin/1ls-qjs" "$OUT_DIR/cli.js"
-echo "Binary created at bin/1ls-qjs"
+if qjsc -m -o "$ROOT_DIR/bin/1ls-qjs" "$OUT_DIR/cli.js" 2>/dev/null; then
+  echo "Binary created at bin/1ls-qjs"
+else
+  echo "Warning: native binary compilation skipped (qjsc headers unavailable)" >&2
+fi
