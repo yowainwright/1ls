@@ -7,7 +7,7 @@ import { CodeCard } from "@/components/Codeblock";
 import { SectionHeader } from "@/components/SectionHeader";
 import { EASE_CURVE } from "@/lib/styles";
 import { FULL_QUERY, DEMO_STEPS, BASE_STEP_DURATION, TOOLTIP_DEMO_CONSTANTS } from "./constants";
-import type { TooltipDemoProps, MethodHint, DemoContext, TerminalBodyProps, HintRowProps, FeatureDescriptionProps } from "./types";
+import type { TooltipDemoProps, DemoContext, TerminalBodyProps, HintRowProps, FeatureDescriptionProps } from "./types";
 import { getSearchTerm, filterHints } from "./utils";
 export { getSearchTerm, filterHints } from "./utils";
 

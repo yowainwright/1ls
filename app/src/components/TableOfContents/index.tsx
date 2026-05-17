@@ -34,7 +34,9 @@ const activeItemMachine = setup({
         );
         input.itemIds.forEach((id) => {
           const el = document.getElementById(id);
-          el && io.observe(el);
+          if (el) {
+            io.observe(el);
+          }
         });
         return () => io.disconnect();
       },

@@ -4,7 +4,7 @@ import { useSelector } from "@xstate/react";
 import { Effect } from "effect";
 import EditorModule from "react-simple-code-editor";
 import { CodeCard, CopyButton, getHighlighter, THEME, LANGUAGES } from "@/components/Codeblock";
-import type { Highlighter } from "shiki";
+import type { CodeHighlighter } from "@/components/Codeblock";
 import type { ReactNode, CSSProperties } from "react";
 import { cn } from "@/lib/utils";
 
@@ -15,8 +15,8 @@ function escapeHtml(text: string): string {
 }
 
 const highlighterMachine = setup({
-  types: {} as { context: { highlighter: Highlighter | null } },
-  actors: { loader: fromPromise((): Promise<Highlighter> => getHighlighter()) },
+  types: {} as { context: { highlighter: CodeHighlighter | null } },
+  actors: { loader: fromPromise((): Promise<CodeHighlighter> => getHighlighter()) },
 }).createMachine({
   id: "highlighter",
   context: { highlighter: null },
@@ -39,7 +39,7 @@ const highlighterMachine = setup({
 
 const highlighterActor = createActor(highlighterMachine).start();
 
-function doHighlight(highlighter: Highlighter | null, code: string, language: string): string {
+function doHighlight(highlighter: CodeHighlighter | null, code: string, language: string): string {
   if (!highlighter || !code) return escapeHtml(code);
   const lang = language === "csv" || language === "text" ? "txt" : language;
   const validLang = LANGUAGES.includes(lang as (typeof LANGUAGES)[number]) ? lang : "txt";

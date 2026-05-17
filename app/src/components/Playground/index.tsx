@@ -45,9 +45,10 @@ function usePlaygroundEvaluation(state: Pick<PlaygroundContext, "input" | "expre
 function useFormatDetection(
   input: string,
   mode: PlaygroundMode,
+  currentFormat: Format,
   onFormatDetected: (format: Format) => void,
 ) {
-  const previousInputRef = useRef<string>("");
+  const previousInputRef = useRef<string>(input);
 
   useEffect(() => {
     if (mode !== "sandbox" || input === previousInputRef.current || input === SANDBOX_PLACEHOLDER || !input.trim()) return;
@@ -56,12 +57,18 @@ function useFormatDetection(
     const fiber = Effect.runFork(
       Effect.sleep("300 millis").pipe(
         Effect.flatMap(() => Effect.sync(() => detectFormat(input))),
-        Effect.tap(({ format }) => Effect.sync(() => onFormatDetected(format))),
+        Effect.tap(({ format }) =>
+          Effect.sync(() => {
+            if (format !== currentFormat) {
+              onFormatDetected(format);
+            }
+          }),
+        ),
         Effect.catchAll(() => Effect.void),
       ),
     );
     return () => { Effect.runFork(Fiber.interrupt(fiber)); };
-  }, [input, mode, onFormatDetected]);
+  }, [currentFormat, input, mode, onFormatDetected]);
 }
 
 
@@ -72,7 +79,7 @@ export function Playground({ mode = "preset" }: PlaygroundProps) {
 
   const { output, error } = usePlaygroundEvaluation(context);
 
-  useFormatDetection(context.input, mode, (format) =>
+  useFormatDetection(context.input, mode, context.format, (format) =>
     send({ type: MachineEvents.FORMAT_DETECTED, format }),
   );
 
