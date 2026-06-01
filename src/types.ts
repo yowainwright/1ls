@@ -38,6 +38,7 @@ export interface CliOptions extends FileOperationOptions, ShorthandOptions, Form
   strict?: boolean;
   slurp?: boolean;
   nullInput?: boolean;
+  daemon?: boolean;
 }
 
 export enum TokenType {

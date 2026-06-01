@@ -4,17 +4,17 @@ import { parseArgs } from "./parser";
 import { showHelp } from "./help";
 import { processInput } from "./stream";
 import { readFile, listFiles, grep } from "../file";
-import { Lexer } from "../lexer";
-import { ExpressionParser } from "../expression";
-import { JsonNavigator } from "../navigator/json";
 import { Formatter } from "../formatter/output";
 import { warning, info } from "../formatter/colors";
 import { expandShortcuts, shortenExpression, getShortcutHelp } from "../shortcuts";
 import { detectFormat } from "../formats";
 import { CliOptions } from "../types";
 import { VERSION } from "../version";
+import { evaluateAndFormatExpression, formatResult } from "../executor";
+import { resolveReadFileInvocation } from "./read-file";
 
-export const getInteractive = () => import("../interactive/app");
+export const getInteractive = () => import("../tui/app");
+export const getDaemon = () => import("../tooltip/index");
 
 export async function handleGrepOperation(options: CliOptions): Promise<void> {
   const results = await grep(options.grep!, options.find!, {
@@ -39,10 +39,9 @@ export async function handleGrepOperation(options: CliOptions): Promise<void> {
 
 export async function loadData(options: CliOptions, args: string[]): Promise<unknown> {
   if (options.readFile) {
-    const filePath = args[args.indexOf("readFile") + 1];
+    const { filePath, expression } = resolveReadFileInvocation(args);
     const data = await readFile(filePath);
-    const candidate = args[args.indexOf("readFile") + 2];
-    options.expression = candidate?.startsWith("-") ? "." : candidate || ".";
+    options.expression = expression;
     return data;
   }
 
@@ -64,24 +63,12 @@ export async function loadData(options: CliOptions, args: string[]): Promise<unk
 
 export async function processExpression(options: CliOptions, jsonData: unknown): Promise<void> {
   if (!options.expression) {
-    const formatter = new Formatter(options);
-    console.log(formatter.format(jsonData));
+    console.log(formatResult(jsonData, options));
     return;
   }
 
   try {
-    const expandedExpression = expandShortcuts(options.expression);
-    const lexer = new Lexer(expandedExpression);
-    const tokens = lexer.tokenize();
-
-    const parser = new ExpressionParser(tokens);
-    const ast = parser.parse();
-
-    const navigator = new JsonNavigator({ strict: options.strict });
-    const result = navigator.evaluate(ast, jsonData);
-
-    const formatter = new Formatter(options);
-    console.log(formatter.format(result));
+    console.log(evaluateAndFormatExpression(options.expression, jsonData, options));
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : String(error);
     console.error("Error:", message);
@@ -105,6 +92,12 @@ export async function main(args: string[]): Promise<void> {
   if (options.shortcuts) {
     console.log(getShortcutHelp());
     process.exit(0);
+  }
+
+  if (options.daemon) {
+    const { startDaemon } = await getDaemon();
+    await startDaemon();
+    return;
   }
 
   if (options.shorten) {
@@ -145,17 +138,14 @@ export async function main(args: string[]): Promise<void> {
   }
 
   if (options.readFile) {
-    const filePath = args[args.indexOf("readFile") + 1];
+    const { filePath, expression, hasExplicitExpression } = resolveReadFileInvocation(args);
     const data = await readFile(filePath);
-    const candidate = args[args.indexOf("readFile") + 2];
-    const expression = candidate?.startsWith("-") ? "." : candidate || ".";
 
-    const hasNoExpression = expression === ".";
-    const shouldUseInteractive = options.interactive || hasNoExpression;
+    const shouldUseInteractive = options.interactive || !hasExplicitExpression;
 
     if (shouldUseInteractive) {
       const { runInteractive } = await getInteractive();
-      await runInteractive(data);
+      await runInteractive(data, options);
       return;
     }
 
@@ -174,8 +164,9 @@ export async function main(args: string[]): Promise<void> {
 }
 
 if (import.meta.main) {
-  main(process.argv.slice(2)).catch((err) => {
-    console.error("Error:", err.message);
+  main(process.argv.slice(2)).catch((err: unknown) => {
+    const message = err instanceof Error ? err.message : String(err);
+    console.error("Error:", message);
     process.exit(1);
   });
 }

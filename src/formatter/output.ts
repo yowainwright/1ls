@@ -120,15 +120,21 @@ export class Formatter {
       return "";
     }
 
-    // Check if all items are objects with same keys
-    if (typeof data[0] === "object" && data[0] !== null && !Array.isArray(data[0])) {
-      const keys = Object.keys(data[0]);
+    const firstItem = data[0];
+    const isObjectArray =
+      typeof firstItem === "object" &&
+      firstItem !== null &&
+      !Array.isArray(firstItem);
+
+    if (isObjectArray) {
+      const records = data as Record<string, unknown>[];
+      const keys = Object.keys(firstItem as Record<string, unknown>);
       const headers = keys.join(",");
-      const rows = data.map((item) => keys.map((key) => this.escapeCsvValue(item[key])).join(","));
+      const rows = records.map((item) =>
+        keys.map((key) => this.escapeCsvValue(item[key])).join(","),
+      );
       return [headers, ...rows].join("\n");
     }
-
-    // Simple array of values
     return data.map((item) => this.escapeCsvValue(item)).join("\n");
   }
 
@@ -152,13 +158,18 @@ export class Formatter {
       return "(empty array)";
     }
 
-    // Check if all items are objects
-    if (typeof data[0] === "object" && data[0] !== null && !Array.isArray(data[0])) {
-      return this.formatObjectTable(data);
-    }
+    const firstItem = data[0];
+    const isObjectArray =
+      typeof firstItem === "object" &&
+      firstItem !== null &&
+      !Array.isArray(firstItem);
 
-    // Simple list
-    return data.map((item, index) => `${index}: ${this.formatRaw(item)}`).join("\n");
+    if (isObjectArray) {
+      return this.formatObjectTable(data as Record<string, unknown>[]);
+    }
+    return data
+      .map((item, index) => `${index}: ${this.formatRaw(item)}`)
+      .join("\n");
   }
 
   private formatObjectTable(data: Record<string, unknown>[]): string {

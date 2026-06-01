@@ -9,10 +9,10 @@ import {
   updateBuildQuery,
   updateArrowFnQuery,
   undoLastSegment,
-} from "../../src/interactive/builder";
-import { createInitialState } from "../../src/interactive/state";
-import { navigateJson } from "../../src/interactive/navigator";
-import type { State } from "../../src/interactive/types";
+} from "../../src/tui/builder";
+import { createInitialState } from "../../src/tui/state";
+import { navigateJson } from "../../src/tui/navigator";
+import type { State } from "../../src/tui/types";
 
 describe("Expression Builder", () => {
   const testData = {
@@ -188,6 +188,36 @@ describe("Expression Building Flow", () => {
     expect(final.builder?.expression).toContain(".filter(x => x.active)");
     expect(final.builder?.expression).toContain(".map(x => x.name)");
   });
+
+  test("completes the filtered method the user selected", () => {
+    const buildState = enterBuildMode(initialState);
+    const filtered = updateBuildQuery(buildState, "filter");
+
+    expect(filtered.methodMatches[0]?.item.name).toBe("filter");
+
+    const filterState = selectMethod(filtered, 0);
+    expect(filterState.mode).toBe("build-arrow-fn");
+
+    const paramPaths = filterState.builder?.arrowFnContext?.paramPaths || [];
+    const activePathIndex = paramPaths.findIndex((p) => p.path === ".active");
+    expect(activePathIndex).toBeGreaterThanOrEqual(0);
+
+    const withActive = updateArrowFnExpression(filterState, activePathIndex);
+    const completed = completeArrowFn(withActive);
+
+    expect(completed.builder?.expression).toContain(".filter(x => x.active)");
+    expect(completed.builder?.expression).not.toContain(".map(x => x.active)");
+  });
+
+  test("cancels the filtered method the user selected", () => {
+    const buildState = enterBuildMode(initialState);
+    const filtered = updateBuildQuery(buildState, "filter");
+    const filterState = selectMethod(filtered, 0);
+    const cancelled = cancelArrowFn(filterState);
+
+    expect(cancelled.mode).toBe("build");
+    expect(cancelled.builder?.expression).toBe(".users");
+  });
 });
 
 describe("updateBuildQuery", () => {
@@ -313,6 +343,8 @@ describe("selectMethod edge cases", () => {
     const buildState = enterBuildMode(stateWithConfig);
 
     expect(buildState.builder?.baseType).toBe("Object");
+    expect(buildState.methodMatches.some((m) => m.item.name === "map")).toBe(false);
+    expect(buildState.methodMatches.some((m) => m.item.signature === ".{length}")).toBe(true);
   });
 
   test("handles string type base value", () => {
@@ -324,6 +356,8 @@ describe("selectMethod edge cases", () => {
     const buildState = enterBuildMode(stateWithString);
 
     expect(buildState.builder?.baseType).toBe("String");
+    expect(buildState.methodMatches.some((m) => m.item.name === "map")).toBe(false);
+    expect(buildState.methodMatches.some((m) => m.item.name === "toUpperCase")).toBe(true);
   });
 
   test("handles number type base value", () => {

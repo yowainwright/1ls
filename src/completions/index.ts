@@ -110,7 +110,7 @@ ${generateZshPathsBlock()}
             _describe -t subcmds 'subcommands' subcmds
             ;;
         args)
-            case $words[1] in
+            case $words[2] in
                 readFile)
                     _files
                     ;;

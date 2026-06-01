@@ -4,7 +4,7 @@ export function showHelp(): void {
 
 Usage:
   echo '{"key": "value"}' | 1ls [expression] [options]
-  1ls readFile <file> [expression] [options]
+  1ls rf <file> [expression] [options]
   1ls --list <dir> [options]
   1ls --grep <pattern> --find <path> [options]
 
@@ -60,7 +60,7 @@ Shorthand Options:
 Examples:
   # JSON manipulation
   echo '{"name": "John"}' | 1ls .name
-  1ls readFile package.json .version
+  1ls rf package.json .version
   echo '[1,2,3]' | 1ls '.map(x => x * 2)'
 
   # File operations

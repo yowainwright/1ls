@@ -69,8 +69,8 @@ export function parseArgs(args: string[]): CliOptions {
         break;
 
       case "readFile":
+      case "rf":
         options.readFile = true;
-        i += 2;
         break;
 
       case "--find":
@@ -156,6 +156,10 @@ export function parseArgs(args: string[]): CliOptions {
       case "--strict":
       case "-s":
         options.strict = true;
+        break;
+
+      case "--daemon":
+        options.daemon = true;
         break;
 
       case "--slurp":

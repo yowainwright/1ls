@@ -50,6 +50,7 @@ jobs:
         run: |
           mkdir -p dist/qjs
           bun build ./src/browser/index.ts --outfile dist/qjs/core.js --target browser --minify --format esm
+          bun run build:qjs:bundle
           cp src/qjs/cli.js dist/qjs/
           cp src/qjs/constants.js dist/qjs/
           VERSION=$(node -p "require('./package.json').version")

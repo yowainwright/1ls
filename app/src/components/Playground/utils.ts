@@ -61,7 +61,7 @@ export function runEvaluation(
       try: () => evaluate(parsedInput, expression),
       catch: (cause) => new EvaluationError({ cause }),
     });
-    const output = JSON.stringify(result, null, 2);
+    const output = JSON.stringify(result, null, 2) ?? String(result);
     if (output.length > MAX_OUTPUT_LENGTH) {
       return { output: "", error: "Output too large to display" } satisfies EvaluationResult;
     }

@@ -5,40 +5,32 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_DIR="$(dirname "$SCRIPT_DIR")"
 OUT_DIR="$ROOT_DIR/dist/qjs"
 
-VERSION=$(node -p "require('$ROOT_DIR/package.json').version")
-
 mkdir -p "$OUT_DIR"
 mkdir -p "$ROOT_DIR/bin"
 
-echo "Building QuickJS bundle (v$VERSION)..."
+echo "Building QuickJS terminal bundle..."
 
-bun build "$ROOT_DIR/src/browser/index.ts" \
-  --outfile "$OUT_DIR/core.js" \
+bun build "$ROOT_DIR/src/qjs/shared.ts" \
+  --outfile "$OUT_DIR/shared.js" \
   --target browser \
   --minify \
   --format esm
 
 cp "$ROOT_DIR/src/qjs/cli.js" "$OUT_DIR/cli.js"
-cp "$ROOT_DIR/src/qjs/constants.js" "$OUT_DIR/constants.js"
-
-perl -i -pe "s/__VERSION__/$VERSION/g" "$OUT_DIR/constants.js"
 
 echo "Bundle created at $OUT_DIR"
-echo "  - core.js (evaluate function)"
-echo "  - cli.js (CLI entry point)"
-echo "  - constants.js (version: $VERSION)"
+echo "  - shared.js (shared terminal CLI core)"
+echo "  - cli.js (QuickJS host entry point)"
 
-if ! command -v qjsc &> /dev/null; then
-  echo ""
-  echo "Error: qjsc not found. Install QuickJS to compile native binary:" >&2
-  echo "  brew install quickjs" >&2
-  exit 1
-fi
-
-echo ""
-echo "Compiling to native binary..."
-if qjsc -m -o "$ROOT_DIR/bin/1ls-qjs" "$OUT_DIR/cli.js" 2>/dev/null; then
+if command -v qjsc &> /dev/null; then
+  echo "Compiling to native binary..."
+  qjsc -m -o "$ROOT_DIR/bin/1ls-qjs" "$OUT_DIR/cli.js"
   echo "Binary created at bin/1ls-qjs"
 else
-  echo "Warning: native binary compilation skipped (qjsc headers unavailable)" >&2
+  echo ""
+  echo "Note: qjsc not found. Install QuickJS to compile native binary:"
+  echo "  brew install quickjs"
+  if [[ "${CI:-}" == "true" || "${REQUIRE_QJS:-}" == "1" ]]; then
+    exit 1
+  fi
 fi

@@ -1,5 +1,6 @@
 import { Effect, Data } from "effect";
 import type { Format } from "./types";
+import { FORMATS } from "./constants";
 
 const DB_NAME = "1ls-playground";
 const DB_VERSION = 1;
@@ -76,7 +77,8 @@ export function decodeShareableState(encoded: string): Omit<StoredState, "savedA
   try {
     const json = decodeURIComponent(atob(encoded));
     const parsed = JSON.parse(json);
-    if (parsed.f && typeof parsed.i === "string" && typeof parsed.e === "string") {
+    const isValidFormat = FORMATS.includes(parsed.f);
+    if (isValidFormat && typeof parsed.i === "string" && typeof parsed.e === "string") {
       return { format: parsed.f, input: parsed.i, expression: parsed.e };
     }
     return null;
