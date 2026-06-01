@@ -23,7 +23,6 @@ echo "  - shared.js (shared terminal CLI core)"
 echo "  - cli.js (QuickJS host entry point)"
 
 if command -v qjsc &> /dev/null; then
-  echo ""
   echo "Compiling to native binary..."
   qjsc -m -o "$ROOT_DIR/bin/1ls-qjs" "$OUT_DIR/cli.js"
   echo "Binary created at bin/1ls-qjs"

@@ -62,6 +62,7 @@ export default defineConfig({
   build: {
     outDir: "dist",
     sourcemap: true,
-    chunkSizeWarningLimit: 1024,
+    // The Shaders WebGPU background is isolated behind a lazy route-level chunk.
+    chunkSizeWarningLimit: 1300,
   },
 });

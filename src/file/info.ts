@@ -1,10 +1,11 @@
 import { stat } from "node:fs/promises";
+import type { Stats } from "node:fs";
 import { extname, basename } from "node:path";
 import type { FileInfo } from "./types";
 
 export const createFileInfo = (
   path: string,
-  stats: Awaited<ReturnType<typeof stat>>,
+  stats: Stats,
 ): FileInfo => ({
   path,
   name: basename(path),
