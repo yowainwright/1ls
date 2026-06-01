@@ -59,4 +59,18 @@ describe("cli/read-file", () => {
       hasExplicitExpression: true,
     });
   });
+
+  test("skips list targets before explicit expression", () => {
+    expect(resolveReadFileInvocation(["readFile", "data.json", "--list", "src", ".name"])).toEqual({
+      filePath: "data.json",
+      expression: ".name",
+      hasExplicitExpression: true,
+    });
+
+    expect(resolveReadFileInvocation(["rf", "data.json", "-l", "src", ".items"])).toEqual({
+      filePath: "data.json",
+      expression: ".items",
+      hasExplicitExpression: true,
+    });
+  });
 });

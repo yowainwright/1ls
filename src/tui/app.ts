@@ -46,17 +46,24 @@ const handleFatalError = (error: unknown): void => {
   exit(1);
 };
 
-const setupErrorBoundary = (): void => {
-  process.on("uncaughtException", handleFatalError);
-  process.on("unhandledRejection", handleFatalError);
-  process.on("SIGINT", () => {
-    cleanup();
-    exit(0);
-  });
-  process.on("SIGTERM", () => {
-    cleanup();
-    exit(0);
-  });
+const handleTerminationSignal = (): void => {
+  cleanup();
+  exit(0);
+};
+
+export const teardownErrorBoundary = (): void => {
+  process.off("uncaughtException", handleFatalError);
+  process.off("unhandledRejection", handleFatalError);
+  process.off("SIGINT", handleTerminationSignal);
+  process.off("SIGTERM", handleTerminationSignal);
+};
+
+export const setupErrorBoundary = (): void => {
+  teardownErrorBoundary();
+  process.once("uncaughtException", handleFatalError);
+  process.once("unhandledRejection", handleFatalError);
+  process.once("SIGINT", handleTerminationSignal);
+  process.once("SIGTERM", handleTerminationSignal);
 };
 
 const processInput = (
