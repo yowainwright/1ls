@@ -75,6 +75,8 @@ const wrapWithBorder = (lines: string[], width: number): string[] => {
 };
 
 export const openTty = (ttyPath: string): boolean => {
+  if (state.ttyFd !== null) return true;
+
   try {
     state.ttyFd = openSync(ttyPath, "w");
     return true;

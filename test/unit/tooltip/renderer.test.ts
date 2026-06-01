@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, test } from "bun:test";
-import { mkdtempSync, readFileSync, rmSync } from "fs";
+import { existsSync, mkdtempSync, readFileSync, rmSync } from "fs";
 import { tmpdir } from "os";
 import { join } from "path";
 import { BORDER } from "../../../src/tooltip/constants";
@@ -70,6 +70,41 @@ describe("tooltip/renderer selection", () => {
       expect(output).not.toContain(
         `${BORDER.TL}${BORDER.H.repeat(expectedInnerWidth + 10)}`
       );
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  test("openTty reuses an active descriptor", () => {
+    const dir = mkdtempSync(join(tmpdir(), "1ls-tooltip-renderer-"));
+    const firstTtyPath = join(dir, "first-tty");
+    const secondTtyPath = join(dir, "second-tty");
+
+    try {
+      expect(openTty(firstTtyPath)).toBe(true);
+      render([
+        {
+          signature: "first",
+          type: "path",
+          description: "desc",
+        },
+      ]);
+
+      expect(openTty(secondTtyPath)).toBe(true);
+      render([
+        {
+          signature: "second",
+          type: "path",
+          description: "desc",
+        },
+      ]);
+      closeTty();
+
+      const output = readFileSync(firstTtyPath, "utf8");
+
+      expect(output).toContain("first");
+      expect(output).toContain("second");
+      expect(existsSync(secondTtyPath)).toBe(false);
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }
