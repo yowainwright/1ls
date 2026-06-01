@@ -55,7 +55,8 @@ export const JSON5 = {
 } as const;
 
 const JS_EXPORT = /^\s*export\s+(const|let|var|function|class|default|type|interface|enum)/m;
-const TS_TYPE_ANNOTATION = /:\s*(string|number|boolean|any|unknown|void|never|object|Array|Promise)/;
+const TS_TYPE_ANNOTATION =
+  /:\s*(string|number|boolean|any|unknown|void|never|object|Array|Promise)/;
 const TS_INTERFACE = /^\s*interface\s+\w+/m;
 const TS_TYPE_ALIAS = /^\s*type\s+\w+\s*=/m;
 const TS_GENERIC = /<[A-Z]\w*>/;

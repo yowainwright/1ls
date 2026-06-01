@@ -47,6 +47,17 @@ describe("tooltip/server", () => {
       expect(result?.action).toBe("complete");
     });
 
+    test("parses escaped JSON payloads", () => {
+      const msg =
+        '{"input":"1ls rf file.json \\".user.na\\"","tty":"/dev/ttys002","action":"complete","file":"file.json","expr":".user.na"}';
+      const result = parseMessage(msg);
+
+      expect(result).not.toBeNull();
+      expect(result?.file).toBe("file.json");
+      expect(result?.expr).toBe(".user.na");
+      expect(result?.input).toContain('.user.na');
+    });
+
     test("handles invalid JSON gracefully", () => {
       const result = parseMessage("{invalid json}");
       expect(result).not.toBeNull();

@@ -292,6 +292,13 @@ describe("tooltip", () => {
       expect(hasMap).toBe(true);
     });
 
+    test("filters out unrelated methods for array data", () => {
+      const context = { query: ".toU", dataType: "Array", originalData: [1, 2, 3] };
+      const state = updateTooltipFromQuery(context);
+
+      expect(state.visible).toBe(false);
+    });
+
     test("detects String type and shows string methods", () => {
       const context = { query: ".toUp", dataType: "", originalData: "hello" };
       const state = updateTooltipFromQuery(context);
@@ -308,6 +315,14 @@ describe("tooltip", () => {
       expect(state.visible).toBe(true);
       const hasKeys = state.methodHints.some((m) => m.item.name === "keys");
       expect(hasKeys).toBe(true);
+    });
+
+    test("preserves object operation syntax for object length", () => {
+      const context = { query: ".le", dataType: "Object", originalData: { a: 1 } };
+      const state = updateTooltipFromQuery(context);
+
+      expect(state.methodHints.some((m) => m.item.signature === ".{length}")).toBe(true);
+      expect(state.methodHints.some((m) => m.item.signature === ".length")).toBe(false);
     });
 
     test("detects Number type and shows number methods", () => {

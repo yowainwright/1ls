@@ -71,9 +71,9 @@ describe("JSON5 Normalizer", () => {
   });
 
   test("removes trailing commas in arrays", () => {
-    const input = '[1, 2, 3,]';
+    const input = "[1, 2, 3,]";
     const result = normalizeJSON5(input);
-    expect(result).toBe('[1, 2, 3]');
+    expect(result).toBe("[1, 2, 3]");
   });
 
   test("quotes unquoted keys", () => {
@@ -95,7 +95,7 @@ describe("JSON5 Normalizer", () => {
   });
 
   test("handles keys starting with dollar sign", () => {
-    const input = '{$id: 123}';
+    const input = "{$id: 123}";
     const result = normalizeJSON5(input);
     expect(result).toBe('{"$id": 123}');
   });
@@ -108,7 +108,7 @@ describe("JSON5 Normalizer", () => {
     const result = normalizeJSON5(input);
     expect(result).toContain('"unquoted"');
     expect(result).toContain('"trailing"');
-    expect(result).not.toContain(',}');
+    expect(result).not.toContain(",}");
   });
 });
 

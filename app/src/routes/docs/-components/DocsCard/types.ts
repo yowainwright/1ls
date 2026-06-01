@@ -1,5 +1,5 @@
 export interface DocsCardProps {
-  href: string
-  title: string
-  description: string
+  href: string;
+  title: string;
+  description: string;
 }

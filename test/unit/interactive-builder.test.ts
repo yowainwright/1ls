@@ -104,9 +104,7 @@ describe("Arrow Function Builder", () => {
     expect(hasNamePath).toBe(true);
 
     const namePathIndex =
-      arrowFnState.builder?.arrowFnContext?.paramPaths.findIndex(
-        (p) => p.path === ".name",
-      ) || 0;
+      arrowFnState.builder?.arrowFnContext?.paramPaths.findIndex((p) => p.path === ".name") || 0;
 
     const newState = updateArrowFnExpression(arrowFnState, namePathIndex);
 
@@ -115,9 +113,7 @@ describe("Arrow Function Builder", () => {
 
   test("completes arrow function and returns to build mode", () => {
     const namePathIndex =
-      arrowFnState.builder?.arrowFnContext?.paramPaths.findIndex(
-        (p) => p.path === ".name",
-      ) || 0;
+      arrowFnState.builder?.arrowFnContext?.paramPaths.findIndex((p) => p.path === ".name") || 0;
     const withProperty = updateArrowFnExpression(arrowFnState, namePathIndex);
     const completed = completeArrowFn(withProperty);
 
@@ -191,6 +187,36 @@ describe("Expression Building Flow", () => {
     expect(final.mode).toBe("build");
     expect(final.builder?.expression).toContain(".filter(x => x.active)");
     expect(final.builder?.expression).toContain(".map(x => x.name)");
+  });
+
+  test("completes the filtered method the user selected", () => {
+    const buildState = enterBuildMode(initialState);
+    const filtered = updateBuildQuery(buildState, "filter");
+
+    expect(filtered.methodMatches[0]?.item.name).toBe("filter");
+
+    const filterState = selectMethod(filtered, 0);
+    expect(filterState.mode).toBe("build-arrow-fn");
+
+    const paramPaths = filterState.builder?.arrowFnContext?.paramPaths || [];
+    const activePathIndex = paramPaths.findIndex((p) => p.path === ".active");
+    expect(activePathIndex).toBeGreaterThanOrEqual(0);
+
+    const withActive = updateArrowFnExpression(filterState, activePathIndex);
+    const completed = completeArrowFn(withActive);
+
+    expect(completed.builder?.expression).toContain(".filter(x => x.active)");
+    expect(completed.builder?.expression).not.toContain(".map(x => x.active)");
+  });
+
+  test("cancels the filtered method the user selected", () => {
+    const buildState = enterBuildMode(initialState);
+    const filtered = updateBuildQuery(buildState, "filter");
+    const filterState = selectMethod(filtered, 0);
+    const cancelled = cancelArrowFn(filterState);
+
+    expect(cancelled.mode).toBe("build");
+    expect(cancelled.builder?.expression).toBe(".users");
   });
 });
 
@@ -300,9 +326,7 @@ describe("selectMethod edge cases", () => {
     const paths = navigateJson(testData);
     const initialState = createInitialState(paths, testData);
     const buildState = enterBuildMode(initialState);
-    const sortMethodIndex = buildState.methodMatches.findIndex(
-      (m) => m.item.name === "sort"
-    );
+    const sortMethodIndex = buildState.methodMatches.findIndex((m) => m.item.name === "sort");
     const hasSortMethod = sortMethodIndex >= 0;
     expect(hasSortMethod).toBe(true);
 
@@ -319,6 +343,8 @@ describe("selectMethod edge cases", () => {
     const buildState = enterBuildMode(stateWithConfig);
 
     expect(buildState.builder?.baseType).toBe("Object");
+    expect(buildState.methodMatches.some((m) => m.item.name === "map")).toBe(false);
+    expect(buildState.methodMatches.some((m) => m.item.signature === ".{length}")).toBe(true);
   });
 
   test("handles string type base value", () => {
@@ -330,6 +356,8 @@ describe("selectMethod edge cases", () => {
     const buildState = enterBuildMode(stateWithString);
 
     expect(buildState.builder?.baseType).toBe("String");
+    expect(buildState.methodMatches.some((m) => m.item.name === "map")).toBe(false);
+    expect(buildState.methodMatches.some((m) => m.item.name === "toUpperCase")).toBe(true);
   });
 
   test("handles number type base value", () => {
@@ -385,9 +413,7 @@ describe("completeArrowFn template replacements", () => {
   const buildState = enterBuildMode(initialState);
 
   test("replaces (a, b) => a - b pattern for sort", () => {
-    const sortIndex = buildState.methodMatches.findIndex(
-      (m) => m.item.name === "sort"
-    );
+    const sortIndex = buildState.methodMatches.findIndex((m) => m.item.name === "sort");
     const hasSortMethod = sortIndex >= 0;
     expect(hasSortMethod).toBe(true);
 
@@ -402,9 +428,7 @@ describe("completeArrowFn template replacements", () => {
   });
 
   test("replaces (acc, x) => acc pattern for reduce", () => {
-    const reduceIndex = buildState.methodMatches.findIndex(
-      (m) => m.item.name === "reduce"
-    );
+    const reduceIndex = buildState.methodMatches.findIndex((m) => m.item.name === "reduce");
     const hasReduceMethod = reduceIndex >= 0;
     expect(hasReduceMethod).toBe(true);
 

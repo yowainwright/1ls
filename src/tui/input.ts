@@ -1,4 +1,4 @@
-import { updateSelection, updateQuery, getSelectedPath } from "./state";
+import { updateSelection, updateQuery, getSelectedPath, acceptTooltipHint, dismissTooltip } from "./state";
 import {
   enterBuildMode,
   exitBuildMode,
@@ -12,20 +12,19 @@ import {
 } from "./builder";
 import type { State } from "./types";
 
-const KEYS = Object.assign(
-  {},
-  {
-    CTRL_C: "\x03",
-    ESCAPE: "\x1b",
-    ENTER: "\r",
-    TAB: "\t",
-    UP: "\x1b[A",
-    DOWN: "\x1b[B",
-    LEFT: "\x1b[D",
-    RIGHT: "\x1b[C",
-    BACKSPACE: "\x7f",
-  } as const,
-);
+const KEYS = Object.assign({}, {
+  CTRL_C: "\x03",
+  ESCAPE: "\x1b",
+  ENTER: "\r",
+  TAB: "\t",
+  UP: "\x1b[A",
+  DOWN: "\x1b[B",
+  LEFT: "\x1b[D",
+  RIGHT: "\x1b[C",
+  BACKSPACE: "\x7f",
+} as const);
+
+const isEscapeKey = (key: string): boolean => key === KEYS.ESCAPE;
 
 const isExitKey = (key: string): boolean => {
   const isCtrlC = key === KEYS.CTRL_C;
@@ -57,6 +56,23 @@ const isPrintableKey = (key: string): boolean => {
 type InputResult = { state: State | null; output: string | null };
 
 const handleExploreMode = (state: State, key: string): InputResult => {
+  const isTooltipActive = state.tooltip.visible;
+
+  if (isTooltipActive && (isTabKey(key) || isRightKey(key))) {
+    const newState = acceptTooltipHint(state);
+    return { state: newState, output: null };
+  }
+
+  if (isTooltipActive && isUpKey(key)) {
+    const newState = updateSelection(state, -1);
+    return { state: newState, output: null };
+  }
+
+  if (isTooltipActive && isDownKey(key)) {
+    const newState = updateSelection(state, 1);
+    return { state: newState, output: null };
+  }
+
   if (isTabKey(key)) {
     const newState = enterBuildMode(state);
     return { state: newState, output: null };
@@ -64,10 +80,12 @@ const handleExploreMode = (state: State, key: string): InputResult => {
 
   if (isEnterKey(key)) {
     const selected = getSelectedPath(state);
-    if (!selected) return { state: null, output: null };
-
-    const output = JSON.stringify(selected.value, null, 2);
-    return { state: null, output };
+    if (selected) {
+      return { state: null, output: selected.path };
+    }
+    const hasQuery = state.query.length > 0;
+    if (hasQuery) return { state: null, output: state.query };
+    return { state: null, output: null };
   }
 
   if (isUpKey(key)) {
@@ -197,10 +215,7 @@ const handleArrowFnMode = (state: State, key: string): InputResult => {
   return { state, output: null };
 };
 
-const MODE_HANDLERS: Record<
-  State["mode"],
-  (state: State, key: string) => InputResult
-> = {
+const MODE_HANDLERS: Record<State["mode"], (state: State, key: string) => InputResult> = {
   explore: handleExploreMode,
   build: handleBuildMode,
   "build-arrow-fn": handleArrowFnMode,
@@ -209,9 +224,14 @@ const MODE_HANDLERS: Record<
 export const handleInput = (state: State, data: Buffer): InputResult => {
   const key = data.toString();
 
+  const isTooltipDismiss = isEscapeKey(key) && state.mode === "explore" && state.tooltip.visible;
+  if (isTooltipDismiss) {
+    const newState = dismissTooltip(state);
+    return { state: newState, output: null };
+  }
+
   if (isExitKey(key)) {
-    const isInBuildMode =
-      state.mode === "build" || state.mode === "build-arrow-fn";
+    const isInBuildMode = state.mode === "build" || state.mode === "build-arrow-fn";
 
     if (isInBuildMode) {
       const newState = exitBuildMode(state);

@@ -1,4 +1,4 @@
-import { unlinkSync, existsSync, writeFileSync } from "fs";
+import { unlinkSync, existsSync, writeFileSync, statSync } from "fs";
 import { spawnSync } from "child_process";
 import { complete } from "./completion";
 import { openTty, closeTty, render, hide, resetSelection, selectNext, selectPrev, getSelectedIndex, renderPreview } from "./renderer";
@@ -53,19 +53,29 @@ export const parseMessage = (raw: string): Message | null => {
 };
 
 let lastSuggestions: ReturnType<typeof complete>["suggestions"] = [];
+const fileCache = new Map<string, { mtimeMs: number; data: unknown }>();
 
 const writeResponseWithSelected = (): void => {
   const selectedIdx = getSelectedIndex();
   const selected = lastSuggestions[selectedIdx];
-  const response = {
-    suggestions: lastSuggestions,
-    selected: selected?.signature || "",
-  };
-  writeFileSync(RESPONSE_PATH, JSON.stringify(response));
+  const value = selected?.insertText || selected?.signature || "";
+  writeFileSync(RESPONSE_PATH, value);
+};
+
+const readCachedFile = async (filePath: string): Promise<unknown> => {
+  const { mtimeMs } = statSync(filePath);
+  const cached = fileCache.get(filePath);
+  if (cached && cached.mtimeMs === mtimeMs) {
+    return cached.data;
+  }
+
+  const data = await readFile(filePath);
+  fileCache.set(filePath, { mtimeMs, data });
+  return data;
 };
 
 const evaluateExpression = async (filePath: string, expr: string): Promise<unknown> => {
-  const data = await readFile(filePath);
+  const data = await readCachedFile(filePath);
   const expandedExpr = expandShortcuts(expr);
   const lexer = new Lexer(expandedExpr);
   const tokens = lexer.tokenize();
@@ -96,6 +106,7 @@ export const handleMessage = async (msg: Message): Promise<void> => {
   if (isHideAction) {
     hide();
     lastSuggestions = [];
+    writeFileSync(RESPONSE_PATH, "");
     return;
   }
 
@@ -124,7 +135,20 @@ export const handleMessage = async (msg: Message): Promise<void> => {
     return;
   }
 
-  const result = complete(msg.input);
+  let result: ReturnType<typeof complete>;
+  const hasCompletionContext = Boolean(msg.file && msg.expr);
+
+  if (hasCompletionContext) {
+    try {
+      const data = await readCachedFile(msg.file!);
+      result = complete(msg.input, { data, expression: msg.expr });
+    } catch {
+      result = complete(msg.input);
+    }
+  } else {
+    result = complete(msg.input);
+  }
+
   lastSuggestions = result.suggestions;
 
   const hasSuggestions = result.suggestions.length > 0;
@@ -134,7 +158,7 @@ export const handleMessage = async (msg: Message): Promise<void> => {
     writeResponseWithSelected();
   } else {
     hide();
-    writeFileSync(RESPONSE_PATH, JSON.stringify({ suggestions: [], selected: "" }));
+    writeFileSync(RESPONSE_PATH, "");
   }
 };
 

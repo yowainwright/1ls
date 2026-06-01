@@ -13,19 +13,15 @@ export function escapeRegExp(str: string): string {
   return str.replace(REGEX_SPECIAL_CHARS, "\\$&");
 }
 
-const EXPAND_PATTERNS = SHORTCUTS
-  .map((s) => ({
-    regex: new RegExp(`${escapeRegExp(s.short)}(?![a-zA-Z])`, "g"),
-    replacement: s.full,
-  }))
-  .sort((a, b) => b.replacement.length - a.replacement.length);
+const EXPAND_PATTERNS = SHORTCUTS.map((s) => ({
+  regex: new RegExp(`${escapeRegExp(s.short)}(?![a-zA-Z])`, "g"),
+  replacement: s.full,
+})).sort((a, b) => b.replacement.length - a.replacement.length);
 
-const SHORTEN_PATTERNS = SHORTCUTS
-  .map((s) => ({
-    regex: new RegExp(`${escapeRegExp(s.full)}(?![a-zA-Z])`, "g"),
-    replacement: s.short,
-  }))
-  .sort((a, b) => b.regex.source.length - a.regex.source.length);
+const SHORTEN_PATTERNS = SHORTCUTS.map((s) => ({
+  regex: new RegExp(`${escapeRegExp(s.full)}(?![a-zA-Z])`, "g"),
+  replacement: s.short,
+})).sort((a, b) => b.regex.source.length - a.regex.source.length);
 
 export function expandShortcuts(expression: string): string {
   return EXPAND_PATTERNS.reduce(

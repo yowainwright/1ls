@@ -11,6 +11,7 @@ export interface Suggestion {
   signature: string;
   description: string;
   type: SuggestionType;
+  insertText?: string;
 }
 
 export interface CompletionResult {

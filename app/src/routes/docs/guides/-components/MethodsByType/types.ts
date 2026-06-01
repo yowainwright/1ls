@@ -1,4 +1,4 @@
 export interface MethodGroup {
-  type: string
-  methods: string
+  type: string;
+  methods: string;
 }

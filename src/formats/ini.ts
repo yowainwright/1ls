@@ -82,10 +82,10 @@ export function processINILine(state: INIParseState, line: string): INIParseStat
 export function parseINI(input: string): Record<string, unknown> {
   const lines = input.trim().split("\n");
 
-  const finalState = lines.reduce(
-    (state, line) => processINILine(state, line),
-    { result: {}, currentSection: "" } as INIParseState
-  );
+  const finalState = lines.reduce((state, line) => processINILine(state, line), {
+    result: {},
+    currentSection: "",
+  } as INIParseState);
 
   return finalState.result;
 }

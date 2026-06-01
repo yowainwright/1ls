@@ -25,30 +25,65 @@ import {
 } from "./constants";
 import type { Method } from "./types";
 
-export const getAllMethods = (): Method[] => {
+const getUniqueMethods = (methods: Method[], key: (method: Method) => string): Method[] => {
   const seen = new Set<string>();
-  const all: Method[] = [];
+  const unique: Method[] = [];
 
-  const addUnique = (methods: Method[]) => {
-    for (const m of methods) {
-      if (!seen.has(m.name)) {
-        seen.add(m.name);
-        all.push(m);
-      }
+  for (const method of methods) {
+    const id = key(method);
+    if (seen.has(id)) {
+      continue;
     }
-  };
 
-  addUnique(ARRAY_METHODS);
-  addUnique(ARRAY_BUILTINS);
-  addUnique(STRING_METHODS);
-  addUnique(STRING_BUILTINS);
-  addUnique(OBJECT_OPERATIONS);
-  addUnique(OBJECT_BUILTINS);
-  addUnique(NUMBER_METHODS);
-  addUnique(NUMBER_BUILTINS);
-  addUnique(UNIVERSAL_BUILTINS);
+    seen.add(id);
+    unique.push(method);
+  }
 
-  return all;
+  return unique;
 };
 
-export const getMethodsForType = (): Method[] => getAllMethods();
+export const getAllMethods = (): Method[] =>
+  getUniqueMethods(
+    [
+      ...ARRAY_METHODS,
+      ...ARRAY_BUILTINS,
+      ...STRING_METHODS,
+      ...STRING_BUILTINS,
+      ...OBJECT_OPERATIONS,
+      ...OBJECT_BUILTINS,
+      ...NUMBER_METHODS,
+      ...NUMBER_BUILTINS,
+      ...UNIVERSAL_BUILTINS,
+    ],
+    (method) => method.signature,
+  );
+
+const METHODS_BY_TYPE: Record<string, Method[]> = {
+  Array: getUniqueMethods(
+    [...ARRAY_METHODS, ...ARRAY_BUILTINS, ...UNIVERSAL_BUILTINS],
+    (method) => method.name,
+  ),
+  String: getUniqueMethods(
+    [...STRING_METHODS, ...STRING_BUILTINS, ...UNIVERSAL_BUILTINS],
+    (method) => method.name,
+  ),
+  Object: getUniqueMethods(
+    [...OBJECT_OPERATIONS, ...OBJECT_BUILTINS, ...UNIVERSAL_BUILTINS],
+    (method) => method.name,
+  ),
+  Number: getUniqueMethods(
+    [...NUMBER_METHODS, ...NUMBER_BUILTINS, ...UNIVERSAL_BUILTINS],
+    (method) => method.name,
+  ),
+  Boolean: [...UNIVERSAL_BUILTINS],
+  null: [...UNIVERSAL_BUILTINS],
+  unknown: [...UNIVERSAL_BUILTINS],
+};
+
+export const getMethodsForType = (dataType?: string): Method[] => {
+  if (!dataType) {
+    return getAllMethods();
+  }
+
+  return METHODS_BY_TYPE[dataType] ?? METHODS_BY_TYPE.unknown;
+};

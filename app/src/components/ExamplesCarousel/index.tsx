@@ -1,29 +1,31 @@
-import { motion } from "framer-motion"
+import { motion } from "framer-motion";
 import {
   Carousel,
   CarouselContent,
   CarouselItem,
   CarouselNext,
   CarouselPrevious,
-} from "@/components/ui/carousel"
-import { SectionHeader } from "@/components/SectionHeader"
-import { EASE_CURVE } from "@/lib/styles"
-import { SpotlightCard } from "./components"
-import { CODE_EXAMPLES } from "./constants"
+} from "@/components/ui/carousel";
+import { SectionHeader } from "@/components/SectionHeader";
+import { EASE_CURVE } from "@/lib/styles";
+import { SpotlightCard } from "./components";
+import { EXAMPLES_CAROUSEL_CONSTANTS } from "./constants";
+
+const { styles, text, items } = EXAMPLES_CAROUSEL_CONSTANTS;
 
 export default function ExamplesCarousel() {
   return (
-    <section className="px-4 py-16 md:py-24">
-      <div className="container mx-auto max-w-6xl">
+    <section className={styles.section}>
+      <div className={styles.container}>
         <SectionHeader
-          title="Works With Any Format"
-          description="JSON, YAML, CSV, TypeScript, plain text, and more - all with the same simple syntax"
-          className="mb-12"
+          title={text.sectionTitle}
+          description={text.sectionDescription}
+          className={styles.sectionHeaderClassName}
         />
         <CarouselWrapper />
       </div>
     </section>
-  )
+  );
 }
 
 function CarouselWrapper() {
@@ -34,16 +36,10 @@ function CarouselWrapper() {
       viewport={{ once: true }}
       transition={{ duration: 0.6, delay: 0.2, ease: EASE_CURVE }}
     >
-      <Carousel
-        opts={{
-          align: "start",
-          loop: true,
-        }}
-        className="w-full"
-      >
+      <Carousel opts={{ align: "start", loop: true }} className="w-full">
         <CarouselContent>
-          {CODE_EXAMPLES.map((example, index) => (
-            <CarouselItem key={index} className="md:basis-1/2 lg:basis-1/3">
+          {items.map((example, index) => (
+            <CarouselItem key={index} className={styles.carouselItem}>
               <SpotlightCard example={example} />
             </CarouselItem>
           ))}
@@ -52,5 +48,5 @@ function CarouselWrapper() {
         <CarouselNext />
       </Carousel>
     </motion.div>
-  )
+  );
 }

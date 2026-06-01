@@ -1,14 +1,15 @@
 import { fuzzySearch } from "./fuzzy";
-import { createTooltipState, updateTooltipFromQuery } from "./tooltip";
+import {
+  createTooltipState,
+  updateTooltipFromQuery,
+  selectNextHint,
+  selectPreviousHint,
+  getSelectedHint,
+} from "./tooltip";
+import { evaluatePreview } from "./preview";
 import type { State, JsonPath } from "./types";
-import { appendFileSync } from "fs";
 
-const debug = (msg: string) => appendFileSync("/tmp/1ls-debug.log", msg + "\n");
-
-export const createInitialState = (
-  paths: JsonPath[],
-  originalData: unknown,
-): State => {
+export const createInitialState = (paths: JsonPath[], originalData: unknown): State => {
   const matches = fuzzySearch(paths, "", (item) => item.path);
   const state = Object.assign(
     {},
@@ -42,32 +43,28 @@ const detectDataType = (data: unknown): string => {
 };
 
 export const updateQuery = (state: State, newQuery: string): State => {
-  debug(`updateQuery called with: "${newQuery}"`);
   const matches = fuzzySearch(state.paths, newQuery, (item) => item.path);
   const selectedIndex = matches.length > 0 ? 0 : state.selectedIndex;
 
-  const dataType = detectDataType(state.originalData);
-  const tooltipContext = {
-    query: newQuery,
-    dataType,
-    originalData: state.originalData,
-  };
+  const lastDotIndex = newQuery.lastIndexOf(".");
+  const prefix = lastDotIndex > 0 ? newQuery.slice(0, lastDotIndex) : "";
+  const prefixResult = prefix ? evaluatePreview(prefix, state.originalData) : null;
+  const dataType = prefixResult?.success ? detectDataType(prefixResult.value) : detectDataType(state.originalData);
+  const tooltipContext = { query: newQuery, dataType, originalData: state.originalData };
   const tooltip = updateTooltipFromQuery(tooltipContext);
-  debug(`tooltip.visible: ${tooltip.visible}, hints: ${tooltip.methodHints.length}`);
 
-  const newState = Object.assign({}, state, {
-    query: newQuery,
-    matches,
-    selectedIndex,
-    tooltip,
-  });
-
-  return newState;
+  return Object.assign({}, state, { query: newQuery, matches, selectedIndex, tooltip });
 };
 
 export const updateSelection = (state: State, delta: number): State => {
   const isExploreMode = state.mode === "explore";
   const isBuildMode = state.mode === "build";
+
+  const isTooltipActive = isExploreMode && state.tooltip.visible;
+  if (isTooltipActive) {
+    const newTooltip = delta > 0 ? selectNextHint(state.tooltip) : selectPreviousHint(state.tooltip);
+    return Object.assign({}, state, { tooltip: newTooltip });
+  }
 
   const totalMatches = isExploreMode
     ? state.matches.length
@@ -79,25 +76,29 @@ export const updateSelection = (state: State, delta: number): State => {
   if (hasNoMatches) return state;
 
   const currentIndex = state.selectedIndex;
-  let newIndex = currentIndex + delta;
+  const rawNext = currentIndex + delta;
+  const newIndex = rawNext < 0 ? totalMatches - 1 : rawNext >= totalMatches ? 0 : rawNext;
 
-  if (newIndex < 0) {
-    newIndex = totalMatches - 1;
-  } else if (newIndex >= totalMatches) {
-    newIndex = 0;
-  }
-
-  const newState = Object.assign({}, state, {
-    selectedIndex: newIndex,
-  });
-
-  return newState;
+  return Object.assign({}, state, { selectedIndex: newIndex });
 };
+
+export const acceptTooltipHint = (state: State): State => {
+  const selectedMethod = getSelectedHint(state.tooltip);
+  const hasNoMethod = !selectedMethod?.template;
+  if (hasNoMethod) return state;
+
+  const lastDotIndex = state.query.lastIndexOf(".");
+  const prefix = lastDotIndex >= 0 ? state.query.slice(0, lastDotIndex) : "";
+  const newQuery = prefix.concat(selectedMethod!.template!);
+  return updateQuery(state, newQuery);
+};
+
+export const dismissTooltip = (state: State): State =>
+  Object.assign({}, state, { tooltip: createTooltipState() });
 
 export const getSelectedPath = (state: State): JsonPath | null => {
   const hasMatches = state.matches.length > 0;
-  const hasValidIndex =
-    state.selectedIndex >= 0 && state.selectedIndex < state.matches.length;
+  const hasValidIndex = state.selectedIndex >= 0 && state.selectedIndex < state.matches.length;
 
   if (hasMatches && hasValidIndex) {
     return state.matches[state.selectedIndex].item;

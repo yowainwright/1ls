@@ -50,10 +50,13 @@ describe("JSON Navigator", () => {
     };
     const paths = navigateJson(data);
 
-    const typeMap = paths.reduce((acc, p) => {
-      acc[p.path] = p.type;
-      return acc;
-    }, {} as Record<string, string>);
+    const typeMap = paths.reduce(
+      (acc, p) => {
+        acc[p.path] = p.type;
+        return acc;
+      },
+      {} as Record<string, string>,
+    );
 
     expect(typeMap[".str"]).toBe("String");
     expect(typeMap[".num"]).toBe("Number");
@@ -72,10 +75,13 @@ describe("JSON Navigator", () => {
     };
     const paths = navigateJson(data);
 
-    const displayMap = paths.reduce((acc, p) => {
-      acc[p.path] = p.displayValue;
-      return acc;
-    }, {} as Record<string, string>);
+    const displayMap = paths.reduce(
+      (acc, p) => {
+        acc[p.path] = p.displayValue;
+        return acc;
+      },
+      {} as Record<string, string>,
+    );
 
     expect(displayMap[".str"]).toBe('"hello"');
     expect(displayMap[".num"]).toBe("42");

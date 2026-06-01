@@ -1,3 +1,11 @@
+import type { ReactNode } from "react";
+
+export interface CodeCardProps {
+  children: ReactNode;
+  className?: string;
+  variant?: "light" | "dark";
+}
+
 export type Language =
   | "json"
   | "yaml"
@@ -7,14 +15,14 @@ export type Language =
   | "bash"
   | "shell"
   | "diff"
-  | "csv"
+  | "csv";
 
 export interface CodeblockProps {
-  code: string
-  language?: Language
-  className?: string
-  showLineNumbers?: boolean
-  showLanguage?: boolean
-  showCopy?: boolean
-  title?: string
+  code: string;
+  language?: string;
+  className?: string;
+  showLineNumbers?: boolean;
+  showLanguage?: boolean;
+  showCopy?: boolean;
+  title?: string;
 }

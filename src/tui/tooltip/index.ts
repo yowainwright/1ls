@@ -22,34 +22,38 @@ const extractPartialMethod = (query: string): string | null => {
 };
 
 export const createTooltipState = (): TooltipState =>
-  Object.assign({}, {
-    visible: false,
-    methodHints: [],
-    partialMethod: "",
-    selectedHintIndex: 0,
-  });
+  Object.assign(
+    {},
+    {
+      visible: false,
+      methodHints: [],
+      partialMethod: "",
+      selectedHintIndex: 0,
+    },
+  );
 
-export const updateTooltipFromQuery = (
-  context: TooltipContext,
-): TooltipState => {
+export const updateTooltipFromQuery = (context: TooltipContext): TooltipState => {
   const partialMethod = extractPartialMethod(context.query);
   const hasNoPartial = partialMethod === null;
   if (hasNoPartial) {
     return createTooltipState();
   }
 
-  const methods = getMethodsForType();
+  const methods = getMethodsForType(context.dataType);
   const allMatches = fuzzySearch(methods, partialMethod, (m: Method) => m.name);
   const methodHints = allMatches.slice(0, MAX_TOOLTIP_HINTS);
 
   const hasHints = methodHints.length > 0;
 
-  return Object.assign({}, {
-    visible: hasHints,
-    methodHints,
-    partialMethod,
-    selectedHintIndex: 0,
-  });
+  return Object.assign(
+    {},
+    {
+      visible: hasHints,
+      methodHints,
+      partialMethod,
+      selectedHintIndex: 0,
+    },
+  );
 };
 
 export const selectNextHint = (tooltip: TooltipState): TooltipState => {
@@ -74,8 +78,7 @@ export const getSelectedHint = (tooltip: TooltipState): Method | null => {
   if (hasNoHints) return null;
 
   const hasValidIndex =
-    tooltip.selectedHintIndex >= 0 &&
-    tooltip.selectedHintIndex < tooltip.methodHints.length;
+    tooltip.selectedHintIndex >= 0 && tooltip.selectedHintIndex < tooltip.methodHints.length;
   if (!hasValidIndex) return null;
 
   return tooltip.methodHints[tooltip.selectedHintIndex].item;

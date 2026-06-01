@@ -77,11 +77,7 @@ describe("parseNDJSON", () => {
 {"name": "Charlie"}
 `;
     const result = parseNDJSON(input);
-    expect(result).toEqual([
-      { name: "Alice" },
-      { name: "Bob" },
-      { name: "Charlie" },
-    ]);
+    expect(result).toEqual([{ name: "Alice" }, { name: "Bob" }, { name: "Charlie" }]);
   });
 
   test("handles malformed JSON as strings", () => {
@@ -91,11 +87,7 @@ invalid line
 {"another": "valid"}
 `;
     const result = parseNDJSON(input);
-    expect(result).toEqual([
-      { valid: "json" },
-      "invalid line",
-      { another: "valid" },
-    ]);
+    expect(result).toEqual([{ valid: "json" }, "invalid line", { another: "valid" }]);
   });
 
   test("handles single-line arrays as NDJSON", () => {

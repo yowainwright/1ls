@@ -1,31 +1,43 @@
-import { useState, useEffect } from "react"
-import { NavLogo, NavLinks, GithubButton } from "./components"
-import { MobileNav } from "./MobileNav"
-import type { NavbarProps } from "./types"
+import { setup, fromCallback } from "xstate";
+import { useMachine } from "@xstate/react";
+import { NavLogo, NavLinks, GithubButton } from "./components";
+import { MobileNav } from "./MobileNav";
+import { NAVBAR_CONSTANTS } from "./constants";
+import type { NavbarProps } from "./types";
+
+const { styles } = NAVBAR_CONSTANTS;
+
+const SCROLL_THRESHOLD = 20;
+const scrollEventType = () => (window.scrollY > SCROLL_THRESHOLD ? "SCROLLED" : "TOP") as const;
+
+const navbarMachine = setup({
+  actors: {
+    scrollListener: fromCallback(({ sendBack }) => {
+      const handler = () => sendBack({ type: scrollEventType() });
+      window.addEventListener("scroll", handler);
+      handler();
+      return () => window.removeEventListener("scroll", handler);
+    }),
+  },
+}).createMachine({
+  id: "navbar",
+  initial: "top",
+  invoke: { src: "scrollListener" },
+  states: {
+    top: { on: { SCROLLED: "scrolled" } },
+    scrolled: { on: { TOP: "top" } },
+  },
+});
 
 export function Navbar({ className = "" }: NavbarProps) {
-  const [isScrolled, setIsScrolled] = useState(false)
-
-  useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 20)
-    }
-
-    window.addEventListener("scroll", handleScroll)
-    handleScroll()
-    return () => window.removeEventListener("scroll", handleScroll)
-  }, [])
-
-  const bgClasses = isScrolled
-    ? "bg-background/80 backdrop-blur-lg shadow-sm border-b border-border/10"
-    : "bg-transparent"
+  const [snapshot] = useMachine(navbarMachine);
+  const isScrolled = snapshot.matches("scrolled");
+  const bgClasses = isScrolled ? styles.bgScrolled : styles.bgTop;
 
   return (
-    <nav
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${className}`}
-    >
-      <div className={`transition-all duration-300 ${bgClasses}`}>
-        <div className="container mx-auto flex items-center justify-between h-16 px-4 md:px-8">
+    <nav className={`${styles.nav} ${className}`}>
+      <div className={bgClasses}>
+        <div className={styles.inner}>
           <div className="md:hidden">
             <MobileNav />
           </div>
@@ -40,5 +52,5 @@ export function Navbar({ className = "" }: NavbarProps) {
         </div>
       </div>
     </nav>
-  )
+  );
 }

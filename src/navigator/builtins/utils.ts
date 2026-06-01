@@ -3,8 +3,7 @@ export const isArray = (x: unknown): x is unknown[] => Array.isArray(x);
 export const isObject = (x: unknown): x is Record<string, unknown> =>
   x !== null && typeof x === "object" && !Array.isArray(x);
 
-export const isNil = (x: unknown): x is null | undefined =>
-  x === null || x === undefined;
+export const isNil = (x: unknown): x is null | undefined => x === null || x === undefined;
 
 export const isString = (x: unknown): x is string => typeof x === "string";
 
@@ -20,15 +19,18 @@ export const deepMerge = (
   target: Record<string, unknown>,
   source: Record<string, unknown>,
 ): Record<string, unknown> =>
-  Object.keys(source).reduce((result, key) => {
-    const targetVal = target[key];
-    const sourceVal = source[key];
-    const shouldRecurseMerge = isObject(targetVal) && isObject(sourceVal);
-    return {
-      ...result,
-      [key]: shouldRecurseMerge ? deepMerge(targetVal, sourceVal) : sourceVal,
-    };
-  }, { ...target });
+  Object.keys(source).reduce(
+    (result, key) => {
+      const targetVal = target[key];
+      const sourceVal = source[key];
+      const shouldRecurseMerge = isObject(targetVal) && isObject(sourceVal);
+      return {
+        ...result,
+        [key]: shouldRecurseMerge ? deepMerge(targetVal, sourceVal) : sourceVal,
+      };
+    },
+    { ...target },
+  );
 
 export const deepContains = (container: unknown, value: unknown): boolean => {
   if (container === value) return true;
@@ -36,7 +38,7 @@ export const deepContains = (container: unknown, value: unknown): boolean => {
   const bothArrays = isArray(container) && isArray(value);
   if (bothArrays) {
     return (value as unknown[]).every((v) =>
-      (container as unknown[]).some((c) => deepContains(c, v))
+      (container as unknown[]).some((c) => deepContains(c, v)),
     );
   }
 
@@ -44,17 +46,14 @@ export const deepContains = (container: unknown, value: unknown): boolean => {
   if (bothObjects) {
     const containerObj = container as Record<string, unknown>;
     return Object.entries(value).every(
-      ([k, v]) => k in containerObj && deepContains(containerObj[k], v)
+      ([k, v]) => k in containerObj && deepContains(containerObj[k], v),
     );
   }
 
   return false;
 };
 
-export const getValueAtPath = (
-  data: unknown,
-  path: (string | number)[],
-): unknown =>
+export const getValueAtPath = (data: unknown, path: (string | number)[]): unknown =>
   path.reduce<unknown>((current, key) => {
     if (isNil(current)) return undefined;
     if (isArray(current) && typeof key === "number") return current[key];
@@ -92,9 +91,7 @@ export const setValueAtPath = (
   }
 
   if (typeof first === "number") {
-    return Array.from({ length: first + 1 }, (_, i) =>
-      i === first ? nestedValue : undefined
-    );
+    return Array.from({ length: first + 1 }, (_, i) => (i === first ? nestedValue : undefined));
   }
 
   return { [first]: nestedValue };
@@ -116,15 +113,11 @@ export const collectPaths = (
 ): (string | number)[][] => {
   const self = [currentPath];
   if (isArray(val)) {
-    const childPaths = val.flatMap((item, i) =>
-      collectPaths(item, [...currentPath, i])
-    );
+    const childPaths = val.flatMap((item, i) => collectPaths(item, [...currentPath, i]));
     return [...self, ...childPaths];
   }
   if (isObject(val)) {
-    const childPaths = Object.keys(val).flatMap((k) =>
-      collectPaths(val[k], [...currentPath, k])
-    );
+    const childPaths = Object.keys(val).flatMap((k) => collectPaths(val[k], [...currentPath, k]));
     return [...self, ...childPaths];
   }
   return self;

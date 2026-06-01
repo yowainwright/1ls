@@ -1,4 +1,4 @@
-import { METHOD_GROUPS } from './constants'
+import { METHOD_GROUPS } from "./constants";
 
 export function MethodsByType() {
   return (
@@ -10,5 +10,5 @@ export function MethodsByType() {
         </div>
       ))}
     </div>
-  )
+  );
 }

@@ -9,6 +9,7 @@ export type { PreviewResult } from "./types";
 export { MAX_PREVIEW_LINES, MAX_PREVIEW_CHARS, MAX_ARRAY_ITEMS } from "./constants";
 
 let cachedExpression = "";
+let cachedData: unknown = undefined;
 let cachedResult: PreviewResult | null = null;
 
 const truncateValue = (value: unknown): { value: unknown; truncated: boolean } => {
@@ -32,11 +33,8 @@ const formatPreviewValue = (value: unknown, truncated: boolean): string => {
   return json + suffix;
 };
 
-export const evaluatePreview = (
-  expression: string,
-  data: unknown,
-): PreviewResult => {
-  if (expression === cachedExpression && cachedResult !== null) {
+export const evaluatePreview = (expression: string, data: unknown): PreviewResult => {
+  if (expression === cachedExpression && data === cachedData && cachedResult !== null) {
     return cachedResult;
   }
 
@@ -59,6 +57,7 @@ export const evaluatePreview = (
     };
 
     cachedExpression = expression;
+    cachedData = data;
     cachedResult = previewResult;
 
     return previewResult;
@@ -72,6 +71,7 @@ export const evaluatePreview = (
     };
 
     cachedExpression = expression;
+    cachedData = data;
     cachedResult = previewResult;
 
     return previewResult;

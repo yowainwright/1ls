@@ -47,7 +47,7 @@ export const extractPartialMethod = (input: string): PartialMethod | null => {
 
   const dotMatch = input.match(DOT_PATTERN);
   if (dotMatch) {
-    const prefix = dotMatch[1];
+    const prefix = dotMatch[1] || "";
     const startIndex = input.length - prefix.length;
     return { prefix, startIndex };
   }

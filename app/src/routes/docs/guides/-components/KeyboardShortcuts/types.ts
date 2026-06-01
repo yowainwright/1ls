@@ -1,4 +1,4 @@
 export interface Shortcut {
-  key: string
-  action: string
+  key: string;
+  action: string;
 }

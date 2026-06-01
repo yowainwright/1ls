@@ -1,11 +1,9 @@
 import { YAML } from "../constants";
 import { parseBooleanValue, parseNullValue } from "../utils";
 
-export const getIndent = (line: string): number =>
-  line.length - line.trimStart().length;
+export const getIndent = (line: string): number => line.length - line.trimStart().length;
 
-export const countQuotes = (text: string): number =>
-  (text.match(/["']/g) || []).length;
+export const countQuotes = (text: string): number => (text.match(/["']/g) || []).length;
 
 export const isCommentOutsideQuotes = (line: string, commentIdx: number): boolean => {
   const beforeComment = line.substring(0, commentIdx);
@@ -44,9 +42,7 @@ export const hasValidColonKey = (value: string): boolean => {
   return isUnquotedWithoutSpaces || isQuoted;
 };
 
-export const parseKeyValue = (
-  line: string,
-): { key: string; value: string } | null => {
+export const parseKeyValue = (line: string): { key: string; value: string } | null => {
   const colonIdx = line.indexOf(":");
   if (colonIdx <= 0) return null;
 
@@ -80,9 +76,7 @@ export const extractAnchorFromKey = (
   return { cleanKey, anchorName };
 };
 
-const parseTypeTag = (
-  value: string,
-): { tag: string | null; content: string } => {
+const parseTypeTag = (value: string): { tag: string | null; content: string } => {
   const isTypeTagged = value.startsWith("!!");
   if (!isTypeTagged) return { tag: null, content: value };
 
@@ -123,10 +117,7 @@ const parseInlineObject = (content: string): Record<string, unknown> | null => {
     .split(",")
     .map((pair) => pair.split(":").map((s) => s.trim()))
     .filter(([k, v]) => k && v)
-    .reduce<Record<string, unknown>>(
-      (obj, [k, v]) => ({ ...obj, [k]: parseYAMLValue(v) }),
-      {},
-    );
+    .reduce<Record<string, unknown>>((obj, [k, v]) => ({ ...obj, [k]: parseYAMLValue(v) }), {});
 };
 
 export const parseYAMLValue = (value: string): unknown => {
@@ -157,12 +148,9 @@ export const parseYAMLValue = (value: string): unknown => {
   return content;
 };
 
-export const findPreviousKey = (
-  lines: string[],
-  currentIndex: number,
-): string | null =>
-  Array.from({ length: currentIndex }, (_, i) => currentIndex - 1 - i)
-    .reduce<string | null>((found, i) => {
+export const findPreviousKey = (lines: string[], currentIndex: number): string | null =>
+  Array.from({ length: currentIndex }, (_, i) => currentIndex - 1 - i).reduce<string | null>(
+    (found, i) => {
       if (found !== null) return found;
 
       const line = stripComment(lines[i]);
@@ -176,7 +164,9 @@ export const findPreviousKey = (
 
       const hasEmptyOrMultilineValue = !parsed.value || isMultilineIndicator(parsed.value);
       return hasEmptyOrMultilineValue ? parsed.key : null;
-    }, null);
+    },
+    null,
+  );
 
 export const collectMultilineContent = (
   lines: string[],
@@ -205,19 +195,13 @@ export const collectMultilineContent = (
     { contentLines: [], endIdx: startIdx - 1, done: false },
   );
 
-  const trimmedLines = result.contentLines
-    .reduceRight<string[]>(
-      (acc, line) => (acc.length === 0 && line === "" ? acc : [line, ...acc]),
-      [],
-    );
+  const trimmedLines = result.contentLines.reduceRight<string[]>(
+    (acc, line) => (acc.length === 0 && line === "" ? acc : [line, ...acc]),
+    [],
+  );
 
   return { contentLines: trimmedLines, endIdx: result.endIdx };
 };
 
-export const formatMultilineValue = (
-  contentLines: string[],
-  style: "|" | ">",
-): string =>
-  style === "|"
-    ? contentLines.join("\n")
-    : contentLines.join(" ").replace(/\s+/g, " ").trim();
+export const formatMultilineValue = (contentLines: string[], style: "|" | ">"): string =>
+  style === "|" ? contentLines.join("\n") : contentLines.join(" ").replace(/\s+/g, " ").trim();

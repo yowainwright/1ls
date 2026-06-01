@@ -1,11 +1,11 @@
-import { createFileRoute } from '@tanstack/react-router'
-import { PageHeader } from '../-components/PageHeader'
-import { DocsCard } from '../-components/DocsCard'
-import { API_PAGES } from './-constants'
+import { createFileRoute } from "@tanstack/react-router";
+import { PageHeader } from "../-components/PageHeader";
+import { DocsCard } from "../-components/DocsCard";
+import { API_PAGES } from "./-constants";
 
-export const Route = createFileRoute('/docs/api/')({
+export const Route = createFileRoute("/docs/api/")({
   component: ApiIndex,
-})
+});
 
 function ApiIndex() {
   return (
@@ -20,5 +20,5 @@ function ApiIndex() {
         ))}
       </div>
     </div>
-  )
+  );
 }

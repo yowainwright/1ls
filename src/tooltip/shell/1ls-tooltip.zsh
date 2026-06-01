@@ -5,6 +5,16 @@ typeset -g _1LS_RESPONSE_PATH="/tmp/1ls-response"
 typeset -g _1LS_TOOLTIP_ENABLED=1
 typeset -g _1LS_TTY_PATH=$(tty)
 
+_1ls_json_escape() {
+  local value="$1"
+  value="${value//\\/\\\\}"
+  value="${value//\"/\\\"}"
+  value="${value//$'\n'/\\n}"
+  value="${value//$'\r'/\\r}"
+  value="${value//$'\t'/\\t}"
+  print -r -- "$value"
+}
+
 _1ls_send_message() {
   [[ -p "$_1LS_FIFO_PATH" ]] || return
   local input="$1"
@@ -12,11 +22,16 @@ _1ls_send_message() {
   local file="${3:-}"
   local expr="${4:-}"
   local msg=""
-  msg+="{\"input\":\"$input\","
-  msg+="\"tty\":\"$_1LS_TTY_PATH\","
-  msg+="\"action\":\"$action\","
-  msg+="\"file\":\"$file\","
-  msg+="\"expr\":\"$expr\"}"
+  local escaped_input=$(_1ls_json_escape "$input")
+  local escaped_tty=$(_1ls_json_escape "$_1LS_TTY_PATH")
+  local escaped_action=$(_1ls_json_escape "$action")
+  local escaped_file=$(_1ls_json_escape "$file")
+  local escaped_expr=$(_1ls_json_escape "$expr")
+  msg+="{\"input\":\"$escaped_input\","
+  msg+="\"tty\":\"$escaped_tty\","
+  msg+="\"action\":\"$escaped_action\","
+  msg+="\"file\":\"$escaped_file\","
+  msg+="\"expr\":\"$escaped_expr\"}"
   echo "$msg" > "$_1LS_FIFO_PATH"
 }
 
@@ -25,18 +40,21 @@ _1ls_is_1ls_command() {
 }
 
 _1ls_has_partial_method() {
-  [[ "$BUFFER" == *\.* ]]
+  local expr="$1"
+  [[ "$expr" == *\.* ]]
 }
 
 _1ls_is_inside_parens() {
+  local expr="$1"
   # Count open vs close parens - if more open, we're inside
-  local open="${BUFFER//[^\(]/}"
-  local close="${BUFFER//[^\)]/}"
+  local open="${expr//[^\(]/}"
+  local close="${expr//[^\)]/}"
   [[ ${#open} -gt ${#close} ]]
 }
 
 _1ls_is_complete_expression() {
-  local partial="${BUFFER##*.}"
+  local expr="$1"
+  local partial="${expr##*.}"
   local ends_with_paren="$([[ "$partial" == *\) ]] && echo 1 || echo 0)"
   local is_length="$([[ "$partial" == "length" ]] && echo 1 || echo 0)"
   local is_keys="$([[ "$partial" == "keys" ]] && echo 1 || echo 0)"
@@ -98,38 +116,38 @@ _1ls_line_changed() {
     return
   fi
 
+  local parsed=$(_1ls_extract_file_and_expr "$BUFFER")
+  if [[ -z "$parsed" ]]; then
+    [[ $_1LS_TOOLTIP_VISIBLE -eq 1 ]] && _1ls_hide_tooltip
+    _1LS_TOOLTIP_VISIBLE=0
+    return
+  fi
+
+  local file="${parsed%%|*}"
+  local expr="${parsed#*|}"
+
   # No partial method yet - hide tooltip
-  if ! _1ls_has_partial_method; then
+  if ! _1ls_has_partial_method "$expr"; then
     [[ $_1LS_TOOLTIP_VISIBLE -eq 1 ]] && _1ls_hide_tooltip
     _1LS_TOOLTIP_VISIBLE=0
     return
   fi
 
   # Inside parens (typing arrow function body) - hide tooltip
-  if _1ls_is_inside_parens; then
+  if _1ls_is_inside_parens "$expr"; then
     [[ $_1LS_TOOLTIP_VISIBLE -eq 1 ]] && _1ls_hide_tooltip
     _1LS_TOOLTIP_VISIBLE=0
     return
   fi
 
   # Expression is complete (ends with ) or known property) - show preview
-  if _1ls_is_complete_expression; then
-    local parsed=$(_1ls_extract_file_and_expr "$BUFFER")
-    if [[ -n "$parsed" ]]; then
-      local file="${parsed%%|*}"
-      local expr="${parsed#*|}"
-      _1ls_send_message "" "preview" "$file" "$expr"
-      _1LS_TOOLTIP_VISIBLE=1
-    else
-      [[ $_1LS_TOOLTIP_VISIBLE -eq 1 ]] && _1ls_hide_tooltip
-      _1LS_TOOLTIP_VISIBLE=0
-    fi
+  if _1ls_is_complete_expression "$expr"; then
+    _1ls_send_message "$BUFFER" "preview" "$file" "$expr"
+    _1LS_TOOLTIP_VISIBLE=1
     return
   fi
 
-  # Show tooltip for partial method at root level
-  local partial="${BUFFER##*.}"
-  _1ls_send_message ".$partial" "complete"
+  _1ls_send_message "$BUFFER" "complete" "$file" "$expr"
   _1LS_TOOLTIP_VISIBLE=1
 }
 
@@ -167,12 +185,9 @@ _1ls_select_prev() {
 
 _1ls_accept_suggestion() {
   if [[ $_1LS_TOOLTIP_VISIBLE -eq 1 ]]; then
-    # Read selected suggestion from response file and insert it
     [[ -f "$_1LS_RESPONSE_PATH" ]] || return
-    local response=$(cat "$_1LS_RESPONSE_PATH")
-    local selected=$(echo "$response" | sed 's/.*"selected":"\([^"]*\)".*/\1/')
-    if [[ -n "$selected" && "$selected" != "$response" ]]; then
-      # Replace partial method with selected signature
+    local selected=$(<"$_1LS_RESPONSE_PATH")
+    if [[ -n "$selected" ]]; then
       local before_dot="${BUFFER%.*}"
       BUFFER="${before_dot}${selected}"
       CURSOR=${#BUFFER}

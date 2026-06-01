@@ -4,11 +4,7 @@ export interface FuzzyMatch<T> {
   matches: number[];
 }
 
-const calculateScore = (
-  text: string,
-  pattern: string,
-  matches: number[],
-): number => {
+const calculateScore = (text: string, pattern: string, matches: number[]): number => {
   const baseScore = matches.length * 100;
 
   const reducer = (bonus: number, pos: number, idx: number): number => {
@@ -63,11 +59,7 @@ const findMatches = (text: string, pattern: string): number[] | null => {
   return allPatternMatched ? matches : null;
 };
 
-const createFuzzyMatch = <T>(
-  item: T,
-  text: string,
-  pattern: string,
-): FuzzyMatch<T> | null => {
+const createFuzzyMatch = <T>(item: T, text: string, pattern: string): FuzzyMatch<T> | null => {
   const matches = findMatches(text, pattern);
   const hasNoMatches = !matches;
 
@@ -78,8 +70,7 @@ const createFuzzyMatch = <T>(
   return match;
 };
 
-const compareScores = <T>(a: FuzzyMatch<T>, b: FuzzyMatch<T>): number =>
-  b.score - a.score;
+const compareScores = <T>(a: FuzzyMatch<T>, b: FuzzyMatch<T>): number => b.score - a.score;
 
 export const fuzzySearch = <T>(
   items: T[],
@@ -109,8 +100,7 @@ export const fuzzySearch = <T>(
   };
   const matches = items.map(mapper);
 
-  const filter = (match: FuzzyMatch<T> | null): match is FuzzyMatch<T> =>
-    match !== null;
+  const filter = (match: FuzzyMatch<T> | null): match is FuzzyMatch<T> => match !== null;
   const validMatches = matches.filter(filter);
 
   const sortedMatches = validMatches.sort(compareScores);

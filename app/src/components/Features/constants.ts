@@ -1,6 +1,25 @@
-import type { Feature } from "./types"
+import { SECTION, CONTAINER, CARD, CARD_OVERLAY } from "@/lib/classes";
+import type { Feature } from "./types";
 
-export const FEATURES: Feature[] = [
+const styles = {
+  section: SECTION,
+  container: CONTAINER,
+  grid: "grid gap-6 sm:grid-cols-2 lg:grid-cols-3",
+  card: CARD,
+  cardOverlay: CARD_OVERLAY,
+  cardInner: "relative",
+  iconWrap: "mb-4 inline-flex rounded-lg bg-primary/10 p-3",
+  icon: "h-6 w-6 text-primary",
+  title: "mb-2 text-lg font-semibold text-foreground",
+  description: "text-sm text-muted-foreground",
+};
+
+const text = {
+  sectionTitle: "Powerful Features",
+  sectionDescription: "Everything you need for efficient data processing in your terminal",
+};
+
+const items: Feature[] = [
   {
     title: "JavaScript Syntax",
     description: "Use familiar array methods and syntax instead of learning jq's DSL",
@@ -31,4 +50,6 @@ export const FEATURES: Feature[] = [
     description: "Read, list, and grep files with native support",
     icon: "folder",
   },
-]
+];
+
+export const FEATURES_CONSTANTS = { styles, text, items };

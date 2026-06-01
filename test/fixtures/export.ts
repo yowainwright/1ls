@@ -5,8 +5,8 @@ export default {
     target: "ES2020",
     module: "ESNext",
     strict: true,
-    esModuleInterop: true
+    esModuleInterop: true,
   },
   include: ["src/**/*"],
-  exclude: ["node_modules", "dist"]
+  exclude: ["node_modules", "dist"],
 };

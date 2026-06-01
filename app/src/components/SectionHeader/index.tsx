@@ -1,12 +1,18 @@
-import { motion } from "framer-motion"
-import { GRADIENT_HEADER_STYLES, EASE_CURVE } from "@/lib/styles"
-import type { SectionHeaderProps } from "./types"
+import { motion } from "framer-motion";
+import { GRADIENT_HEADER_STYLES, EASE_CURVE } from "@/lib/styles";
+import type { SectionHeaderProps } from "./types";
+
+const styles = {
+  wrapper: "mb-8 text-center",
+  title: "mb-4 text-3xl font-bold tracking-tight sm:text-4xl md:text-5xl",
+  description: "mx-auto max-w-2xl text-lg text-muted-foreground",
+};
 
 export function SectionHeader({ title, description, className = "" }: SectionHeaderProps) {
   return (
-    <div className={`mb-8 text-center ${className}`}>
+    <div className={`${styles.wrapper} ${className}`}>
       <motion.h2
-        className="mb-4 text-3xl font-bold tracking-tight sm:text-4xl md:text-5xl"
+        className={styles.title}
         initial={{ opacity: 0, y: 20 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true }}
@@ -17,7 +23,7 @@ export function SectionHeader({ title, description, className = "" }: SectionHea
       </motion.h2>
       {description && (
         <motion.p
-          className="mx-auto max-w-2xl text-lg text-muted-foreground"
+          className={styles.description}
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
@@ -27,5 +33,5 @@ export function SectionHeader({ title, description, className = "" }: SectionHea
         </motion.p>
       )}
     </div>
-  )
+  );
 }

@@ -28,11 +28,7 @@ describe("Fuzzy Search", () => {
   });
 
   test("returns matches in score order", () => {
-    const testItems = [
-      { name: "u.s.e.r" },
-      { name: "user" },
-      { name: "users" },
-    ];
+    const testItems = [{ name: "u.s.e.r" }, { name: "user" }, { name: "users" }];
     const results = fuzzySearch(testItems, "user", (item) => item.name);
     expect(results[0].item.name).toBe("user");
     expect(results[1].item.name).toBe("users");

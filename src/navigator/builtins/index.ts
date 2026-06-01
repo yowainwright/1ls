@@ -20,18 +20,13 @@ export type { BuiltinFn, KeyExtractor, Predicate } from "./types";
 
 export const BUILTINS: Record<string, BuiltinFn> = {
   [BUILTIN_FUNCTIONS.HEAD]: (data) => (isArray(data) ? data[0] : undefined),
-  [BUILTIN_FUNCTIONS.LAST]: (data) =>
-    isArray(data) ? data[data.length - 1] : undefined,
+  [BUILTIN_FUNCTIONS.LAST]: (data) => (isArray(data) ? data[data.length - 1] : undefined),
   [BUILTIN_FUNCTIONS.TAIL]: (data) => (isArray(data) ? data.slice(1) : []),
-  [BUILTIN_FUNCTIONS.TAKE]: (data, [n]) =>
-    isArray(data) ? data.slice(0, n as number) : [],
-  [BUILTIN_FUNCTIONS.DROP]: (data, [n]) =>
-    isArray(data) ? data.slice(n as number) : [],
+  [BUILTIN_FUNCTIONS.TAKE]: (data, [n]) => (isArray(data) ? data.slice(0, n as number) : []),
+  [BUILTIN_FUNCTIONS.DROP]: (data, [n]) => (isArray(data) ? data.slice(n as number) : []),
   [BUILTIN_FUNCTIONS.UNIQ]: (data) => (isArray(data) ? [...new Set(data)] : []),
-  [BUILTIN_FUNCTIONS.FLATTEN]: (data) =>
-    isArray(data) ? data.flat(Infinity) : [],
-  [BUILTIN_FUNCTIONS.REVERSE]: (data) =>
-    isArray(data) ? [...data].reverse() : [],
+  [BUILTIN_FUNCTIONS.FLATTEN]: (data) => (isArray(data) ? data.flat(Infinity) : []),
+  [BUILTIN_FUNCTIONS.REVERSE]: (data) => (isArray(data) ? [...data].reverse() : []),
   [BUILTIN_FUNCTIONS.GROUPBY]: (data, [fn]) => {
     if (!isArray(data)) return {};
     const keyFn = fn as KeyExtractor;
@@ -58,12 +53,9 @@ export const BUILTINS: Record<string, BuiltinFn> = {
     if (!isArray(data)) return [];
     const n = size as number;
     const numChunks = Math.ceil(data.length / n);
-    return Array.from({ length: numChunks }, (_, i) =>
-      data.slice(i * n, (i + 1) * n),
-    );
+    return Array.from({ length: numChunks }, (_, i) => data.slice(i * n, (i + 1) * n));
   },
-  [BUILTIN_FUNCTIONS.COMPACT]: (data) =>
-    isArray(data) ? data.filter(Boolean) : [],
+  [BUILTIN_FUNCTIONS.COMPACT]: (data) => (isArray(data) ? data.filter(Boolean) : []),
   [BUILTIN_FUNCTIONS.PLUCK]: (data, [key]) => {
     if (!isArray(data)) return [];
     return data.map((item) => (isObject(item) ? item[key as string] : undefined));
@@ -72,26 +64,24 @@ export const BUILTINS: Record<string, BuiltinFn> = {
     if (!isObject(data)) return {};
     const isSingleArrayArg = args.length === 1 && isArray(args[0]);
     const keys = isSingleArrayArg ? (args[0] as string[]) : (args as string[]);
-    return keys.reduce((acc, key) => {
-      const keyStr = key as string;
-      const hasKey = keyStr in data;
-      return hasKey ? { ...acc, [keyStr]: data[keyStr] } : acc;
-    }, {} as Record<string, unknown>);
+    return keys.reduce(
+      (acc, key) => {
+        const keyStr = key as string;
+        const hasKey = keyStr in data;
+        return hasKey ? { ...acc, [keyStr]: data[keyStr] } : acc;
+      },
+      {} as Record<string, unknown>,
+    );
   },
   [BUILTIN_FUNCTIONS.OMIT]: (data, args) => {
     if (!isObject(data)) return {};
     const isSingleArrayArg = args.length === 1 && isArray(args[0]);
-    const keysToOmit = isSingleArrayArg
-      ? (args[0] as string[])
-      : (args as string[]);
+    const keysToOmit = isSingleArrayArg ? (args[0] as string[]) : (args as string[]);
     const keySet = new Set(keysToOmit);
-    return Object.fromEntries(
-      Object.entries(data).filter(([k]) => !keySet.has(k)),
-    );
+    return Object.fromEntries(Object.entries(data).filter(([k]) => !keySet.has(k)));
   },
   [BUILTIN_FUNCTIONS.KEYS]: (data) => (isObject(data) ? Object.keys(data) : []),
-  [BUILTIN_FUNCTIONS.VALUES]: (data) =>
-    isObject(data) ? Object.values(data) : [],
+  [BUILTIN_FUNCTIONS.VALUES]: (data) => (isObject(data) ? Object.values(data) : []),
   [BUILTIN_FUNCTIONS.MERGE]: (data, args) => {
     if (!isObject(data)) return {};
     return args.reduce<Record<string, unknown>>((acc, obj) => {
@@ -110,8 +100,7 @@ export const BUILTINS: Record<string, BuiltinFn> = {
     if (!isArray(data)) return {};
     return Object.fromEntries(data as [string, unknown][]);
   },
-  [BUILTIN_FUNCTIONS.TOPAIRS]: (data) =>
-    isObject(data) ? Object.entries(data) : [],
+  [BUILTIN_FUNCTIONS.TOPAIRS]: (data) => (isObject(data) ? Object.entries(data) : []),
   [BUILTIN_FUNCTIONS.SUM]: (data) => {
     if (!isArray(data)) return 0;
     return data.reduce<number>((acc, val) => acc + (val as number), 0);
@@ -192,8 +181,7 @@ export const BUILTINS: Record<string, BuiltinFn> = {
     return data.reduce<number>((acc, val) => acc + (val as number), 0);
   },
   [BUILTIN_FUNCTIONS.PATH]: (data) => collectPaths(data, []),
-  [BUILTIN_FUNCTIONS.GETPATH]: (data, [path]) =>
-    getValueAtPath(data, path as (string | number)[]),
+  [BUILTIN_FUNCTIONS.GETPATH]: (data, [path]) => getValueAtPath(data, path as (string | number)[]),
   [BUILTIN_FUNCTIONS.SETPATH]: (data, [path, value]) =>
     setValueAtPath(data, path as (string | number)[], value),
   [BUILTIN_FUNCTIONS.RECURSE]: (data) => collectAllValues(data),
@@ -265,11 +253,7 @@ export const BUILTINS: Record<string, BuiltinFn> = {
 
 export const isBuiltin = (name: string): boolean => name in BUILTINS;
 
-export const executeBuiltin = (
-  name: string,
-  data: unknown,
-  args: unknown[],
-): unknown => {
+export const executeBuiltin = (name: string, data: unknown, args: unknown[]): unknown => {
   const fn = BUILTINS[name];
   if (!fn) throw new Error(`Unknown builtin: ${name}`);
   return fn(data, args);

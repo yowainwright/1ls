@@ -17,7 +17,7 @@ export interface ExpressionBuilder {
   baseValue: unknown;
   baseType: string;
   expression: string;
-  currentMethodIndex: number;
+  currentMethod: Method | null;
   arrowFnContext: ArrowFnContext | null;
 }
 

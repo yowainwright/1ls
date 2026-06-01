@@ -6,8 +6,8 @@ export const SCORE_PREFIX_MATCH = 100;
 export const SCORE_CONTAINS_MATCH = 50;
 export const SCORE_FUZZY_MATCH = 25;
 
-export const QUOTE_PATTERN = /['"]([^'"]*\.([a-zA-Z]*))?$/;
-export const DOT_PATTERN = /\.([a-zA-Z]*)$/;
+export const QUOTE_PATTERN = /['"]([^'"]*\.([a-zA-Z_$][\w$]*)?)$/;
+export const DOT_PATTERN = /\.([a-zA-Z_$][\w$]*)?$/;
 
 export const METHODS: Suggestion[] = [
   { name: "map", signature: ".map(x => ...)", description: "Transform each element", type: "method" },

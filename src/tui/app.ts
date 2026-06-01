@@ -12,14 +12,20 @@ import {
   colors,
   colorize,
 } from "./terminal";
-import { Lexer } from "../lexer";
-import { ExpressionParser } from "../expression";
-import { JsonNavigator } from "../navigator/json";
-import { expandShortcuts } from "../shortcuts";
 import type { State } from "./types";
 import { appendFileSync } from "fs";
+import { evaluateAndFormatExpression } from "../executor";
+import type { CliOptions } from "../types";
 
-const debug = (msg: string) => appendFileSync("/tmp/1ls-debug.log", msg + "\n");
+const DEBUG_INTERACTIVE = process.env.ONE_LS_DEBUG === "1";
+
+const debug = (msg: string): void => {
+  if (!DEBUG_INTERACTIVE) {
+    return;
+  }
+
+  appendFileSync("/tmp/1ls-debug.log", msg + "\n");
+};
 
 let isRawModeEnabled = false;
 
@@ -93,7 +99,7 @@ const runEventLoop = async (initialState: State): Promise<string | null> => {
   });
 };
 
-export const runInteractive = async (data: unknown): Promise<void> => {
+export const runInteractive = async (data: unknown, options: CliOptions): Promise<void> => {
   setupErrorBoundary();
 
   const paths = navigateJson(data);
@@ -119,17 +125,7 @@ export const runInteractive = async (data: unknown): Promise<void> => {
     const hasExpression = expressionString !== null;
     if (hasExpression) {
       try {
-        const expandedExpression = expandShortcuts(expressionString);
-        const lexer = new Lexer(expandedExpression);
-        const tokens = lexer.tokenize();
-
-        const parser = new ExpressionParser(tokens);
-        const ast = parser.parse();
-
-        const navigator = new JsonNavigator();
-        const result = navigator.evaluate(ast, data);
-
-        const output = JSON.stringify(result, null, 2);
+        const output = evaluateAndFormatExpression(expressionString, data, options);
         stdout.write(output);
         stdout.write("\n");
       } catch (error: unknown) {

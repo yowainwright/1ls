@@ -1,13 +1,13 @@
-import { motion } from "framer-motion"
-import { LOGO_STYLES, EASE_CURVE } from "@/lib/styles"
+import { motion } from "framer-motion";
+import { LOGO_STYLES, EASE_CURVE } from "@/lib/styles";
 
 const LOGO_CONFIG = {
   text: "1ls",
   fontFamily: "'Fira Code', 'FiraCode Nerd Font', ui-monospace, monospace",
-}
+};
 
 interface LogoProps {
-  className?: string
+  className?: string;
 }
 
 export function Logo({ className = "" }: LogoProps) {
@@ -39,7 +39,7 @@ export function Logo({ className = "" }: LogoProps) {
     >
       {LOGO_CONFIG.text}
     </motion.span>
-  )
+  );
 }
 
-export { LOGO_CONFIG }
+export { LOGO_CONFIG };

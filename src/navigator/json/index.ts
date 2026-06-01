@@ -57,17 +57,10 @@ export class JsonNavigator {
         return this.evaluatePropertyAccess(ast, data);
 
       case "IndexAccess":
-        return getArrayElement(
-          ast.object ? this.evaluate(ast.object, data) : data,
-          ast.index,
-        );
+        return getArrayElement(ast.object ? this.evaluate(ast.object, data) : data, ast.index);
 
       case "SliceAccess":
-        return sliceArray(
-          ast.object ? this.evaluate(ast.object, data) : data,
-          ast.start,
-          ast.end,
-        );
+        return sliceArray(ast.object ? this.evaluate(ast.object, data) : data, ast.start, ast.end);
 
       case "ArraySpread":
         return ast.object ? this.evaluate(ast.object, data) : data;
@@ -152,39 +145,26 @@ export class JsonNavigator {
     return args.reduce((result, arg) => this.evaluate(arg, result), data);
   }
 
-  private evaluateRecursiveDescent(
-    ast: RecursiveDescentNode,
-    data: unknown,
-  ): unknown[] {
+  private evaluateRecursiveDescent(ast: RecursiveDescentNode, data: unknown): unknown[] {
     const baseData = ast.object ? this.evaluate(ast.object, data) : data;
     return this.collectAllValues(baseData);
   }
 
-  private collectAllValues(data: unknown): unknown[] {
-    const isArrayData = Array.isArray(data);
-    const isObjectData =
-      data !== null && typeof data === "object" && !isArrayData;
-    const self = [data];
+  private collectAllValues(data: unknown, result: unknown[] = []): unknown[] {
+    result.push(data);
 
-    if (isArrayData) {
-      const children = data.flatMap((item) => this.collectAllValues(item));
-      return [...self, ...children];
-    }
-
-    if (isObjectData) {
-      const children = Object.values(data as Record<string, unknown>).flatMap(
-        (val) => this.collectAllValues(val),
+    if (Array.isArray(data)) {
+      data.forEach((item) => this.collectAllValues(item, result));
+    } else if (data !== null && typeof data === "object") {
+      Object.values(data as Record<string, unknown>).forEach((val) =>
+        this.collectAllValues(val, result),
       );
-      return [...self, ...children];
     }
 
-    return self;
+    return result;
   }
 
-  private evaluateOptionalAccess(
-    ast: OptionalAccessNode,
-    data: unknown,
-  ): unknown {
+  private evaluateOptionalAccess(ast: OptionalAccessNode, data: unknown): unknown {
     try {
       return this.evaluate(ast.expression, data);
     } catch {
@@ -192,28 +172,20 @@ export class JsonNavigator {
     }
   }
 
-  private evaluateNullCoalescing(
-    ast: NullCoalescingNode,
-    data: unknown,
-  ): unknown {
+  private evaluateNullCoalescing(ast: NullCoalescingNode, data: unknown): unknown {
     const leftValue = this.evaluate(ast.left, data);
     const isNullish = leftValue === null || leftValue === undefined;
     return isNullish ? this.evaluate(ast.right, data) : leftValue;
   }
 
-  private createFunction(
-    node: ArrowFunctionNode,
-  ): (...args: unknown[]) => unknown {
+  private createFunction(node: ArrowFunctionNode): (...args: unknown[]) => unknown {
     return (...args: unknown[]) => {
       const context = createParameterContext(node.params, args);
       return this.evaluateFunctionBody(node.body, context);
     };
   }
 
-  private evaluateFunctionBody(
-    ast: ASTNode,
-    context: EvaluationContext,
-  ): unknown {
+  private evaluateFunctionBody(ast: ASTNode, context: EvaluationContext): unknown {
     switch (ast.type) {
       case "PropertyAccess":
         return this.evaluatePropertyAccessInFunction(ast, context);
@@ -225,9 +197,7 @@ export class JsonNavigator {
         return ast.value;
 
       case "Root":
-        return ast.expression
-          ? this.evaluateFunctionBody(ast.expression, context)
-          : context;
+        return ast.expression ? this.evaluateFunctionBody(ast.expression, context) : context;
 
       default:
         return this.evaluate(ast, getImplicitParameter(context));
@@ -244,10 +214,7 @@ export class JsonNavigator {
       return getPropertyFromObject(baseObj, ast.property);
     }
 
-    const isParameter = Object.prototype.hasOwnProperty.call(
-      context,
-      ast.property,
-    );
+    const isParameter = Object.prototype.hasOwnProperty.call(context, ast.property);
     if (isParameter) {
       return context[ast.property];
     }
@@ -256,10 +223,7 @@ export class JsonNavigator {
     return getPropertyFromObject(implicitParam, ast.property);
   }
 
-  private evaluateMethodCallInFunction(
-    ast: MethodCallNode,
-    context: EvaluationContext,
-  ): unknown {
+  private evaluateMethodCallInFunction(ast: MethodCallNode, context: EvaluationContext): unknown {
     const target = ast.object
       ? this.evaluateFunctionBody(ast.object, context)
       : getImplicitParameter(context);
@@ -271,9 +235,7 @@ export class JsonNavigator {
       return executeOperator(target, operator, evaluatedArg);
     }
 
-    const methodArgs = ast.args.map((arg) =>
-      this.evaluateFunctionBody(arg, context),
-    );
+    const methodArgs = ast.args.map((arg) => this.evaluateFunctionBody(arg, context));
 
     return callMethod(target, ast.method, methodArgs);
   }

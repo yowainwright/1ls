@@ -106,4 +106,69 @@ describe("tooltip/completion", () => {
       expect(result.suggestions.length).toBeGreaterThan(0);
     });
   });
+
+  describe("complete with data context", () => {
+    test("suggests object properties for root object expressions", () => {
+      const result = complete("1ls rf file.json '.na", {
+        data: { name: "Ada", age: 37 },
+        expression: ".na",
+      });
+
+      expect(result.suggestions[0]?.type).toBe("path");
+      expect(result.suggestions[0]?.name).toBe("name");
+      expect(result.suggestions[0]?.insertText).toBe(".name");
+    });
+
+    test("suggests nested properties relative to the selected object", () => {
+      const result = complete("1ls rf file.json '.user.na", {
+        data: { user: { name: "Ada", email: "ada@example.com" } },
+        expression: ".user.na",
+      });
+
+      expect(result.suggestions[0]?.name).toBe("name");
+      expect(result.suggestions[0]?.insertText).toBe(".name");
+    });
+
+    test("suggests bracket notation for special keys", () => {
+      const result = complete("1ls rf file.json '.user.sp", {
+        data: { user: { "sp ace": true } },
+        expression: ".user.sp",
+      });
+
+      expect(result.suggestions[0]?.type).toBe("path");
+      expect(result.suggestions[0]?.insertText).toBe("[\"sp ace\"]");
+    });
+
+    test("filters methods by array context", () => {
+      const result = complete("1ls rf file.json '.to", {
+        data: [1, 2, 3],
+        expression: ".to",
+      });
+
+      const names = result.suggestions.map((suggestion) => suggestion.name);
+      expect(names).not.toContain("toUpperCase");
+      expect(names).not.toContain("toLowerCase");
+    });
+
+    test("suggests array methods for array context", () => {
+      const result = complete("1ls rf file.json '.ma", {
+        data: [1, 2, 3],
+        expression: ".ma",
+      });
+
+      const mapSuggestion = result.suggestions.find((suggestion) => suggestion.name === "map");
+      expect(mapSuggestion?.signature).toContain(".map");
+      expect(mapSuggestion?.insertText).toBe(".map(x => x)");
+    });
+
+    test("falls back to generic suggestions if contextual evaluation fails", () => {
+      const result = complete("1ls rf file.json '.ma", {
+        data: { user: { name: "Ada" } },
+        expression: ".missing.ma",
+      });
+
+      const hasMap = result.suggestions.some((suggestion) => suggestion.name === "map");
+      expect(hasMap).toBe(true);
+    });
+  });
 });

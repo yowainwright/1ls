@@ -29,10 +29,7 @@ export interface FormattingOptions {
   detect?: boolean;
 }
 
-export interface CliOptions
-  extends FileOperationOptions,
-    ShorthandOptions,
-    FormattingOptions {
+export interface CliOptions extends FileOperationOptions, ShorthandOptions, FormattingOptions {
   expression?: string;
   readFile?: boolean;
   help?: boolean;

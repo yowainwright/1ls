@@ -1,17 +1,25 @@
 import { stdout } from "process";
-import { clearScreen, clearLine, clearToEnd, moveCursor, colors, colorize, highlightMatches } from "./terminal";
+import {
+  clearScreen,
+  clearLine,
+  clearToEnd,
+  moveCursor,
+  colors,
+  colorize,
+  highlightMatches,
+} from "./terminal";
 import { renderBuildMode, renderArrowFnMode } from "./renderer-builder";
 import { isMethodComplete, getPreviewForExpression } from "./tooltip";
 import type { State, JsonPath } from "./types";
 import type { FuzzyMatch } from "./fuzzy";
+import type { Method } from "./methods/types";
 
 const MAX_VISIBLE_ITEMS = 10;
 
 let lastRenderedLines: string[] = [];
 let isFirstRender = true;
 
-const formatPath = (path: string, matches: number[]): string =>
-  highlightMatches(path, matches);
+const formatPath = (path: string, matches: number[]): string => highlightMatches(path, matches);
 
 const formatType = (type: string): string => {
   const prefix = "[";
@@ -20,8 +28,7 @@ const formatType = (type: string): string => {
   return colorize(text, colors.dim);
 };
 
-const formatValue = (displayValue: string): string =>
-  colorize(displayValue, colors.gray);
+const formatValue = (displayValue: string): string => colorize(displayValue, colors.gray);
 
 const formatPrefix = (isSelected: boolean): string => {
   const selectedPrefix = colorize("❯", colors.green);
@@ -29,10 +36,7 @@ const formatPrefix = (isSelected: boolean): string => {
   return isSelected ? selectedPrefix : unselectedPrefix;
 };
 
-const formatPathEntry = (
-  match: FuzzyMatch<JsonPath>,
-  isSelected: boolean,
-): string => {
+const formatPathEntry = (match: FuzzyMatch<JsonPath>, isSelected: boolean): string => {
   const item = match.item;
   const matches = match.matches;
 
@@ -41,12 +45,27 @@ const formatPathEntry = (
   const typeText = formatType(item.type);
   const valueText = formatValue(item.displayValue);
 
-  const line = prefix
-    .concat(" ", pathText)
-    .concat(" ", typeText)
-    .concat(" ", valueText);
+  const line = prefix.concat(" ", pathText).concat(" ", typeText).concat(" ", valueText);
 
   return line;
+};
+
+const TOOLTIP_SEPARATOR = "  ".concat("─".repeat(48));
+
+const renderTooltipHintRow = (match: FuzzyMatch<Method>, isSelected: boolean): string => {
+  const method = match.item;
+  const prefix = formatPrefix(isSelected);
+  const signature = isSelected ? colorize(method.signature, colors.bright) : method.signature;
+  const category = method.category ? colorize(`  [${method.category}]`, colors.dim) : "";
+  const description = colorize(`  ${method.description}`, colors.gray);
+  return prefix.concat(" ", signature, category, description);
+};
+
+const renderTooltipSection = (state: State): string[] => {
+  if (!state.tooltip.visible) return [];
+  const { methodHints, selectedHintIndex } = state.tooltip;
+  const hintLines = methodHints.map((match, i) => renderTooltipHintRow(match, i === selectedHintIndex));
+  return ["", ...hintLines, colorize(TOOLTIP_SEPARATOR, colors.dim)];
 };
 
 const renderTitle = (): string => {
@@ -69,9 +88,7 @@ const formatComplexPreview = (value: unknown): string => {
   const hasMore = lines.length > MAX_PREVIEW_LINES;
   const preview = colorize(limited.join("\n"), colors.cyan);
 
-  return hasMore
-    ? preview.concat(colorize("\n... (truncated)", colors.dim))
-    : preview;
+  return hasMore ? preview.concat(colorize("\n... (truncated)", colors.dim)) : preview;
 };
 
 const formatPreviewContent = (selected: JsonPath): string => {
@@ -102,17 +119,20 @@ const renderPreview = (state: State): string => {
   return previewTitle.concat(previewContent);
 };
 
-const renderHelp = (): string => {
-  const help = "\n\n".concat(
-    colorize("↑/↓", colors.bright),
-    " navigate  ",
-    colorize("Enter", colors.bright),
-    " select  ",
-    colorize("Tab", colors.bright),
-    " build  ",
-    colorize("Esc/q", colors.bright),
-    " quit",
-  );
+const renderHelp = (tooltipVisible: boolean): string => {
+  const help = tooltipVisible
+    ? "\n\n".concat(
+        colorize("↑/↓", colors.bright), " hints  ",
+        colorize("Tab/→", colors.bright), " accept  ",
+        colorize("Esc", colors.bright), " dismiss  ",
+        colorize("Enter", colors.bright), " select",
+      )
+    : "\n\n".concat(
+        colorize("↑/↓", colors.bright), " navigate  ",
+        colorize("Enter", colors.bright), " select  ",
+        colorize("Tab", colors.bright), " build  ",
+        colorize("Esc/q", colors.bright), " quit",
+      );
   return colorize(help, colors.dim);
 };
 
@@ -134,7 +154,10 @@ const renderExpressionPreview = (state: State): string[] => {
   return [previewTitle, ...formattedPreview];
 };
 
-const calculateVisibleRange = (selectedIndex: number, totalMatches: number): { start: number; end: number } => {
+const calculateVisibleRange = (
+  selectedIndex: number,
+  totalMatches: number,
+): { start: number; end: number } => {
   const halfWindow = Math.floor(MAX_VISIBLE_ITEMS / 2);
   const initialStart = Math.max(0, selectedIndex - halfWindow);
   const end = Math.min(totalMatches, initialStart + MAX_VISIBLE_ITEMS);
@@ -169,9 +192,7 @@ const buildRemainingIndicator = (totalMatches: number): string[] => {
   const remaining = totalMatches - MAX_VISIBLE_ITEMS;
   const hasMore = remaining > 0;
 
-  return hasMore
-    ? ["", colorize("... " + remaining + " more", colors.dim)]
-    : [];
+  return hasMore ? ["", colorize("... " + remaining + " more", colors.dim)] : [];
 };
 
 const buildPreviewLines = (state: State): string[] => {
@@ -181,13 +202,15 @@ const buildPreviewLines = (state: State): string[] => {
 
 const buildExploreContent = (state: State): string[] => {
   const header = [renderTitle(), "", "Search: " + state.query];
+  const tooltipSection = renderTooltipSection(state);
   const expressionPreview = renderExpressionPreview(state);
   const matchLines = buildMatchLines(state);
   const remainingIndicator = buildRemainingIndicator(state.matches.length);
   const previewLines = buildPreviewLines(state);
-  const footer = ["", renderHelp().trim()];
+  const footer = ["", renderHelp(state.tooltip.visible).trim()];
 
   return header
+    .concat(tooltipSection)
     .concat(expressionPreview)
     .concat([""])
     .concat(matchLines)

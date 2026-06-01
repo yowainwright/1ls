@@ -7,14 +7,14 @@ import {
   getParamName,
   getParamType,
   getArraySampleValue,
+  replaceLastOccurrence,
   replaceTemplateWithExpression,
   buildArrowExpression,
 } from "./utils";
 
 export const enterBuildMode = (state: State): State => {
   const hasMatches = state.matches.length > 0;
-  const hasValidIndex =
-    state.selectedIndex >= 0 && state.selectedIndex < state.matches.length;
+  const hasValidIndex = state.selectedIndex >= 0 && state.selectedIndex < state.matches.length;
 
   if (!hasMatches || !hasValidIndex) {
     return state;
@@ -27,11 +27,11 @@ export const enterBuildMode = (state: State): State => {
     baseValue: selected.value,
     baseType: selected.type,
     expression: selected.path,
-    currentMethodIndex: 0,
+    currentMethod: null,
     arrowFnContext: null,
   };
 
-  const methods = getMethodsForType();
+  const methods = getMethodsForType(selected.type);
   const methodMatches = fuzzySearch(methods, "", (method: Method) => method.signature);
 
   return Object.assign({}, state, {
@@ -53,7 +53,7 @@ export const exitBuildMode = (state: State): State =>
 export const updateBuildQuery = (state: State, query: string): State => {
   if (!state.builder) return state;
 
-  const methods = getMethodsForType();
+  const methods = getMethodsForType(state.builder.baseType);
   const methodMatches = fuzzySearch(methods, query, (method: Method) => method.signature);
 
   return Object.assign({}, state, {
@@ -88,9 +88,7 @@ export const selectMethod = (state: State, methodIndex: number): State => {
 
   if (needsArrowFn(template)) {
     const isArrayMethod = builder.baseType === "Array";
-    const paramValue = isArrayMethod
-      ? getArraySampleValue(builder.baseValue)
-      : builder.baseValue;
+    const paramValue = isArrayMethod ? getArraySampleValue(builder.baseValue) : builder.baseValue;
 
     const arrowFnContext: ArrowFnContext = {
       paramName: getParamName(template),
@@ -103,7 +101,7 @@ export const selectMethod = (state: State, methodIndex: number): State => {
     const propertyMatches = fuzzySearch(arrowFnContext.paramPaths, "", (path) => path.path);
 
     const newBuilder = Object.assign({}, builder, {
-      currentMethodIndex: methodIndex,
+      currentMethod: method,
       arrowFnContext,
       expression: builder.expression + template,
     });
@@ -119,7 +117,7 @@ export const selectMethod = (state: State, methodIndex: number): State => {
 
   const newBuilder = Object.assign({}, builder, {
     expression: builder.expression + template,
-    currentMethodIndex: methodIndex,
+    currentMethod: method,
   });
 
   return Object.assign({}, state, {
@@ -158,11 +156,9 @@ export const completeArrowFn = (state: State): State => {
   const builder = state.builder;
   const context = builder.arrowFnContext;
   const hasValidContext = context && context.expression;
-  if (!hasValidContext) return state;
-
-  const methods = getMethodsForType();
-  const method = methods[builder.currentMethodIndex];
-  const template = method.template || "";
+  const method = builder.currentMethod;
+  const template = method?.template || "";
+  if (!hasValidContext || !template) return state;
 
   const finalExpression = replaceTemplateWithExpression(
     builder.expression,
@@ -187,12 +183,11 @@ export const cancelArrowFn = (state: State): State => {
   if (!state.builder) return state;
 
   const builder = state.builder;
-  const methods = getMethodsForType();
-  const method = methods[builder.currentMethodIndex];
-  const template = method.template || "";
+  const template = builder.currentMethod?.template || "";
+  if (!template) return state;
 
   const newBuilder = Object.assign({}, builder, {
-    expression: builder.expression.replace(template, ""),
+    expression: replaceLastOccurrence(builder.expression, template, ""),
     arrowFnContext: null,
   });
 
@@ -208,19 +203,18 @@ export const undoLastSegment = (state: State): State => {
   const builder = state.builder;
   const expression = builder.expression;
 
+  if (expression === builder.basePath) {
+    return exitBuildMode(state);
+  }
+
   const lastDotIndex = expression.lastIndexOf(".");
   if (lastDotIndex === -1) {
     return exitBuildMode(state);
   }
 
-  const lastOpenParenIndex = expression.lastIndexOf("(");
-  const shouldRemoveMethod = lastOpenParenIndex > lastDotIndex;
+  const newExpression = expression.substring(0, lastDotIndex);
 
-  const newExpression = shouldRemoveMethod
-    ? expression.substring(0, lastDotIndex)
-    : expression;
-
-  if (newExpression === builder.basePath) {
+  if (!newExpression || newExpression === builder.basePath) {
     return exitBuildMode(state);
   }
 
@@ -228,7 +222,7 @@ export const undoLastSegment = (state: State): State => {
     expression: newExpression,
   });
 
-  const methods = getMethodsForType();
+  const methods = getMethodsForType(builder.baseType);
   const methodMatches = fuzzySearch(methods, "", (method: Method) => method.signature);
 
   return Object.assign({}, state, {

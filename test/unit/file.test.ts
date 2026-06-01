@@ -327,7 +327,7 @@ describe("file utilities", () => {
     test("returns results with context when context option is set", async () => {
       const results = await grep("foo", join(testDir, "test.txt"), { context: 1 });
       expect(results.length).toBeGreaterThan(0);
-      const resultWithContext = results.find(r => r.context !== undefined);
+      const resultWithContext = results.find((r) => r.context !== undefined);
       expect(resultWithContext?.context).toBeDefined();
     });
   });

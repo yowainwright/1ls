@@ -13,8 +13,10 @@ const TYPE_COLORS: Record<Suggestion["type"], string> = {
 const colorize = (text: string, color: string): string =>
   `${color}${text}${ANSI.reset}`;
 
+const ANSI_ESCAPE_PATTERN = new RegExp(`${String.fromCharCode(27)}\\[[0-9;]*m`, "g");
+
 const stripAnsi = (str: string): number =>
-  str.replace(/\x1b\[[0-9;]*m/g, "").length;
+  str.replace(ANSI_ESCAPE_PATTERN, "").length;
 
 interface RenderState {
   ttyFd: number | null;

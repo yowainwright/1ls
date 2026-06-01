@@ -1,6 +1,9 @@
 import { DataFormat } from "../formats/types";
 import { CliOptions } from "../types";
-import { VALID_OUTPUT_FORMATS as SHARED_OUTPUT_FORMATS, VALID_INPUT_FORMATS as SHARED_INPUT_FORMATS } from "../constants";
+import {
+  VALID_OUTPUT_FORMATS as SHARED_OUTPUT_FORMATS,
+  VALID_INPUT_FORMATS as SHARED_INPUT_FORMATS,
+} from "../constants";
 
 export const VALID_OUTPUT_FORMATS = SHARED_OUTPUT_FORMATS;
 

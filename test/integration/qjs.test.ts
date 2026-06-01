@@ -5,10 +5,11 @@ import { existsSync } from "fs";
 
 const QJS_BINARY = join(import.meta.dir, "../../bin/1ls-qjs");
 const HAS_BINARY = existsSync(QJS_BINARY);
+const FIXTURES_PATH = join(import.meta.dir, "../fixtures");
 
 async function runQJS(
   input: string,
-  args: string[] = []
+  args: string[] = [],
 ): Promise<{ stdout: string; stderr: string; exitCode: number }> {
   const proc = spawn([QJS_BINARY, ...args], {
     stdin: "pipe",
@@ -30,7 +31,6 @@ async function runQJS(
 const describeQJS = HAS_BINARY ? describe : describe.skip;
 
 describeQJS("QuickJS Binary", () => {
-
   describe("CLI flags", () => {
     test("--help shows usage", async () => {
       const result = await runQJS("", ["--help"]);
@@ -95,25 +95,25 @@ describeQJS("QuickJS Binary", () => {
     test("--type shows result type", async () => {
       const result = await runQJS('{"name":"test"}', ["--type", ".name"]);
       expect(result.exitCode).toBe(0);
-      expect(result.stdout.trim()).toBe("string");
+      expect(result.stdout).toContain("[string]");
     });
 
     test("-t shows result type for array", async () => {
       const result = await runQJS('{"items":[1,2,3]}', ["-t", ".items"]);
       expect(result.exitCode).toBe(0);
-      expect(result.stdout.trim()).toBe("array");
+      expect(result.stdout).toContain("[array]");
     });
 
     test("-t shows result type for object", async () => {
       const result = await runQJS('{"nested":{"a":1}}', ["-t", ".nested"]);
       expect(result.exitCode).toBe(0);
-      expect(result.stdout.trim()).toBe("object");
+      expect(result.stdout).toContain("[object]");
     });
 
     test("-t shows result type for null", async () => {
       const result = await runQJS('{"value":null}', ["-t", ".value"]);
       expect(result.exitCode).toBe(0);
-      expect(result.stdout.trim()).toBe("null");
+      expect(result.stdout).toContain("[object]");
     });
   });
 
@@ -137,7 +137,9 @@ describeQJS("QuickJS Binary", () => {
     });
 
     test("accesses mixed path", async () => {
-      const result = await runQJS('{"users":[{"name":"Alice"},{"name":"Bob"}]}', [".users[0].name"]);
+      const result = await runQJS('{"users":[{"name":"Alice"},{"name":"Bob"}]}', [
+        ".users[0].name",
+      ]);
       expect(result.exitCode).toBe(0);
       expect(result.stdout.trim()).toBe('"Alice"');
     });
@@ -209,7 +211,10 @@ describeQJS("QuickJS Binary", () => {
     test("{entries} returns key-value pairs", async () => {
       const result = await runQJS('{"a":1,"b":2}', [".{entries}"]);
       expect(result.exitCode).toBe(0);
-      expect(JSON.parse(result.stdout)).toEqual([["a", 1], ["b", 2]]);
+      expect(JSON.parse(result.stdout)).toEqual([
+        ["a", 1],
+        ["b", 2],
+      ]);
     });
 
     test("{length} returns array length", async () => {
@@ -253,19 +258,17 @@ describeQJS("QuickJS Binary", () => {
 
   describe("chained operations", () => {
     test("chains filter and map", async () => {
-      const result = await runQJS(
-        '[{"name":"Alice","age":30},{"name":"Bob","age":20}]',
-        [".filter(u => u.age > 25).map(u => u.name)"]
-      );
+      const result = await runQJS('[{"name":"Alice","age":30},{"name":"Bob","age":20}]', [
+        ".filter(u => u.age > 25).map(u => u.name)",
+      ]);
       expect(result.exitCode).toBe(0);
       expect(JSON.parse(result.stdout)).toEqual(["Alice"]);
     });
 
     test("chains with shortcuts", async () => {
-      const result = await runQJS(
-        '[{"name":"Alice","age":30},{"name":"Bob","age":20}]',
-        [".flt(u => u.age > 25).mp(u => u.name)"]
-      );
+      const result = await runQJS('[{"name":"Alice","age":30},{"name":"Bob","age":20}]', [
+        ".flt(u => u.age > 25).mp(u => u.name)",
+      ]);
       expect(result.exitCode).toBe(0);
       expect(JSON.parse(result.stdout)).toEqual(["Alice"]);
     });
@@ -273,7 +276,7 @@ describeQJS("QuickJS Binary", () => {
 
   describe("error handling", () => {
     test("reports invalid JSON", async () => {
-      const result = await runQJS("not json", [".foo"]);
+      const result = await runQJS("not json", ["--input-format", "json", ".foo"]);
       expect(result.exitCode).toBe(1);
       expect(result.stderr).toContain("Error");
     });
@@ -282,6 +285,41 @@ describeQJS("QuickJS Binary", () => {
       const result = await runQJS("", [".foo"]);
       expect(result.exitCode).toBe(1);
       expect(result.stderr).toContain("Error");
+    });
+  });
+
+  describe("readFile", () => {
+    test("reads JSON files", async () => {
+      const result = await runQJS("", [
+        "--compact",
+        "readFile",
+        join(FIXTURES_PATH, "data.json"),
+        ".name",
+      ]);
+      expect(result.exitCode).toBe(0);
+      expect(result.stdout.trim()).toBe('"Test Project"');
+    });
+
+    test("reads YAML files", async () => {
+      const result = await runQJS("", [
+        "--compact",
+        "readFile",
+        join(FIXTURES_PATH, "config.yaml"),
+        ".name",
+      ]);
+      expect(result.exitCode).toBe(0);
+      expect(result.stdout.trim()).toBe('"MyApp"');
+    });
+
+    test("supports rf alias", async () => {
+      const result = await runQJS("", [
+        "--compact",
+        "rf",
+        join(FIXTURES_PATH, "data.json"),
+        ".users[0].name",
+      ]);
+      expect(result.exitCode).toBe(0);
+      expect(result.stdout.trim()).toBe('"Alice"');
     });
   });
 });

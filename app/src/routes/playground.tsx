@@ -1,10 +1,10 @@
-import { createFileRoute } from '@tanstack/react-router'
-import { Playground } from '@/components/Playground'
-import Footer from '@/components/sections/footer'
+import { createFileRoute } from "@tanstack/react-router";
+import { Playground } from "@/components/Playground";
+import Footer from "@/components/sections/footer";
 
-export const Route = createFileRoute('/playground')({
+export const Route = createFileRoute("/playground")({
   component: PlaygroundPage,
-})
+});
 
 function PlaygroundPage() {
   return (
@@ -14,5 +14,5 @@ function PlaygroundPage() {
       </main>
       <Footer className="relative z-10" />
     </>
-  )
+  );
 }

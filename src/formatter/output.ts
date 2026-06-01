@@ -91,9 +91,7 @@ export class Formatter {
 
     if (Array.isArray(data)) {
       if (data.length === 0) return "[]";
-      return data
-        .map((item) => `${spaces}- ${this.toYaml(item, indent + 2).trim()}`)
-        .join("\n");
+      return data.map((item) => `${spaces}- ${this.toYaml(item, indent + 2).trim()}`).join("\n");
     }
 
     if (typeof data === "object") {
@@ -130,7 +128,7 @@ export class Formatter {
 
     if (isObjectArray) {
       const records = data as Record<string, unknown>[];
-      const keys = Object.keys(firstItem);
+      const keys = Object.keys(firstItem as Record<string, unknown>);
       const headers = keys.join(",");
       const rows = records.map((item) =>
         keys.map((key) => this.escapeCsvValue(item[key])).join(","),
@@ -180,10 +178,7 @@ export class Formatter {
     // Calculate column widths
     const widths: Record<string, number> = {};
     keys.forEach((key) => {
-      widths[key] = Math.max(
-        key.length,
-        ...data.map((item) => String(item[key] ?? "").length),
-      );
+      widths[key] = Math.max(key.length, ...data.map((item) => String(item[key] ?? "").length));
     });
 
     // Create header
@@ -192,9 +187,7 @@ export class Formatter {
 
     // Create rows
     const rows = data.map((item) =>
-      keys
-        .map((key) => String(item[key] ?? "").padEnd(widths[key]))
-        .join(" | "),
+      keys.map((key) => String(item[key] ?? "").padEnd(widths[key])).join(" | "),
     );
 
     return [header, separator, ...rows].join("\n");

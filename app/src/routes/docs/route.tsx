@@ -1,14 +1,14 @@
-import { createFileRoute, Outlet } from '@tanstack/react-router'
-import { DocsSidebar } from './-components/DocsSidebar'
-import { TableOfContents, useHeadings } from '@/components/TableOfContents'
-import Footer from '@/components/sections/footer'
+import { createFileRoute, Outlet } from "@tanstack/react-router";
+import { DocsSidebar } from "./-components/DocsSidebar";
+import { TableOfContents, useHeadings } from "@/components/TableOfContents";
+import Footer from "@/components/sections/footer";
 
-export const Route = createFileRoute('/docs')({
+export const Route = createFileRoute("/docs")({
   component: DocsLayout,
-})
+});
 
 function DocsLayout() {
-  const headings = useHeadings()
+  const headings = useHeadings();
 
   return (
     <div className="pt-16 min-h-screen">
@@ -27,5 +27,5 @@ function DocsLayout() {
       </div>
       <Footer className="relative z-10" />
     </div>
-  )
+  );
 }

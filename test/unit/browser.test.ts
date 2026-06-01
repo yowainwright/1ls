@@ -1,5 +1,11 @@
 import { describe, expect, test } from "bun:test";
-import { evaluate, expandShortcuts, Lexer, ExpressionParser, JsonNavigator } from "../../src/browser";
+import {
+  evaluate,
+  expandShortcuts,
+  Lexer,
+  ExpressionParser,
+  JsonNavigator,
+} from "../../src/browser";
 
 describe("Browser evaluate function", () => {
   describe("property access", () => {
@@ -100,7 +106,10 @@ describe("Browser evaluate function", () => {
 
     test("{entries} returns key-value pairs", () => {
       const data = { a: 1, b: 2 };
-      expect(evaluate(data, ".{entries}")).toEqual([["a", 1], ["b", 2]]);
+      expect(evaluate(data, ".{entries}")).toEqual([
+        ["a", 1],
+        ["b", 2],
+      ]);
     });
 
     test("{length} returns array length", () => {
@@ -144,7 +153,12 @@ describe("Browser evaluate function", () => {
 
   describe("chained operations", () => {
     test("chains multiple array methods", () => {
-      const data = { users: [{ name: "Alice", age: 30 }, { name: "Bob", age: 20 }] };
+      const data = {
+        users: [
+          { name: "Alice", age: 30 },
+          { name: "Bob", age: 20 },
+        ],
+      };
       expect(evaluate(data, ".users.filter(u => u.age > 25).map(u => u.name)")).toEqual(["Alice"]);
     });
 
@@ -186,7 +200,9 @@ describe("expandShortcuts", () => {
 
   test("expands shortcuts in expressions", () => {
     expect(expandShortcuts(".users.mp(u => u.name)")).toBe(".users.map(u => u.name)");
-    expect(expandShortcuts(".items.flt(x => x > 5).len")).toBe(".items.filter(x => x > 5).{length}");
+    expect(expandShortcuts(".items.flt(x => x > 5).len")).toBe(
+      ".items.filter(x => x > 5).{length}",
+    );
   });
 
   test("does not expand partial matches", () => {

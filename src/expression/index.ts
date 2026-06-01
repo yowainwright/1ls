@@ -140,9 +140,7 @@ export class ExpressionParser {
       return this.parseObjectOperation(object);
     }
 
-    throw new Error(
-      createErrorMessage(this.current, "Expected property name after dot"),
-    );
+    throw new Error(createErrorMessage(this.current, "Expected property name after dot"));
   }
 
   private parseBracketAccess(object?: ASTNode): ASTNode {
@@ -163,8 +161,7 @@ export class ExpressionParser {
     }
 
     const isNumber = this.current.type === TT.NUMBER;
-    const isNegativeOperator =
-      this.current.type === TT.OPERATOR && this.current.value === "-";
+    const isNegativeOperator = this.current.type === TT.OPERATOR && this.current.value === "-";
     const isColon = this.current.type === TT.COLON;
     const isNumericOrSlice = isNumber || isNegativeOperator || isColon;
 
@@ -172,9 +169,7 @@ export class ExpressionParser {
       return this.parseNumericIndexOrSlice(object);
     }
 
-    throw new Error(
-      createErrorMessage(this.current, "Unexpected token in bracket access"),
-    );
+    throw new Error(createErrorMessage(this.current, "Unexpected token in bracket access"));
   }
 
   private parseNumericIndexOrSlice(object?: ASTNode): ASTNode {
@@ -195,15 +190,11 @@ export class ExpressionParser {
     return createIndexAccessNode(index, object);
   }
 
-  private parseSliceFromColon(
-    start: number | undefined,
-    object?: ASTNode,
-  ): SliceAccessNode {
+  private parseSliceFromColon(start: number | undefined, object?: ASTNode): SliceAccessNode {
     this.advance();
 
     const isNumber = this.current.type === TT.NUMBER;
-    const isNegativeOperator =
-      this.current.type === TT.OPERATOR && this.current.value === "-";
+    const isNegativeOperator = this.current.type === TT.OPERATOR && this.current.value === "-";
     const hasEndNumber = isNumber || isNegativeOperator;
 
     const end = hasEndNumber ? this.parseNumber() : undefined;
@@ -225,9 +216,7 @@ export class ExpressionParser {
 
     const isValidToken = this.current.type === TT.IDENTIFIER;
     if (!isValidToken) {
-      throw new Error(
-        createErrorMessage(this.current, "Expected operation name after {"),
-      );
+      throw new Error(createErrorMessage(this.current, "Expected operation name after {"));
     }
 
     const operation = this.current.value;
@@ -322,9 +311,7 @@ export class ExpressionParser {
       return expr;
     }
 
-    throw new Error(
-      createErrorMessage(this.current, "Unexpected token in function body"),
-    );
+    throw new Error(createErrorMessage(this.current, "Unexpected token in function body"));
   }
 
   private parseIdentifierChain(): ASTNode {
@@ -371,10 +358,7 @@ export class ExpressionParser {
   private parseMethodArguments(): ASTNode[] {
     const args: ASTNode[] = [];
 
-    while (
-      this.current.type !== TT.RIGHT_PAREN &&
-      this.current.type !== TT.EOF
-    ) {
+    while (this.current.type !== TT.RIGHT_PAREN && this.current.type !== TT.EOF) {
       const arg = this.parseMethodArgument();
       args.push(arg);
 
@@ -426,10 +410,7 @@ export class ExpressionParser {
     this.expect(TT.LEFT_PAREN);
     const params: string[] = [];
 
-    while (
-      this.current.type !== TT.RIGHT_PAREN &&
-      this.current.type !== TT.EOF
-    ) {
+    while (this.current.type !== TT.RIGHT_PAREN && this.current.type !== TT.EOF) {
       const isIdentifier = this.current.type === TT.IDENTIFIER;
       if (isIdentifier) {
         params.push(this.current.value);
@@ -489,8 +470,7 @@ export class ExpressionParser {
       const isLeftParen = tokenType === TT.LEFT_PAREN;
       if (isLeftParen) {
         const isPropertyAccess = current.type === "PropertyAccess";
-        const hasNoObject =
-          isPropertyAccess && !(current as PropertyAccessNode).object;
+        const hasNoObject = isPropertyAccess && !(current as PropertyAccessNode).object;
         if (hasNoObject) {
           const method = (current as PropertyAccessNode).property;
           current = this.parseMethodCall(createRootNode(), method);
@@ -529,9 +509,7 @@ export class ExpressionParser {
       return this.parseObjectOperation(node);
     }
 
-    throw new Error(
-      createErrorMessage(this.current, "Expected property name after dot"),
-    );
+    throw new Error(createErrorMessage(this.current, "Expected property name after dot"));
   }
 
   private parseNumber(): number {
@@ -542,9 +520,7 @@ export class ExpressionParser {
 
     const isNumber = this.current.type === TT.NUMBER;
     if (!isNumber) {
-      throw new Error(
-        createErrorMessage(this.current, "Expected number after minus sign"),
-      );
+      throw new Error(createErrorMessage(this.current, "Expected number after minus sign"));
     }
 
     const value = Number(this.current.value);
@@ -563,10 +539,7 @@ export class ExpressionParser {
     const isCorrectType = this.current.type === type;
     if (!isCorrectType) {
       throw new Error(
-        createErrorMessage(
-          this.current,
-          `Expected ${type} but got ${this.current.type}`,
-        ),
+        createErrorMessage(this.current, `Expected ${type} but got ${this.current.type}`),
       );
     }
     this.advance();
