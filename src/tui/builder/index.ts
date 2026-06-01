@@ -197,6 +197,67 @@ export const cancelArrowFn = (state: State): State => {
   });
 };
 
+const findLastTopLevelMethodDot = (expression: string, startIndex: number): number => {
+  let lastDotIndex = -1;
+  let parenDepth = 0;
+  let bracketDepth = 0;
+  let braceDepth = 0;
+  let quote: string | null = null;
+  let isEscaped = false;
+
+  for (let i = startIndex; i < expression.length; i++) {
+    const char = expression[i];
+
+    if (quote) {
+      if (isEscaped) {
+        isEscaped = false;
+      } else if (char === "\\") {
+        isEscaped = true;
+      } else if (char === quote) {
+        quote = null;
+      }
+      continue;
+    }
+
+    if (char === "\"" || char === "'" || char === "`") {
+      quote = char;
+      continue;
+    }
+
+    if (char === "(") {
+      parenDepth++;
+      continue;
+    }
+    if (char === ")") {
+      parenDepth = Math.max(0, parenDepth - 1);
+      continue;
+    }
+    if (char === "[") {
+      bracketDepth++;
+      continue;
+    }
+    if (char === "]") {
+      bracketDepth = Math.max(0, bracketDepth - 1);
+      continue;
+    }
+    if (char === "{") {
+      braceDepth++;
+      continue;
+    }
+    if (char === "}") {
+      braceDepth = Math.max(0, braceDepth - 1);
+      continue;
+    }
+
+    const isTopLevel = parenDepth === 0 && bracketDepth === 0 && braceDepth === 0;
+    if (char === "." && isTopLevel) {
+      lastDotIndex = i;
+    }
+  }
+
+  return lastDotIndex;
+};
+
 export const undoLastSegment = (state: State): State => {
   if (!state.builder) return state;
 
@@ -207,7 +268,7 @@ export const undoLastSegment = (state: State): State => {
     return exitBuildMode(state);
   }
 
-  const lastDotIndex = expression.lastIndexOf(".");
+  const lastDotIndex = findLastTopLevelMethodDot(expression, builder.basePath.length);
   if (lastDotIndex === -1) {
     return exitBuildMode(state);
   }
@@ -220,6 +281,8 @@ export const undoLastSegment = (state: State): State => {
 
   const newBuilder = Object.assign({}, builder, {
     expression: newExpression,
+    currentMethod: null,
+    arrowFnContext: null,
   });
 
   const methods = getMethodsForType(builder.baseType);

@@ -51,19 +51,24 @@ const handleTerminationSignal = (): void => {
   exit(0);
 };
 
+let isErrorBoundarySetup = false;
+
 export const teardownErrorBoundary = (): void => {
   process.off("uncaughtException", handleFatalError);
   process.off("unhandledRejection", handleFatalError);
   process.off("SIGINT", handleTerminationSignal);
   process.off("SIGTERM", handleTerminationSignal);
+  isErrorBoundarySetup = false;
 };
 
 export const setupErrorBoundary = (): void => {
-  teardownErrorBoundary();
+  if (isErrorBoundarySetup) return;
+
   process.once("uncaughtException", handleFatalError);
   process.once("unhandledRejection", handleFatalError);
   process.once("SIGINT", handleTerminationSignal);
   process.once("SIGTERM", handleTerminationSignal);
+  isErrorBoundarySetup = true;
 };
 
 const processInput = (
