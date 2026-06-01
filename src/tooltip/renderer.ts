@@ -15,7 +15,7 @@ const colorize = (text: string, color: string): string =>
 
 const ANSI_ESCAPE_PATTERN = new RegExp(`${String.fromCharCode(27)}\\[[0-9;]*m`, "g");
 
-const stripAnsi = (str: string): number =>
+const getVisibleLength = (str: string): number =>
   str.replace(ANSI_ESCAPE_PATTERN, "").length;
 
 interface RenderState {
@@ -48,7 +48,7 @@ const formatLine = (suggestion: Suggestion, isSelected: boolean): string => {
 };
 
 const calculateWidth = (lines: string[]): number =>
-  Math.max(...lines.map(stripAnsi), 0);
+  Math.max(...lines.map(getVisibleLength), 0);
 
 const wrapWithBorder = (lines: string[], width: number): string[] => {
   const pad = 1;
@@ -64,7 +64,7 @@ const wrapWithBorder = (lines: string[], width: number): string[] => {
   );
 
   const wrapped = lines.map((line) => {
-    const visibleLen = stripAnsi(line);
+    const visibleLen = getVisibleLength(line);
     const rightPad = " ".repeat(Math.max(0, width - visibleLen));
     const leftBorder = colorize(BORDER.V, ANSI.dim);
     const rightBorder = colorize(BORDER.V, ANSI.dim);
@@ -88,6 +88,8 @@ export const closeTty = (): void => {
     closeSync(state.ttyFd);
     state.ttyFd = null;
   }
+  state.lastHeight = 0;
+  state.selectedIndex = 0;
 };
 
 const clearPreviousTooltip = (): void => {

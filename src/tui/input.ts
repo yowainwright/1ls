@@ -166,11 +166,6 @@ const handleBuildMode = (state: State, key: string): InputResult => {
 };
 
 const handleArrowFnMode = (state: State, key: string): InputResult => {
-  if (key === KEYS.ESCAPE) {
-    const newState = cancelArrowFn(state);
-    return { state: newState, output: null };
-  }
-
   if (isEnterKey(key)) {
     const hasNoBuilder = !state.builder;
     if (hasNoBuilder) return { state, output: null };
