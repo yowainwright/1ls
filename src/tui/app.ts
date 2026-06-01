@@ -1,7 +1,7 @@
 import { stdin, stdout, exit } from "process";
 import { navigateJson } from "./navigator";
 import { createInitialState } from "./state";
-import { render } from "./renderer";
+import { render, resetRenderState } from "./renderer";
 import { handleInput } from "./input";
 import {
   clearScreen,
@@ -101,6 +101,7 @@ const runEventLoop = async (initialState: State): Promise<string | null> => {
 
 export const runInteractive = async (data: unknown, options: CliOptions): Promise<void> => {
   setupErrorBoundary();
+  resetRenderState();
 
   const paths = navigateJson(data);
 

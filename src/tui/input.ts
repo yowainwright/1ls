@@ -26,10 +26,10 @@ const KEYS = Object.assign({}, {
 
 const isEscapeKey = (key: string): boolean => key === KEYS.ESCAPE;
 
-const isExitKey = (key: string): boolean => {
+const isExitKey = (key: string, state: State): boolean => {
   const isCtrlC = key === KEYS.CTRL_C;
   const isEscape = key === KEYS.ESCAPE;
-  const isQ = key === "q";
+  const isQ = key === "q" && state.query.length === 0;
   return isCtrlC || isEscape || isQ;
 };
 
@@ -230,7 +230,7 @@ export const handleInput = (state: State, data: Buffer): InputResult => {
     return { state: newState, output: null };
   }
 
-  if (isExitKey(key)) {
+  if (isExitKey(key, state)) {
     const isInBuildMode = state.mode === "build" || state.mode === "build-arrow-fn";
 
     if (isInBuildMode) {

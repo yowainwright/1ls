@@ -27,4 +27,28 @@ describe("interactive input", () => {
     expect(result.state).toBeNull();
     expect(result.output).toBe(".users");
   });
+
+  test("q exits explore mode when query is empty", () => {
+    const data = { query: "Ada" };
+    const paths = navigateJson(data);
+    const state = createInitialState(paths, data);
+
+    const result = handleInput(state, Buffer.from("q"));
+
+    expect(result.state).toBeNull();
+    expect(result.output).toBeNull();
+  });
+
+  test("q is appended to a non-empty explore query", () => {
+    const data = { query: "Ada" };
+    const paths = navigateJson(data);
+    const state = createInitialState(paths, data);
+    const queriedState = handleInput(state, Buffer.from("u")).state!;
+
+    const result = handleInput(queriedState, Buffer.from("q"));
+
+    expect(result.state).not.toBeNull();
+    expect(result.state?.query).toBe("uq");
+    expect(result.output).toBeNull();
+  });
 });

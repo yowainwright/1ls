@@ -118,10 +118,7 @@ export const handleMessage = async (msg: Message): Promise<void> => {
 
   const isNextAction = msg.action === "next";
   if (isNextAction && lastSuggestions.length > 0) {
-    selectNext();
-    const idx = getSelectedIndex();
-    const wrappedIdx = idx % lastSuggestions.length;
-    if (idx !== wrappedIdx) resetSelection();
+    selectNext(lastSuggestions.length);
     render(lastSuggestions);
     writeResponseWithSelected();
     return;
@@ -129,7 +126,7 @@ export const handleMessage = async (msg: Message): Promise<void> => {
 
   const isPrevAction = msg.action === "prev";
   if (isPrevAction && lastSuggestions.length > 0) {
-    selectPrev();
+    selectPrev(lastSuggestions.length);
     render(lastSuggestions);
     writeResponseWithSelected();
     return;

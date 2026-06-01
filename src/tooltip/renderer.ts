@@ -113,8 +113,6 @@ export const render = (suggestions: Suggestion[]): void => {
 
   clearPreviousTooltip();
 
-  state.selectedIndex = Math.min(state.selectedIndex, suggestions.length - 1);
-
   const lines = suggestions.map((s, i) => formatLine(s, i === state.selectedIndex));
   const width = calculateWidth(lines);
   const bordered = wrapWithBorder(lines, width);
@@ -142,12 +140,14 @@ export const hide = (): void => {
   state.lastHeight = 0;
 };
 
-export const selectNext = (): void => {
-  state.selectedIndex++;
+export const selectNext = (suggestionCount: number): void => {
+  if (suggestionCount <= 0) return;
+  state.selectedIndex = (state.selectedIndex + 1) % suggestionCount;
 };
 
-export const selectPrev = (): void => {
-  state.selectedIndex = Math.max(0, state.selectedIndex - 1);
+export const selectPrev = (suggestionCount: number): void => {
+  if (suggestionCount <= 0) return;
+  state.selectedIndex = (state.selectedIndex - 1 + suggestionCount) % suggestionCount;
 };
 
 export const getSelectedIndex = (): number => state.selectedIndex;
