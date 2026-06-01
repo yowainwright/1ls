@@ -1,7 +1,18 @@
-import { describe, test, expect } from "bun:test";
-import { parseMessage } from "../../src/tooltip/server";
+import { afterEach, beforeEach, describe, expect, test } from "bun:test";
+import { existsSync, readFileSync, unlinkSync } from "fs";
+import { RESPONSE_PATH } from "../../../src/tooltip/constants";
+import { handleMessage, parseMessage } from "../../../src/tooltip/server";
+
+const removeResponseFile = (): void => {
+  if (existsSync(RESPONSE_PATH)) {
+    unlinkSync(RESPONSE_PATH);
+  }
+};
 
 describe("tooltip/server", () => {
+  beforeEach(removeResponseFile);
+  afterEach(removeResponseFile);
+
   describe("parseMessage", () => {
     test("returns null for empty string", () => {
       const result = parseMessage("");
@@ -67,6 +78,26 @@ describe("tooltip/server", () => {
     test("trims whitespace from input", () => {
       const result = parseMessage("  .map  ");
       expect(result?.input).toBe(".map");
+    });
+  });
+
+  describe("handleMessage", () => {
+    test("updates the selected response across next, prev, and hide actions", async () => {
+      await handleMessage({ input: "data." });
+
+      const initial = readFileSync(RESPONSE_PATH, "utf8");
+      expect(initial.length).toBeGreaterThan(0);
+
+      await handleMessage({ input: "", action: "next" });
+      const next = readFileSync(RESPONSE_PATH, "utf8");
+      expect(next.length).toBeGreaterThan(0);
+      expect(next).not.toBe(initial);
+
+      await handleMessage({ input: "", action: "prev" });
+      expect(readFileSync(RESPONSE_PATH, "utf8")).toBe(initial);
+
+      await handleMessage({ input: "", action: "hide" });
+      expect(readFileSync(RESPONSE_PATH, "utf8")).toBe("");
     });
   });
 });

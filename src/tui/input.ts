@@ -231,9 +231,12 @@ export const handleInput = (state: State, data: Buffer): InputResult => {
   }
 
   if (isExitKey(key, state)) {
-    const isInBuildMode = state.mode === "build" || state.mode === "build-arrow-fn";
+    if (state.mode === "build-arrow-fn") {
+      const newState = cancelArrowFn(state);
+      return { state: newState, output: null };
+    }
 
-    if (isInBuildMode) {
+    if (state.mode === "build") {
       const newState = exitBuildMode(state);
       return { state: newState, output: null };
     }
