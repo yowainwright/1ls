@@ -58,6 +58,33 @@ describe("interactive input", () => {
     expect(result.output).toBeNull();
   });
 
+  test("ctrl+c in build mode exits the app", () => {
+    const data = { users: [{ name: "Ada" }] };
+    const paths = navigateJson(data);
+    const state = createInitialState(paths, data);
+    const buildState = enterBuildMode(state);
+
+    const result = handleInput(buildState, Buffer.from("\x03"));
+
+    expect(result.state).toBeNull();
+    expect(result.output).toBeNull();
+  });
+
+  test("ctrl+c in arrow function mode exits the app", () => {
+    const data = { users: [{ name: "Ada" }] };
+    const paths = navigateJson(data);
+    const state = createInitialState(paths, data);
+    const buildState = enterBuildMode(state);
+    const arrowState = selectMethod(buildState, 0);
+
+    expect(arrowState.mode).toBe("build-arrow-fn");
+
+    const result = handleInput(arrowState, Buffer.from("\x03"));
+
+    expect(result.state).toBeNull();
+    expect(result.output).toBeNull();
+  });
+
   test("q exits explore mode when query is empty", () => {
     const data = { query: "Ada" };
     const paths = navigateJson(data);

@@ -26,11 +26,12 @@ const KEYS = Object.assign({}, {
 
 const isEscapeKey = (key: string): boolean => key === KEYS.ESCAPE;
 
+const isCtrlCKey = (key: string): boolean => key === KEYS.CTRL_C;
+
 const isExitKey = (key: string, state: State): boolean => {
-  const isCtrlC = key === KEYS.CTRL_C;
   const isEscape = key === KEYS.ESCAPE;
   const isQ = key === "q" && state.query.length === 0;
-  return isCtrlC || isEscape || isQ;
+  return isEscape || isQ;
 };
 
 const isEnterKey = (key: string): boolean => key === KEYS.ENTER;
@@ -114,11 +115,6 @@ const handleExploreMode = (state: State, key: string): InputResult => {
 };
 
 const handleBuildMode = (state: State, key: string): InputResult => {
-  if (key === KEYS.ESCAPE) {
-    const newState = exitBuildMode(state);
-    return { state: newState, output: null };
-  }
-
   if (isEnterKey(key)) {
     const hasNoBuilder = !state.builder;
     if (hasNoBuilder) return { state, output: null };
@@ -218,6 +214,10 @@ const MODE_HANDLERS: Record<State["mode"], (state: State, key: string) => InputR
 
 export const handleInput = (state: State, data: Buffer): InputResult => {
   const key = data.toString();
+
+  if (isCtrlCKey(key)) {
+    return { state: null, output: null };
+  }
 
   const isTooltipDismiss = isEscapeKey(key) && state.mode === "explore" && state.tooltip.visible;
   if (isTooltipDismiss) {
