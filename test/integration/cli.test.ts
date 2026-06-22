@@ -55,6 +55,19 @@ describe("1ls Integration - File Reading", () => {
     expect(result.stdout.trim()).toBe('"Alice"');
   });
 
+  test("honors explicit input format for readFile", async () => {
+    const result = await runCLI([
+      "--compact",
+      "readFile",
+      join(FIXTURES_PATH, "data.csv"),
+      "--input-format",
+      "lines",
+      ".[0]",
+    ]);
+    expect(result.exitCode).toBe(0);
+    expect(result.stdout.trim()).toBe('"id,name,age,city,active"');
+  });
+
   test("reads ENV files", async () => {
     const result = await runCLI([
       "--compact",
@@ -110,27 +123,6 @@ describe("1ls Integration - File Reading", () => {
     expect(result.stdout.trim()).toBe('"info"');
   });
 
-  test("reads TypeScript files", async () => {
-    const result = await runCLI([
-      "--compact",
-      "readFile",
-      join(FIXTURES_PATH, "export.ts"),
-      ".name",
-    ]);
-    expect(result.exitCode).toBe(0);
-    expect(result.stdout.trim()).toBe('"TypeScript Config"');
-  });
-
-  test("reads JavaScript files", async () => {
-    const result = await runCLI([
-      "--compact",
-      "readFile",
-      join(FIXTURES_PATH, "export.js"),
-      ".name",
-    ]);
-    expect(result.exitCode).toBe(0);
-    expect(result.stdout.trim()).toBe('"JavaScript Config"');
-  });
 });
 
 describe("1ls Integration - Expression Processing", () => {

@@ -1,8 +1,24 @@
+import type { DataFormat } from "./formats/types";
 import type { ShortcutMapping } from "./shortcuts";
 
 export const VALID_OUTPUT_FORMATS = ["json", "yaml", "csv", "table"] as const;
 
-export const VALID_INPUT_FORMATS = ["json", "yaml", "toml", "csv", "tsv", "lines", "text"] as const;
+export const VALID_INPUT_FORMATS = [
+  "json",
+  "json5",
+  "yaml",
+  "toml",
+  "xml",
+  "ini",
+  "csv",
+  "tsv",
+  "env",
+  "ndjson",
+  "lines",
+  "text",
+] as const satisfies readonly DataFormat[];
+
+const INPUT_FORMAT_HELP = VALID_INPUT_FORMATS.join(", ");
 
 export const SHORTCUTS: ShortcutMapping[] = [
   { short: ".mp", full: ".map", description: "Transform each element", type: "array" },
@@ -38,7 +54,7 @@ Options:
   -c, --compact         Output compact JSON (no whitespace)
   -t, --type            Show the type of the result
   --format <format>     Output format: json, yaml, csv, table
-  --input-format, -if   Input format: json, yaml, toml, csv, tsv, lines, text
+  --input-format, -if   Input format: ${INPUT_FORMAT_HELP}
   --detect              Show detected input format without processing
   --shortcuts           List available expression shortcuts
 

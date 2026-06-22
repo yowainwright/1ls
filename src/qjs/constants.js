@@ -2,7 +2,20 @@ export const VERSION = "__VERSION__";
 
 export const VALID_OUTPUT_FORMATS = ["json", "yaml", "csv", "table"];
 
-export const VALID_INPUT_FORMATS = ["json", "yaml", "toml", "csv", "tsv", "lines", "text"];
+export const VALID_INPUT_FORMATS = [
+  "json",
+  "json5",
+  "yaml",
+  "toml",
+  "xml",
+  "ini",
+  "csv",
+  "tsv",
+  "env",
+  "ndjson",
+  "lines",
+  "text",
+];
 
 export const HELP_TEXT = `1ls - Lightweight JSON CLI with JavaScript syntax
 
@@ -16,7 +29,7 @@ Options:
   -c, --compact         Output compact JSON (no whitespace)
   -t, --type            Show the type of the result
   --format <format>     Output format: json, yaml, csv, table
-  --input-format, -if   Input format: json, yaml, toml, csv, tsv, lines, text
+  --input-format, -if   Input format: json, json5, yaml, toml, xml, ini, csv, tsv, env, ndjson, lines, text
   --shortcuts           List available expression shortcuts
 
 Expression Syntax:

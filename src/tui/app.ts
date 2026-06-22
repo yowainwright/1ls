@@ -14,7 +14,7 @@ import {
 } from "./terminal";
 import type { State } from "./types";
 import { appendFileSync } from "fs";
-import { evaluateAndFormatExpression } from "../executor";
+import { processData } from "../executor";
 import type { CliOptions } from "../types";
 
 const DEBUG_INTERACTIVE = process.env.ONE_LS_DEBUG === "1";
@@ -138,7 +138,7 @@ export const runInteractive = async (data: unknown, options: CliOptions): Promis
     const hasExpression = expressionString !== null;
     if (hasExpression) {
       try {
-        const output = evaluateAndFormatExpression(expressionString, data, options);
+        const output = processData(data, { ...options, expression: expressionString });
         stdout.write(output);
         stdout.write("\n");
       } catch (error: unknown) {

@@ -8,8 +8,6 @@ export type DataFormat =
   | "csv"
   | "tsv"
   | "protobuf"
-  | "javascript"
-  | "typescript"
   | "env"
   | "ndjson"
   | "lines"

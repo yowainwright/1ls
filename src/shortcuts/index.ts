@@ -29,37 +29,87 @@ const BUILTIN_SHORTEN_PATTERNS = BUILTIN_SHORTCUTS.map((s) => ({
   replacement: `${s.short}(`,
 })).sort((a, b) => b.regex.source.length - a.regex.source.length);
 
+const transformCodeSegments = (
+  expression: string,
+  transform: (segment: string) => string,
+): string => {
+  let result = "";
+  let codeSegment = "";
+  let quote: string | null = null;
+  let isEscaped = false;
+
+  const flushCode = (): void => {
+    result += transform(codeSegment);
+    codeSegment = "";
+  };
+
+  for (const char of expression) {
+    if (quote) {
+      result += char;
+
+      if (isEscaped) {
+        isEscaped = false;
+      } else if (char === "\\") {
+        isEscaped = true;
+      } else if (char === quote) {
+        quote = null;
+      }
+
+      continue;
+    }
+
+    const isQuote = char === '"' || char === "'" || char === "`";
+    if (isQuote) {
+      flushCode();
+      quote = char;
+      result += char;
+      continue;
+    }
+
+    codeSegment += char;
+  }
+
+  flushCode();
+  return result;
+};
+
 const expandImplicitProps = (expression: string): string => {
   const methodPattern = new RegExp(IMPLICIT_PROP.METHOD_WITH_ARGS.source, "g");
 
-  return expression.replace(methodPattern, (match, method, args) => {
-    const hasArrowFunction = args.includes("=>");
-    if (hasArrowFunction) return match;
+  return transformCodeSegments(expression, (segment) =>
+    segment.replace(methodPattern, (match, method, args) => {
+      const hasArrowFunction = args.includes("=>");
+      if (hasArrowFunction) return match;
 
-    const hasImplicitProp =
-      IMPLICIT_PROP.PROPERTY_AT_START.test(args) ||
-      IMPLICIT_PROP.PROPERTY_AFTER_OPERATOR.test(args);
+      const hasImplicitProp =
+        IMPLICIT_PROP.PROPERTY_AT_START.test(args) ||
+        IMPLICIT_PROP.PROPERTY_AFTER_OPERATOR.test(args);
 
-    if (!hasImplicitProp) return match;
+      if (!hasImplicitProp) return match;
 
-    const param = IMPLICIT_PROP.PARAM;
-    const expandedArgs = args
-      .replace(IMPLICIT_PROP.EXPAND_AT_START, `$1${param}.$2`)
-      .replace(IMPLICIT_PROP.EXPAND_AFTER_OPERATOR, `$1${param}.$2`);
+      const param = IMPLICIT_PROP.PARAM;
+      const expandedArgs = args
+        .replace(IMPLICIT_PROP.EXPAND_AT_START, `$1${param}.$2`)
+        .replace(IMPLICIT_PROP.EXPAND_AFTER_OPERATOR, `$1${param}.$2`);
 
-    return `.${method}(${param} => ${expandedArgs})`;
-  });
+      return `.${method}(${param} => ${expandedArgs})`;
+    }),
+  );
 };
 
 export const expandShortcuts = (expression: string): string => {
-  const withExpandedMethods = EXPAND_PATTERNS.reduce(
-    (result, { regex, replacement }) => result.replace(regex, replacement),
-    expression,
+  const withExpandedMethods = transformCodeSegments(expression, (segment) =>
+    EXPAND_PATTERNS.reduce(
+      (result, { regex, replacement }) => result.replace(regex, replacement),
+      segment,
+    ),
   );
 
-  const withExpandedBuiltins = BUILTIN_EXPAND_PATTERNS.reduce(
-    (result, { regex, replacement }) => result.replace(regex, replacement),
-    withExpandedMethods,
+  const withExpandedBuiltins = transformCodeSegments(withExpandedMethods, (segment) =>
+    BUILTIN_EXPAND_PATTERNS.reduce(
+      (result, { regex, replacement }) => result.replace(regex, replacement),
+      segment,
+    ),
   );
 
   return expandImplicitProps(withExpandedBuiltins);
@@ -71,28 +121,34 @@ const createParamDotPattern = (param: string): RegExp =>
 const shortenToImplicitProps = (expression: string): string => {
   const arrowPattern = new RegExp(IMPLICIT_PROP.ARROW_FUNC.source, "g");
 
-  return expression.replace(arrowPattern, (match, method, param, body) => {
-    const paramPattern = createParamDotPattern(param);
-    const shortenedBody = body.replace(paramPattern, ".");
-    const bodyUnchanged = shortenedBody === body;
+  return transformCodeSegments(expression, (segment) =>
+    segment.replace(arrowPattern, (match, method, param, body) => {
+      const paramPattern = createParamDotPattern(param);
+      const shortenedBody = body.replace(paramPattern, ".");
+      const bodyUnchanged = shortenedBody === body;
 
-    if (bodyUnchanged) return match;
+      if (bodyUnchanged) return match;
 
-    return `.${method}(${shortenedBody})`;
-  });
+      return `.${method}(${shortenedBody})`;
+    }),
+  );
 };
 
 export const shortenExpression = (expression: string): string => {
   const withImplicitProps = shortenToImplicitProps(expression);
 
-  const withShortenedMethods = SHORTEN_PATTERNS.reduce(
-    (result, { regex, replacement }) => result.replace(regex, replacement),
-    withImplicitProps,
+  const withShortenedMethods = transformCodeSegments(withImplicitProps, (segment) =>
+    SHORTEN_PATTERNS.reduce(
+      (result, { regex, replacement }) => result.replace(regex, replacement),
+      segment,
+    ),
   );
 
-  return BUILTIN_SHORTEN_PATTERNS.reduce(
-    (result, { regex, replacement }) => result.replace(regex, replacement),
-    withShortenedMethods,
+  return transformCodeSegments(withShortenedMethods, (segment) =>
+    BUILTIN_SHORTEN_PATTERNS.reduce(
+      (result, { regex, replacement }) => result.replace(regex, replacement),
+      segment,
+    ),
   );
 };
 

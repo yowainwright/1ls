@@ -6,7 +6,12 @@ import { listFiles } from "./walk";
 
 export const createRegexFromPattern = (pattern: string | RegExp, ignoreCase: boolean): RegExp => {
   const isString = typeof pattern === "string";
-  if (!isString) return pattern;
+  if (!isString) {
+    const flagSet = new Set(pattern.flags);
+    flagSet.add("g");
+    if (ignoreCase) flagSet.add("i");
+    return new RegExp(pattern.source, [...flagSet].join(""));
+  }
 
   const flags = ignoreCase ? "gi" : "g";
   return new RegExp(pattern, flags);

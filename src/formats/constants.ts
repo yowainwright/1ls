@@ -54,27 +54,10 @@ export const JSON5 = {
   UNQUOTED_KEY,
 } as const;
 
-const JS_EXPORT = /^\s*export\s+(const|let|var|function|class|default|type|interface|enum)/m;
-const TS_TYPE_ANNOTATION =
-  /:\s*(string|number|boolean|any|unknown|void|never|object|Array|Promise)/;
-const TS_INTERFACE = /^\s*interface\s+\w+/m;
-const TS_TYPE_ALIAS = /^\s*type\s+\w+\s*=/m;
-const TS_GENERIC = /<[A-Z]\w*>/;
-
-export const JS = {
-  EXPORT: JS_EXPORT,
-} as const;
-
-export const TS = {
-  TYPE_ANNOTATION: TS_TYPE_ANNOTATION,
-  INTERFACE: TS_INTERFACE,
-  TYPE_ALIAS: TS_TYPE_ALIAS,
-  GENERIC: TS_GENERIC,
-  EXPORT: JS_EXPORT,
-} as const;
-
 const ENV_FEATURES = /^[A-Z_][A-Z0-9_]*\s*=/m;
 const NDJSON_FEATURES = /^\{.*\}\s*$/m;
+const UNSUPPORTED_CODE_FEATURES =
+  /^\s*(?:export\b|interface\s+\w+|type\s+\w+\s*=|const\s+\w+|let\s+\w+|var\s+\w+|enum\s+\w+)/m;
 
 export const DETECTION = {
   JSON5_FEATURES,
@@ -83,10 +66,7 @@ export const DETECTION = {
   TOML_QUOTED_VALUES,
   TOML_SYNTAX,
   INI_SYNTAX,
-  JS_EXPORT,
-  TS_TYPE_ANNOTATION,
-  TS_INTERFACE,
-  TS_TYPE_ALIAS,
   ENV_FEATURES,
   NDJSON_FEATURES,
+  UNSUPPORTED_CODE_FEATURES,
 } as const;

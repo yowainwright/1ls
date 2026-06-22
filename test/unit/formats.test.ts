@@ -41,15 +41,12 @@ describe("Format Detection", () => {
     expect(detectFormat('{trailing: "comma",}')).toBe("json5");
   });
 
-  test("detects JavaScript", () => {
-    expect(detectFormat('export const data = { name: "test" };')).toBe("javascript");
-    expect(detectFormat("export default { value: 42 };")).toBe("javascript");
-  });
-
-  test("detects TypeScript", () => {
-    expect(detectFormat("interface User { name: string; }")).toBe("typescript");
-    expect(detectFormat("type Data = { value: number; }")).toBe("typescript");
-    expect(detectFormat('const users: string[] = ["Alice", "Bob"];')).toBe("typescript");
+  test("treats JavaScript and TypeScript as text", () => {
+    expect(detectFormat('export const data = { name: "test" };')).toBe("text");
+    expect(detectFormat("export default { value: 42 };")).toBe("text");
+    expect(detectFormat("interface User { name: string; }")).toBe("text");
+    expect(detectFormat("type Data = { value: number; }")).toBe("text");
+    expect(detectFormat('const users: string[] = ["Alice", "Bob"];')).toBe("text");
   });
 
   test("detects CSV", () => {
@@ -645,14 +642,24 @@ describe("Format Detection Edge Cases", () => {
     expect(detectFormat(input)).toBe("text");
   });
 
-  test("detects TypeScript with let declaration", () => {
+  test("treats TypeScript-like let declaration as text", () => {
     const input = "let users: string[] = [];";
-    expect(detectFormat(input)).toBe("typescript");
+    expect(detectFormat(input)).toBe("text");
   });
 
-  test("detects TypeScript with var declaration", () => {
+  test("treats TypeScript-like var declaration as text", () => {
     const input = "var count: number = 0;";
-    expect(detectFormat(input)).toBe("typescript");
+    expect(detectFormat(input)).toBe("text");
+  });
+
+  test("does not treat TOML type keys as TypeScript", () => {
+    const input = 'type = "module"\nname = "demo"';
+    expect(detectFormat(input)).toBe("toml");
+  });
+
+  test("does not treat INI type keys as TypeScript", () => {
+    const input = "type = module\nname = demo";
+    expect(detectFormat(input)).toBe("ini");
   });
 
   test("returns text for empty input", () => {
@@ -752,16 +759,14 @@ describe("parseInput Integration", () => {
     expect(await parseInput(input)).toEqual(expected);
   });
 
-  test("auto-detects and parses JavaScript", async () => {
+  test("auto-detects JavaScript as text", async () => {
     const input = 'export default { name: "Alice", age: 30 };';
-    const expected = { name: "Alice", age: 30 };
-    expect(await parseInput(input)).toEqual(expected);
+    expect(await parseInput(input)).toBe(input);
   });
 
-  test("auto-detects and parses TypeScript", async () => {
+  test("auto-detects TypeScript as text", async () => {
     const input =
       'interface User { name: string; }\nconst user: User = { name: "Alice" };\nexport default user;';
-    const expected = { name: "Alice" };
-    expect(await parseInput(input)).toEqual(expected);
+    expect(await parseInput(input)).toBe(input);
   });
 });

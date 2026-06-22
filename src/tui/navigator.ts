@@ -49,12 +49,13 @@ const flattenJson = (obj: unknown, prefix: string = "", result: JsonPath[] = [])
     const entries = Object.entries(obj);
     entries.forEach(([key, value]) => {
       const needsBrackets = /[^a-zA-Z0-9_$]/.test(key);
+      const bracketKey = JSON.stringify(key);
       const newPrefix = prefix
         ? needsBrackets
-          ? `${prefix}["${key}"]`
+          ? `${prefix}[${bracketKey}]`
           : `${prefix}.${key}`
         : needsBrackets
-          ? `.["${key}"]`
+          ? `.[${bracketKey}]`
           : `.${key}`;
       flattenJson(value, newPrefix, result);
     });

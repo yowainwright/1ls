@@ -77,6 +77,15 @@ describe("file utilities", () => {
       const result = await readFile(filePath);
       expect(result).toEqual({ name: "test", value: 42 });
     });
+
+    test("uses explicit input format when provided", async () => {
+      const filePath = join(testDir, "test.csv");
+      const csvContent = "name,age\nAda,30";
+      await fsWriteFile(filePath, csvContent);
+
+      const result = await readFile(filePath, "lines");
+      expect(result).toEqual(["name,age", "Ada,30"]);
+    });
   });
 
   describe("writeFile", () => {
@@ -199,9 +208,14 @@ describe("file utilities", () => {
   });
 
   describe("createRegexFromPattern", () => {
-    test("returns regex as-is when pattern is regex", () => {
+    test("normalizes regex patterns for matchAll", () => {
       const regex = /test/gi;
-      expect(createRegexFromPattern(regex, false)).toBe(regex);
+      const result = createRegexFromPattern(regex, false);
+
+      expect(result).not.toBe(regex);
+      expect(result.source).toBe("test");
+      expect(result.flags).toContain("g");
+      expect(result.flags).toContain("i");
     });
 
     test("creates case-insensitive regex from string", () => {
@@ -316,6 +330,11 @@ describe("file utilities", () => {
 
     test("accepts regex pattern", async () => {
       const results = await grep(/hello/g, join(testDir, "test.txt"));
+      expect(results.length).toBe(2);
+    });
+
+    test("accepts non-global regex pattern", async () => {
+      const results = await grep(/hello/, join(testDir, "test.txt"));
       expect(results.length).toBe(2);
     });
 

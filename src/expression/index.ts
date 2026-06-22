@@ -46,6 +46,24 @@ export {
 
 export { VALID_OBJECT_OPERATIONS } from "./constants";
 
+const OPERATOR_PRECEDENCE: Readonly<Record<string, number>> = {
+  "||": 1,
+  "&&": 2,
+  "==": 3,
+  "!=": 3,
+  "===": 3,
+  "!==": 3,
+  ">": 4,
+  "<": 4,
+  ">=": 4,
+  "<=": 4,
+  "+": 5,
+  "-": 5,
+  "*": 6,
+  "/": 6,
+  "%": 6,
+};
+
 export class ExpressionParser {
   private tokens: readonly Token[];
   private position: number = 0;
@@ -63,6 +81,10 @@ export class ExpressionParser {
     }
 
     const expression = this.parseExpression();
+    if (this.current.type !== TT.EOF) {
+      throw new Error(createErrorMessage(this.current, "Unexpected token after expression"));
+    }
+
     return createRootNode(expression);
   }
 
@@ -271,13 +293,19 @@ export class ExpressionParser {
     return this.parseBinaryExpression();
   }
 
-  private parseBinaryExpression(): ASTNode {
+  private parseBinaryExpression(minPrecedence = 0): ASTNode {
     let left = this.parseFunctionTerm();
 
     while (this.current.type === TT.OPERATOR) {
       const operator = this.current.value;
+      const precedence = OPERATOR_PRECEDENCE[operator];
+      const hasKnownPrecedence = precedence !== undefined;
+      if (!hasKnownPrecedence || precedence < minPrecedence) {
+        break;
+      }
+
       this.advance();
-      const right = this.parseFunctionTerm();
+      const right = this.parseBinaryExpression(precedence + 1);
 
       left = createMethodCallNode(`__operator_${operator}__`, [right], left);
     }

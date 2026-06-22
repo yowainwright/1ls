@@ -52,13 +52,4 @@ describe("qjs/shared", () => {
     expect(result.stderr).toContain("Interactive mode");
   });
 
-  test("returns a clear error for unsupported TypeScript input", () => {
-    const filePath = join(FIXTURES_PATH, "export.ts");
-    const result = runCli(["readFile", filePath, ".name"], createHost("", {
-      [filePath]: `const name: string = "TypeScript Config";\nexport default { name };\n`,
-    }));
-
-    expect(result.exitCode).toBe(1);
-    expect(result.stderr).toContain('Input format "typescript" is not supported');
-  });
 });

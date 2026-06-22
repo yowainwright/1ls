@@ -46,14 +46,6 @@ export async function parseInput(input: string, format?: DataFormat): Promise<un
       const { parseProtobuf } = await import("./protobuf");
       return parseProtobuf(input);
     }
-    case "javascript": {
-      const { parseJavaScript } = await import("./javascript");
-      return parseJavaScript(input);
-    }
-    case "typescript": {
-      const { parseTypeScript } = await import("./typescript");
-      return parseTypeScript(input);
-    }
     case "env": {
       const { parseENV } = await import("./env");
       return parseENV(input);

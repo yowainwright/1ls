@@ -1,5 +1,6 @@
 import { describe, test, expect } from "bun:test";
 import { navigateJson } from "../../src/tui/navigator";
+import { evaluateExpression } from "../../src/executor";
 
 describe("JSON Navigator", () => {
   test("flattens simple object", () => {
@@ -96,6 +97,19 @@ describe("JSON Navigator", () => {
     const pathStrings = paths.map((p) => p.path);
     expect(pathStrings).toContain('.["user-name"]');
     expect(pathStrings).toContain('.["user.email"]');
+  });
+
+  test("escapes quoted and backslash keys in bracket paths", () => {
+    const data = { 'a"b': 1, "a\\b": 2 };
+    const paths = navigateJson(data);
+    const pathStrings = paths.map((p) => p.path);
+    const quotePath = `.[${JSON.stringify('a"b')}]`;
+    const backslashPath = `.[${JSON.stringify("a\\b")}]`;
+
+    expect(pathStrings).toContain(quotePath);
+    expect(pathStrings).toContain(backslashPath);
+    expect(evaluateExpression(quotePath, data)).toBe(1);
+    expect(evaluateExpression(backslashPath, data)).toBe(2);
   });
 
   test("handles simple keys without special characters", () => {

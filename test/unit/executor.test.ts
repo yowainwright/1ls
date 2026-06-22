@@ -4,6 +4,7 @@ import {
   evaluateExpression,
   evaluateAndFormatExpression,
   formatResult,
+  processData,
 } from "../../src/executor";
 
 describe("executor", () => {
@@ -39,5 +40,20 @@ describe("executor", () => {
     const output = formatResult({ ok: true }, DEFAULT_OPTIONS);
 
     expect(output).toContain('"ok"');
+  });
+
+  test("processes data without an expression", () => {
+    const output = processData({ ok: true }, DEFAULT_OPTIONS);
+
+    expect(output).toContain('"ok"');
+  });
+
+  test("processes data with an expression", () => {
+    const output = processData(
+      { users: [{ name: "Ada" }] },
+      { ...DEFAULT_OPTIONS, expression: ".users[0].name", raw: true },
+    );
+
+    expect(output).toBe("Ada");
   });
 });

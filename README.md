@@ -21,7 +21,7 @@ JavaScript syntax with shortcuts. JSON, YAML, TOML, XML, CSV, INI, ENV, NDJSON. 
 ## Why 1ls?
 
 - **JavaScript Syntax**: Use familiar JavaScript array methods and syntax instead of learning jq's DSL
-- **Multi-format**: Works with JSON, JSON5, YAML, TOML, XML, INI, CSV, TSV, ENV, NDJSON, JavaScript, TypeScript, and more
+- **Multi-format**: Works with JSON, JSON5, YAML, TOML, XML, INI, CSV, TSV, ENV, NDJSON, plain text, and lines
 - **Fast**: Built for speed; no deps, compiled by Bun
 - **Intuitive**: Property access with dot notation, just like JavaScript
 - **Powerful**: Full support for array methods, arrow functions, and object operations
@@ -307,7 +307,6 @@ cat logs.ndjson | 1ls --input-format ndjson '.filter(x => x.level === "error")'
 - CSV, TSV
 - ENV files (.env)
 - NDJSON (Newline-Delimited JSON for logs)
-- JavaScript, TypeScript (with `export default`)
 - Plain text, line-by-line
 
 ### File Operations
@@ -365,13 +364,13 @@ echo '["a", "b"]' | 1ls '.jn(",")'           # Short for .join()
 | Option | Description | Values |
 |--------|-------------|--------|
 | `--format` | Output format | `json`, `yaml`, `csv`, `table` |
-| `--input-format`, `-if` | Input format | `json`, `yaml`, `toml`, `csv`, `tsv`, `lines`, `text` |
+| `--input-format`, `-if` | Input format | `json`, `json5`, `yaml`, `toml`, `xml`, `ini`, `csv`, `tsv`, `env`, `ndjson`, `lines`, `text` |
 
 ### File Operations
 
 | Option | Short | Description |
 |--------|-------|-------------|
-| `readFile` | | Read JSON from file |
+| `readFile` | | Read data from file |
 | `--list` | `-l` | List files in directory |
 | `--find` | `-f` | Find files matching pattern |
 | `--grep` | `-g` | Search for pattern in files |
@@ -637,7 +636,7 @@ MIT © Jeff Wainwright
 | Syntax | JavaScript | DSL | JavaScript |
 | Implementation | Bun/TS | C | Go |
 | Learning Curve | Easy | Steep | Easy |
-| Multi-format | ✓ (12+) | x | ✓ (JSON/YAML/TOML) |
+| Multi-format | ✓ (12) | x | ✓ (JSON/YAML/TOML) |
 | Auto-detect Format | ✓ | x | x |
 | Interactive Mode | ✓ | x | ✓ |
 | Shortcuts | ✓ | x | x |

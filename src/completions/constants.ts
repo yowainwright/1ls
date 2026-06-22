@@ -1,3 +1,5 @@
+import { VALID_INPUT_FORMATS, VALID_OUTPUT_FORMATS } from "../constants";
+
 export const CLI_FLAGS = [
   { long: "--help", short: "-h", description: "Show help" },
   { long: "--version", short: "-v", description: "Show version" },
@@ -5,8 +7,8 @@ export const CLI_FLAGS = [
   { long: "--pretty", short: "-p", description: "Pretty print output with indentation" },
   { long: "--compact", short: "-c", description: "Output compact JSON (no whitespace)" },
   { long: "--type", short: "-t", description: "Show the type of the result" },
-  { long: "--format", short: null, description: "Output format: json, yaml, csv, table" },
-  { long: "--input-format", short: "-if", description: "Input format: json, yaml, toml, csv, tsv, lines, text" },
+  { long: "--format", short: null, description: `Output format: ${VALID_OUTPUT_FORMATS.join(", ")}` },
+  { long: "--input-format", short: "-if", description: `Input format: ${VALID_INPUT_FORMATS.join(", ")}` },
   { long: "--detect", short: null, description: "Show detected input format without processing" },
   { long: "--list", short: "-l", description: "List files in directory" },
   { long: "--grep", short: "-g", description: "Search for pattern in files" },

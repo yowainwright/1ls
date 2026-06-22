@@ -1,6 +1,6 @@
 import { SHORTCUTS, BUILTIN_SHORTCUTS } from "../shortcuts/constants";
 import { BUILTIN_FUNCTIONS } from "../navigator/builtins/constants";
-import { VALID_OUTPUT_FORMATS } from "../constants";
+import { VALID_INPUT_FORMATS, VALID_OUTPUT_FORMATS } from "../constants";
 import { CLI_FLAGS, JSON_PATH_PATTERNS } from "./constants";
 import type { CliFlag, JsonPathPattern } from "./constants";
 import type { ShortcutMapping } from "../shortcuts/types";
@@ -11,6 +11,10 @@ export function getFlags(): string[] {
 
 export function getFormatOptions(): string[] {
   return [...VALID_OUTPUT_FORMATS];
+}
+
+export function getInputFormatOptions(): string[] {
+  return [...VALID_INPUT_FORMATS];
 }
 
 export function getJsonPaths(): string[] {
@@ -31,6 +35,9 @@ export function formatZshFlag(flag: CliFlag): string {
   const desc = flag.description.replace(/'/g, "\\'");
   if (flag.long === "--format") {
     return `        '${flag.long}[${desc}]:format:(${getFormatOptions().join(" ")})'`;
+  }
+  if (flag.long === "--input-format") {
+    return `        '${flag.long}[${desc}]:input format:(${getInputFormatOptions().join(" ")})'`;
   }
   if (flag.long === "--list") {
     return `        '${flag.long}[${desc}]:directory:_files -/'`;
@@ -134,6 +141,7 @@ _1ls "$@"
 export function generateBashCompletions(): string {
   const opts = [...getFlags(), "readFile"].join(" ");
   const formatOpts = getFormatOptions().join(" ");
+  const inputFormatOpts = getInputFormatOptions().join(" ");
   const jsonPaths = getJsonPaths().join(" ");
   const shortcuts = getShortcutCompletions().join(" ");
   const builtinFns = getBuiltinCompletions().join(" ");
@@ -148,6 +156,7 @@ _1ls_complete() {
 
     opts="${opts}"
     format_opts="${formatOpts}"
+    input_format_opts="${inputFormatOpts}"
     json_paths="${jsonPaths}"
     shortcuts="${shortcuts}"
     builtin_fns="${builtinFns}"
@@ -155,6 +164,10 @@ _1ls_complete() {
     case "\${prev}" in
         --format)
             COMPREPLY=( $(compgen -W "\${format_opts}" -- \${cur}) )
+            return 0
+            ;;
+        --input-format|-if)
+            COMPREPLY=( $(compgen -W "\${input_format_opts}" -- \${cur}) )
             return 0
             ;;
         --list|--find|readFile)

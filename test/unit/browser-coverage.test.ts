@@ -10,6 +10,9 @@ import {
   parseYAML,
   parseCSV,
   parseTOML,
+  detectFormat,
+  parseInput,
+  processInput,
 } from "../../src/browser";
 
 test("browser evaluate works with data and expression", () => {
@@ -25,6 +28,12 @@ test("browser evaluate expands shortcuts", () => {
 test("browser expandShortcuts expands method shortcuts", () => {
   expect(expandShortcuts(".mp(x => x)")).toBe(".map(x => x)");
   expect(expandShortcuts(".flt(x => x)")).toBe(".filter(x => x)");
+});
+
+test("browser expandShortcuts preserves string literals", () => {
+  expect(expandShortcuts('.filter(x => x.name === ".mp")')).toBe(
+    '.filter(x => x.name === ".mp")',
+  );
 });
 
 test("browser shortenExpression shortens methods", () => {
@@ -75,6 +84,23 @@ test("browser exports parseCSV", () => {
 test("browser exports parseTOML", () => {
   const result = parseTOML('name = "test"');
   expect(result).toEqual({ name: "test" });
+});
+
+test("browser exports detectFormat", () => {
+  expect(detectFormat("name: test")).toBe("yaml");
+});
+
+test("browser exports parseInput", () => {
+  expect(parseInput("name,age\nAda,30")).toEqual([{ name: "Ada", age: 30 }]);
+});
+
+test("browser processInput parses, evaluates, and formats input", () => {
+  const output = processInput("name,age\nAda,30", {
+    expression: ".[0].name",
+    raw: true,
+  });
+
+  expect(output).toBe("Ada");
 });
 
 test("browser shortenExpression handles multiple shortcuts", () => {

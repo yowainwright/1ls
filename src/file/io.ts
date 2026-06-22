@@ -1,16 +1,22 @@
 import { parseInput } from "../formats";
+import type { DataFormat } from "../formats/types";
 
 export async function readFile(path: string): Promise<unknown>;
 export async function readFile(path: string, parseJson: true): Promise<unknown>;
 export async function readFile(path: string, parseJson: false): Promise<string>;
+export async function readFile(path: string, format: DataFormat): Promise<unknown>;
 
-export async function readFile(path: string, parseJson = true): Promise<unknown> {
+export async function readFile(
+  path: string,
+  parseOption: boolean | DataFormat = true,
+): Promise<unknown> {
   const file = Bun.file(path);
   const content = await file.text();
 
-  if (!parseJson) return content;
+  if (parseOption === false) return content;
 
-  return parseInput(content);
+  const format = typeof parseOption === "string" ? parseOption : undefined;
+  return parseInput(content, format);
 }
 
 export const serializeContent = (content: unknown): string => {

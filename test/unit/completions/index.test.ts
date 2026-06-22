@@ -2,6 +2,7 @@ import { describe, it, expect } from "bun:test";
 import {
   getFlags,
   getFormatOptions,
+  getInputFormatOptions,
   getJsonPaths,
   getShortcutCompletions,
   getBuiltinCompletions,
@@ -10,7 +11,7 @@ import {
 } from "../../../src/completions/index";
 import { SHORTCUTS, BUILTIN_SHORTCUTS } from "../../../src/shortcuts/constants";
 import { BUILTIN_FUNCTIONS } from "../../../src/navigator/builtins/constants";
-import { VALID_OUTPUT_FORMATS } from "../../../src/constants";
+import { VALID_INPUT_FORMATS, VALID_OUTPUT_FORMATS } from "../../../src/constants";
 
 describe("getFlags", () => {
   it("returns long flags", () => {
@@ -49,6 +50,24 @@ describe("getFormatOptions", () => {
     expect(formats).toContain("yaml");
     expect(formats).toContain("csv");
     expect(formats).toContain("table");
+  });
+});
+
+describe("getInputFormatOptions", () => {
+  it("returns all valid input formats", () => {
+    const formats = getInputFormatOptions();
+    for (const f of VALID_INPUT_FORMATS) {
+      expect(formats).toContain(f);
+    }
+  });
+
+  it("includes non-default parser formats", () => {
+    const formats = getInputFormatOptions();
+    expect(formats).toContain("json5");
+    expect(formats).toContain("xml");
+    expect(formats).toContain("ini");
+    expect(formats).toContain("env");
+    expect(formats).toContain("ndjson");
   });
 });
 
@@ -170,6 +189,13 @@ describe("generateZshCompletions", () => {
   it("includes format options", () => {
     const zsh = generateZshCompletions();
     for (const f of VALID_OUTPUT_FORMATS) {
+      expect(zsh).toContain(f);
+    }
+  });
+
+  it("includes input format options", () => {
+    const zsh = generateZshCompletions();
+    for (const f of VALID_INPUT_FORMATS) {
       expect(zsh).toContain(f);
     }
   });

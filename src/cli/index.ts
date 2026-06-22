@@ -10,7 +10,7 @@ import { expandShortcuts, shortenExpression, getShortcutHelp } from "../shortcut
 import { detectFormat } from "../formats";
 import { CliOptions } from "../types";
 import { VERSION } from "../version";
-import { evaluateAndFormatExpression, formatResult } from "../executor";
+import { processData } from "../executor";
 import { resolveReadFileInvocation } from "./read-file";
 
 export const getInteractive = () => import("../tui/app");
@@ -37,10 +37,18 @@ export async function handleGrepOperation(options: CliOptions): Promise<void> {
   }
 }
 
+const readDataFile = (filePath: string, options: CliOptions): Promise<unknown> => {
+  if (options.inputFormat) {
+    return readFile(filePath, options.inputFormat);
+  }
+
+  return readFile(filePath);
+};
+
 export async function loadData(options: CliOptions, args: string[]): Promise<unknown> {
   if (options.readFile) {
     const { filePath, expression } = resolveReadFileInvocation(args);
-    const data = await readFile(filePath);
+    const data = await readDataFile(filePath, options);
     options.expression = expression;
     return data;
   }
@@ -62,13 +70,8 @@ export async function loadData(options: CliOptions, args: string[]): Promise<unk
 }
 
 export async function processExpression(options: CliOptions, jsonData: unknown): Promise<void> {
-  if (!options.expression) {
-    console.log(formatResult(jsonData, options));
-    return;
-  }
-
   try {
-    console.log(evaluateAndFormatExpression(options.expression, jsonData, options));
+    console.log(processData(jsonData, options));
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : String(error);
     console.error("Error:", message);
@@ -139,7 +142,7 @@ export async function main(args: string[]): Promise<void> {
 
   if (options.readFile) {
     const { filePath, expression, hasExplicitExpression } = resolveReadFileInvocation(args);
-    const data = await readFile(filePath);
+    const data = await readDataFile(filePath, options);
 
     const shouldUseInteractive = options.interactive || !hasExplicitExpression;
 

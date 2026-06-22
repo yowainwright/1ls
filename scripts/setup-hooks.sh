@@ -5,15 +5,15 @@
 
 set -e
 
-HOOKS_DIR=".git/hooks"
-PRE_COMMIT="$HOOKS_DIR/pre-commit"
-POST_CHECKOUT="$HOOKS_DIR/post-checkout"
-
 # Check if we're in a git repository
-if [ ! -d ".git" ]; then
+if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
   echo "Error: Not in a git repository"
   exit 1
 fi
+
+HOOKS_DIR="$(git rev-parse --git-path hooks)"
+PRE_COMMIT="$HOOKS_DIR/pre-commit"
+POST_CHECKOUT="$HOOKS_DIR/post-checkout"
 
 echo "Setting up git hooks..."
 

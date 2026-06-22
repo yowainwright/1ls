@@ -1,6 +1,6 @@
 import { parseArgs } from "../cli/parser";
 import { resolveReadFileInvocation } from "../cli/read-file";
-import { evaluateAndFormatExpression, formatResult } from "../executor";
+import { processData } from "../executor";
 import { detectFormat } from "../formats/detect";
 import { parseInputSync } from "../formats/sync";
 import { expandShortcuts, getShortcutHelp, shortenExpression } from "../shortcuts";
@@ -55,18 +55,6 @@ const getUnsupportedFeature = (name: string): CliResult =>
 const parseContent = (content: string, inputFormat?: string): unknown =>
   parseInputSync(content, inputFormat as Parameters<typeof parseInputSync>[1]);
 
-const processExpression = (
-  expression: string | undefined,
-  data: unknown,
-  options: ReturnType<typeof parseArgs>,
-): string => {
-  if (!expression) {
-    return formatResult(data, options);
-  }
-
-  return evaluateAndFormatExpression(expression, data, options);
-};
-
 export function runCli(args: string[], host: QuickJsHost): CliResult {
   const options = parseArgs(args);
 
@@ -97,7 +85,7 @@ export function runCli(args: string[], host: QuickJsHost): CliResult {
       }
 
       const data = parseContent(content, options.inputFormat);
-      return success(processExpression(expression, data, options));
+      return success(processData(data, { ...options, expression }));
     }
 
     const stdinInput = host.readStdin().trim();
@@ -115,7 +103,7 @@ export function runCli(args: string[], host: QuickJsHost): CliResult {
     }
 
     const data = parseContent(stdinInput, options.inputFormat);
-    return success(processExpression(options.expression, data, options));
+    return success(processData(data, options));
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     return failure(`Error: ${message}`);

@@ -33,3 +33,11 @@ export const evaluateAndFormatExpression = (
   const result = evaluateExpression(expression, data, options);
   return formatResult(result, options);
 };
+
+export const processData = (data: unknown, options: CliOptions): string => {
+  if (!options.expression) {
+    return formatResult(data, options);
+  }
+
+  return evaluateAndFormatExpression(options.expression, data, options);
+};

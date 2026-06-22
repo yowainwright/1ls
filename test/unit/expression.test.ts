@@ -23,6 +23,14 @@ test("Expression: simple property access", () => {
   expect((ast.expression as any).property).toBe("name");
 });
 
+test("Expression: rejects trailing tokens", () => {
+  const lexer = new Lexer(".name garbage");
+  const tokens = lexer.tokenize();
+  const parser = new ExpressionParser(tokens);
+
+  expect(() => parser.parse()).toThrow("Unexpected token after expression");
+});
+
 test("Expression: nested property access", () => {
   const lexer = new Lexer(".user.email");
   const tokens = lexer.tokenize();

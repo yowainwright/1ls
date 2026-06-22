@@ -52,6 +52,15 @@ test("Shortcuts: preserve non-shortcut text", () => {
   expect(shortenExpression(expanded)).toBe(input);
 });
 
+test("Shortcuts: preserve shortcut-looking text inside string literals", () => {
+  expect(expandShortcuts('.filter(x => x.name === ".mp")')).toBe(
+    '.filter(x => x.name === ".mp")',
+  );
+  expect(shortenExpression('.filter(x => x.name === ".map")')).toBe(
+    '.flt(x => x.name === ".map")',
+  );
+});
+
 test("Shortcuts: handle object operations", () => {
   expect(expandShortcuts(".kys")).toBe(".{keys}");
   expect(expandShortcuts(".vls")).toBe(".{values}");

@@ -98,23 +98,14 @@ const detectXML = (trimmed: string): DataFormat | null => {
   return isXML ? "xml" : null;
 };
 
-const hasTypeScriptFeatures = (trimmed: string): boolean =>
-  DETECTION.TS_INTERFACE.test(trimmed) ||
-  DETECTION.TS_TYPE_ALIAS.test(trimmed) ||
-  DETECTION.TS_TYPE_ANNOTATION.test(trimmed);
-
-const detectJavaScriptOrTypeScript = (trimmed: string): DataFormat | null => {
-  const hasExport = DETECTION.JS_EXPORT.test(trimmed);
-  if (!hasExport) return null;
-
-  return hasTypeScriptFeatures(trimmed) ? "typescript" : "javascript";
-};
-
 const detectByFirstChar = (
   trimmed: string,
   firstChar: string,
   lastChar: string,
 ): DataFormat | null => {
+  const isUnsupportedCode = DETECTION.UNSUPPORTED_CODE_FEATURES.test(trimmed);
+  if (isUnsupportedCode) return "text";
+
   switch (firstChar) {
     case "{":
     case "[":
@@ -125,20 +116,6 @@ const detectByFirstChar = (
 
     case "-":
       return trimmed.startsWith("---") ? "yaml" : null;
-
-    case "e":
-      return detectJavaScriptOrTypeScript(trimmed);
-
-    case "i":
-      return DETECTION.TS_INTERFACE.test(trimmed) ? "typescript" : null;
-
-    case "t":
-      return DETECTION.TS_TYPE_ALIAS.test(trimmed) ? "typescript" : null;
-
-    case "c":
-    case "l":
-    case "v":
-      return DETECTION.TS_TYPE_ANNOTATION.test(trimmed) ? "typescript" : null;
 
     default:
       return null;

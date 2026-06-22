@@ -3,7 +3,6 @@ import { detectFormat, parseLines } from "./detect";
 import { parseCSV, parseTSV } from "./csv";
 import { parseENV } from "./env";
 import { parseINI } from "./ini";
-import { parseJavaScript } from "./javascript";
 import { parseJSON5 } from "./json5";
 import { parseNDJSON } from "./ndjson";
 import { parseProtobuf } from "./protobuf";
@@ -29,10 +28,6 @@ const parseTextInput = (input: string): unknown => {
   return input;
 };
 
-const throwUnsupportedFormat = (format: DataFormat): never => {
-  throw new Error(`Input format "${format}" is not supported in the QuickJS terminal build`);
-};
-
 export function parseInputSync(input: string, format?: DataFormat): unknown {
   const actualFormat = format ?? detectFormat(input);
 
@@ -55,10 +50,6 @@ export function parseInputSync(input: string, format?: DataFormat): unknown {
       return parseTSV(input);
     case "protobuf":
       return parseProtobuf(input);
-    case "javascript":
-      return parseJavaScript(input);
-    case "typescript":
-      return throwUnsupportedFormat(actualFormat);
     case "env":
       return parseENV(input);
     case "ndjson":

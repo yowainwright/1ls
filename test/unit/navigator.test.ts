@@ -92,6 +92,8 @@ test("Navigator: arithmetic operators", () => {
   const data = [10, 20, 30];
   expect(evaluate(".map(x => x + 5)", data)).toEqual([15, 25, 35]);
   expect(evaluate(".map(x => x * 2)", data)).toEqual([20, 40, 60]);
+  expect(evaluate(".map(x => x + 2 * 3)", [1])).toEqual([7]);
+  expect(evaluate(".map(x => (x + 2) * 3)", [1])).toEqual([9]);
 });
 
 test("Navigator: comparison operators", () => {
