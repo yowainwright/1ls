@@ -5,12 +5,16 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "bun run build:browser && vite build && bun run scripts/prerender.ts",
+    "build": "bun run build:browser && bun run build:site",
     "build:browser": "bun build ../src/browser/index.ts --outdir ../dist/browser --target browser --format esm",
+    "build:client": "vite build",
+    "build:site": "bun run build:client && bun run build:ssr && bun run prerender",
+    "build:ssr": "vite build --ssr src/entry-server.ts --outDir dist-ssr",
     "lint": "oxlint src/",
     "lint:fix": "oxlint src/ --fix",
     "format": "oxfmt src/",
     "format:fix": "oxfmt src/ --write",
+    "prerender": "bun run scripts/prerender.ts",
     "preview": "vite preview",
     "deploy": "bun run build && gh-pages -d dist",
     "test": "bun run build:browser && bun test src/ scripts/ vite.config.test.ts"

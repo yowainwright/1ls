@@ -2,7 +2,16 @@ import { describe, test, expect, beforeEach, afterEach } from "bun:test";
 import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, existsSync, rmSync } from "fs";
 import { join } from "path";
 import { tmpdir } from "os";
-import { isSkipped, toRoutePath, collectRoutes, writeRoutes } from "./prerender";
+import {
+  isSkipped,
+  toRoutePath,
+  collectRoutes,
+  assertStaticMarkup,
+  injectRouteMarkup,
+  toHtmlPath,
+  writeRoutes,
+  type RenderRoute,
+} from "./prerender";
 
 function makeRoutesFixture(base: string): void {
   const mk = (p: string) => mkdirSync(join(base, p), { recursive: true });
@@ -104,38 +113,74 @@ describe("collectRoutes", () => {
 });
 
 describe("writeRoutes", () => {
-  test("creates index.html for each non-root route", () => {
+  const renderRoute: RenderRoute = async (route) => `<main>${route}</main>`;
+
+  test("creates index.html for each route", async () => {
     const tmpDir = mkdtempSync(join(tmpdir(), "prerender-test-"));
-    const html = "<html><body>test</body></html>";
+    const html = '<html><body><div id="root"></div></body></html>';
 
-    writeRoutes(["/", "/docs", "/playground"], tmpDir, html);
+    await writeRoutes(["/", "/docs", "/playground"], tmpDir, html, renderRoute);
 
+    expect(existsSync(join(tmpDir, "index.html"))).toBe(true);
     expect(existsSync(join(tmpDir, "docs", "index.html"))).toBe(true);
     expect(existsSync(join(tmpDir, "playground", "index.html"))).toBe(true);
   });
 
-  test("writes the correct html content", () => {
+  test("writes rendered route content", async () => {
     const tmpDir = mkdtempSync(join(tmpdir(), "prerender-test-"));
-    const html = "<html><body>test</body></html>";
+    const html = '<html><body><div id="root"></div></body></html>';
 
-    writeRoutes(["/docs"], tmpDir, html);
+    await writeRoutes(["/docs"], tmpDir, html, renderRoute);
 
-    expect(readFileSync(join(tmpDir, "docs", "index.html"), "utf-8")).toBe(html);
+    expect(readFileSync(join(tmpDir, "docs", "index.html"), "utf-8")).toContain(
+      '<div id="root"><main>/docs</main></div>',
+    );
   });
 
-  test("skips writing for the root route", () => {
+  test("creates nested directories as needed", async () => {
     const tmpDir = mkdtempSync(join(tmpdir(), "prerender-test-"));
+    const html = '<html><body><div id="root"></div></body></html>';
 
-    writeRoutes(["/"], tmpDir, "<html/>");
-
-    expect(existsSync(join(tmpDir, "index.html"))).toBe(false);
-  });
-
-  test("creates nested directories as needed", () => {
-    const tmpDir = mkdtempSync(join(tmpdir(), "prerender-test-"));
-
-    writeRoutes(["/docs/guides/installation"], tmpDir, "<html/>");
+    await writeRoutes(["/docs/guides/installation"], tmpDir, html, renderRoute);
 
     expect(existsSync(join(tmpDir, "docs", "guides", "installation", "index.html"))).toBe(true);
+  });
+});
+
+describe("injectRouteMarkup", () => {
+  test("injects rendered markup into the app root", () => {
+    const html = '<html><body><div id="root"></div></body></html>';
+
+    expect(injectRouteMarkup(html, "<main>Static content</main>")).toContain(
+      '<div id="root"><main>Static content</main></div>',
+    );
+  });
+
+  test("rejects a template without an app root", () => {
+    expect(() => injectRouteMarkup("<html></html>", "content")).toThrow("root element");
+  });
+});
+
+describe("assertStaticMarkup", () => {
+  test("accepts resolved route content", () => {
+    expect(() => assertStaticMarkup("<main>Static content</main>")).not.toThrow();
+  });
+
+  test("rejects empty route content", () => {
+    expect(() => assertStaticMarkup("  ")).toThrow("empty");
+  });
+
+  test("rejects deferred React content", () => {
+    expect(() => assertStaticMarkup('<template id="B:0"></template>')).toThrow("deferred content");
+  });
+});
+
+describe("toHtmlPath", () => {
+  test("maps the root route to the root index", () => {
+    expect(toHtmlPath("/", "/dist")).toBe("/dist/index.html");
+  });
+
+  test("maps nested routes to nested indexes", () => {
+    expect(toHtmlPath("/docs/guides", "/dist")).toBe("/dist/docs/guides/index.html");
   });
 });
