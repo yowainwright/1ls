@@ -12,6 +12,7 @@ import {
   parseTOML,
   detectFormat,
   parseInput,
+  processContent,
   processInput,
 } from "../../src/browser";
 
@@ -97,6 +98,15 @@ test("browser exports parseInput", () => {
 test("browser processInput parses, evaluates, and formats input", () => {
   const output = processInput("name,age\nAda,30", {
     expression: ".[0].name",
+    raw: true,
+  });
+
+  expect(output).toBe("Ada");
+});
+
+test("browser exports processContent", () => {
+  const output = processContent('{"name":"Ada"}', {
+    expression: ".name",
     raw: true,
   });
 

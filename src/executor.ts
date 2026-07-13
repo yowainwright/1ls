@@ -2,6 +2,7 @@ import { Lexer } from "./lexer";
 import { ExpressionParser } from "./expression";
 import { JsonNavigator } from "./navigator/json";
 import { Formatter } from "./formatter/output";
+import { parseInputSync } from "./formats/sync";
 import { expandShortcuts } from "./shortcuts";
 import type { CliOptions } from "./types";
 
@@ -40,4 +41,9 @@ export const processData = (data: unknown, options: CliOptions): string => {
   }
 
   return evaluateAndFormatExpression(options.expression, data, options);
+};
+
+export const processContent = (input: string, options: CliOptions = {}): string => {
+  const data = parseInputSync(input, options.inputFormat);
+  return processData(data, options);
 };

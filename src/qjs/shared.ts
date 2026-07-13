@@ -1,8 +1,7 @@
 import { parseArgs } from "../cli/parser";
 import { resolveReadFileInvocation } from "../cli/read-file";
-import { processData } from "../executor";
+import { processContent } from "../executor";
 import { detectFormat } from "../formats/detect";
-import { parseInputSync } from "../formats/sync";
 import { expandShortcuts, getShortcutHelp, shortenExpression } from "../shortcuts";
 import { VALID_INPUT_FORMATS, VALID_OUTPUT_FORMATS } from "../constants";
 import { VERSION } from "../version";
@@ -52,9 +51,6 @@ const failure = (stderr: string): CliResult => ({ exitCode: 1, stderr });
 const getUnsupportedFeature = (name: string): CliResult =>
   failure(`Error: ${name} is not supported in the QuickJS terminal build yet`);
 
-const parseContent = (content: string, inputFormat?: string): unknown =>
-  parseInputSync(content, inputFormat as Parameters<typeof parseInputSync>[1]);
-
 export function runCli(args: string[], host: QuickJsHost): CliResult {
   const options = parseArgs(args);
 
@@ -84,8 +80,7 @@ export function runCli(args: string[], host: QuickJsHost): CliResult {
         return failure(`Error: Failed to read file: ${filePath}`);
       }
 
-      const data = parseContent(content, options.inputFormat);
-      return success(processData(data, { ...options, expression }));
+      return success(processContent(content, { ...options, expression }));
     }
 
     const stdinInput = host.readStdin().trim();
@@ -102,8 +97,7 @@ export function runCli(args: string[], host: QuickJsHost): CliResult {
       return failure("Error: No input provided");
     }
 
-    const data = parseContent(stdinInput, options.inputFormat);
-    return success(processData(data, options));
+    return success(processContent(stdinInput, options));
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     return failure(`Error: ${message}`);

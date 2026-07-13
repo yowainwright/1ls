@@ -5,6 +5,7 @@ import {
   evaluateAndFormatExpression,
   evaluateExpression,
   formatResult,
+  processContent,
   processData,
 } from "../executor";
 import { detectFormat } from "../formats/detect";
@@ -29,6 +30,7 @@ export {
   evaluateExpression,
   formatResult,
   parseInputSync,
+  processContent,
   processData,
 };
 
@@ -37,8 +39,7 @@ export function parseInput(input: string, format?: DataFormat): unknown {
 }
 
 export function processInput(input: string, options: CliOptions = {}): string {
-  const data = parseInputSync(input, options.inputFormat);
-  return processData(data, options);
+  return processContent(input, options);
 }
 
 export function evaluate(data: unknown, expression: string, options: CliOptions = {}): unknown {

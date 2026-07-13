@@ -4,6 +4,7 @@ import {
   evaluateExpression,
   evaluateAndFormatExpression,
   formatResult,
+  processContent,
   processData,
 } from "../../src/executor";
 
@@ -53,6 +54,16 @@ describe("executor", () => {
       { users: [{ name: "Ada" }] },
       { ...DEFAULT_OPTIONS, expression: ".users[0].name", raw: true },
     );
+
+    expect(output).toBe("Ada");
+  });
+
+  test("processes raw input content", () => {
+    const output = processContent("name,age\nAda,30", {
+      ...DEFAULT_OPTIONS,
+      expression: ".[0].name",
+      raw: true,
+    });
 
     expect(output).toBe("Ada");
   });
