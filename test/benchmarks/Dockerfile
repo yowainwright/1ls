@@ -7,7 +7,7 @@ RUN apt-get update && apt-get install -y \
     bc \
     && rm -rf /var/lib/apt/lists/*
 
-RUN curl -fsSL https://bun.sh/install | bash
+RUN curl -fsSL https://bun.com/install | bash -s "bun-v1.4.0"
 ENV PATH="/root/.bun/bin:${PATH}"
 
 ARG TARGETARCH

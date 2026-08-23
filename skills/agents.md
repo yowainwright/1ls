@@ -44,6 +44,16 @@ Run `bun skills/eval.ts` to validate skill structure, example compilation, and l
 
 **Goal: the fastest terminal data parser with the most readable syntax.**
 
+### Product Direction
+
+Do not introduce a new architecture. Extend the existing parser, detector, daemon, cache, and tooltip flow.
+
+- **Compiler:** `scriptc` is the production compiler target for the smallest and fastest native tool. Bun builds are a comparison baseline, not the product runtime target.
+- **Terminal UX:** Extend the tooltip flow popularized by Warp and Fig into ordinary terminal sessions. The inline hint/autocomplete experience is the feature; a full-screen fzf/TUI-style flow is not the goal.
+- **Shell integration:** Build Zsh/ZLE first. Keep the daemon protocol shell-neutral so Bash, Fish, and other integrations can follow only after the Zsh experience proves valuable.
+- **Language:** Keep JavaScript-like expression syntax and experiences, similar to fx, while retaining 1ls's format support and readable data manipulation.
+- **Known unknowns:** Do not solve arbitrary JavaScript execution for constants files unless real usage proves it necessary. Static, safe source handling is sufficient until then.
+
 ### Why 1ls exists
 
 | Tool | Strength | Gap |
