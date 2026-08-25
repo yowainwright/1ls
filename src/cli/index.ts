@@ -3,7 +3,7 @@
 import { parseArgs } from "./parser";
 import { showHelp } from "./help";
 import { processInput } from "./stream";
-import { readFile, listFiles, grep } from "../file";
+import { readFile, listFiles, grep } from "../fs";
 import { Formatter } from "../formatter/output";
 import { warning, info } from "../formatter/colors";
 import { expandShortcuts, shortenExpression, getShortcutHelp } from "../shortcuts";

@@ -3,7 +3,7 @@ import { spawnSync } from "child_process";
 import { complete } from "./completion";
 import { openTty, closeTty, render, hide, resetSelection, selectNext, selectPrev, getSelectedIndex, renderPreview } from "./renderer";
 import { FIFO_PATH, RESPONSE_PATH } from "./constants";
-import { readFile } from "../file";
+import { readFile } from "../fs";
 import { Lexer } from "../lexer";
 import { ExpressionParser } from "../expression";
 import { JsonNavigator } from "../navigator/json";

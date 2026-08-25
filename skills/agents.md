@@ -34,7 +34,7 @@ Most tasks combine skills:
 - **Fixing a bug in navigator** → `add-test/` + `qjs-compat/`
 - **Improving the TUI/tooltip** → see [Interactive Mode](#interactive-mode) below
 
-Always check `qjs-compat/` when modifying anything under `src/` that isn't in `src/cli/`, `src/interactive/`, or `src/file/` (those are Bun-only).
+Always check `qjs-compat/` when modifying anything under `src/` that isn't in `src/cli/`, `src/interactive/`, or `src/fs/` (those are Bun-only).
 
 ### Eval
 
@@ -111,7 +111,7 @@ Code that enters the browser/QJS bundle (must be QJS-safe):
 - `src/lexer/`, `src/expression/`, `src/navigator/`, `src/formats/`, `src/shortcuts/`, `src/browser/`
 
 Code that does NOT enter the bundle (Bun-only):
-- `src/cli/`, `src/interactive/`, `src/file/`, `src/completions/`
+- `src/cli/`, `src/interactive/`, `src/fs/`, `src/completions/`
 
 ## Code Style
 

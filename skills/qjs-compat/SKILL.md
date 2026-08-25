@@ -12,7 +12,7 @@ This is an audit skill — it applies to any file in the browser bundle, not a s
 
 Bundle files (must be QJS-safe): `src/lexer/`, `src/expression/`, `src/navigator/`, `src/formats/`, `src/shortcuts/`, `src/browser/`
 
-Bun-only files (exempt from QJS rules): `src/cli/`, `src/interactive/`, `src/file/`, `src/completions/`
+Bun-only files (exempt from QJS rules): `src/cli/`, `src/interactive/`, `src/fs/`, `src/completions/`
 
 ## Constraints
 
@@ -34,7 +34,7 @@ src/qjs/cli.js        →  qjsc -m (QuickJS compiler)       →  bin/1ls-qjs
 
 Modules that enter the browser bundle: `src/lexer/`, `src/expression/`, `src/navigator/`, `src/formats/`, `src/shortcuts/`, `src/browser/`.
 
-Modules that do NOT enter the bundle (Bun-only): `src/cli/`, `src/interactive/`, `src/file/`.
+Modules that do NOT enter the bundle (Bun-only): `src/cli/`, `src/interactive/`, `src/fs/`.
 
 ## Allowed APIs (ES2023+)
 
