@@ -28,7 +28,9 @@ const resolveMergeAlias = (value: string, anchors: AnchorStore): Record<string, 
   const alias = value.substring(1);
   const merged = anchors[alias];
 
-  const isValidMerge = typeof merged === "object" && merged !== null && !Array.isArray(merged);
+  const isObjectValue = typeof merged === "object" && merged !== null;
+  const isNotArray = !Array.isArray(merged);
+  const isValidMerge = isObjectValue && isNotArray;
 
   return isValidMerge ? (merged as Record<string, unknown>) : null;
 };
@@ -71,6 +73,18 @@ const createRootContainer = (lines: string[]): Record<string, unknown> | unknown
 };
 
 const getTopFrame = (stack: StackFrame[]): StackFrame => stack[stack.length - 1];
+
+const shouldPopFrame = (frame: StackFrame, indent: number): boolean => {
+  const isAboveIndent = frame.indent > indent;
+  const isAtIndentWithObject = frame.indent >= indent && !Array.isArray(frame.container);
+  return isAboveIndent || isAtIndentWithObject;
+};
+
+const matchesArrayIndent = (frame: StackFrame, indent: number): boolean => {
+  const isCurrentIndent = frame.indent === indent;
+  const isRootIndent = frame.indent === -1 && indent === 0;
+  return isCurrentIndent || isRootIndent;
+};
 
 const popFramesWhile = (stack: StackFrame[], predicate: (frame: StackFrame) => boolean): void => {
   while (stack.length > 1 && predicate(getTopFrame(stack))) {
@@ -126,14 +140,13 @@ const handleListItem = (
 
   popFramesWhile(
     stack,
-    (f) => f.indent > indent || (f.indent >= indent && !Array.isArray(f.container)),
+    (frame) => shouldPopFrame(frame, indent),
   );
 
   const current = getTopFrame(stack);
 
-  const isMatchingArray =
-    Array.isArray(current.container) &&
-    (current.indent === indent || (current.indent === -1 && indent === 0));
+  const isArrayContainer = Array.isArray(current.container);
+  const isMatchingArray = isArrayContainer && matchesArrayIndent(current, indent);
 
   if (isMatchingArray) {
     if (current.indent === -1) current.indent = indent;

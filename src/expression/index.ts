@@ -300,7 +300,9 @@ export class ExpressionParser {
       const operator = this.current.value;
       const precedence = OPERATOR_PRECEDENCE[operator];
       const hasKnownPrecedence = precedence !== undefined;
-      if (!hasKnownPrecedence || precedence < minPrecedence) {
+      const hasLowerPrecedence = precedence < minPrecedence;
+      const shouldStop = !hasKnownPrecedence || hasLowerPrecedence;
+      if (shouldStop) {
         break;
       }
 

@@ -83,7 +83,8 @@ const detectJSONLike = (
   const isObjectLike = firstChar === "{" && lastChar === "}";
   const isArrayLike = firstChar === "[" && lastChar === "]";
 
-  if (isObjectLike || isArrayLike) {
+  const isJSONLike = isObjectLike || isArrayLike;
+  if (isJSONLike) {
     return tryParseJSON(trimmed);
   }
 

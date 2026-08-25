@@ -21,6 +21,12 @@ const FLAGS_WITH_VALUES = new Set([
   "--expand",
 ]);
 
+const hasSeparateFlagValue = (arg: string): boolean => {
+  const isKnownFlag = FLAGS_WITH_VALUES.has(arg);
+  const hasNoInlineValue = !arg.includes("=");
+  return isKnownFlag && hasNoInlineValue;
+};
+
 export const findReadFileCommandIndex = (args: string[]): number =>
   READ_FILE_COMMANDS.reduce((foundIndex, command) => {
     if (foundIndex !== -1) {
@@ -50,9 +56,7 @@ export const resolveReadFileInvocation = (args: string[]): ReadFileInvocation =>
     }
 
     if (arg.startsWith("-")) {
-      if (FLAGS_WITH_VALUES.has(arg) && !arg.includes("=")) {
-        i++;
-      }
+      if (hasSeparateFlagValue(arg)) i++;
       continue;
     }
 

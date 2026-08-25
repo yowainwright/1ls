@@ -13,7 +13,8 @@ let cachedData: unknown = undefined;
 let cachedResult: PreviewResult | null = null;
 
 const truncateValue = (value: unknown): { value: unknown; truncated: boolean } => {
-  if (Array.isArray(value) && value.length > MAX_ARRAY_ITEMS) {
+  const isLongArray = Array.isArray(value) && value.length > MAX_ARRAY_ITEMS;
+  if (isLongArray) {
     return {
       value: value.slice(0, MAX_ARRAY_ITEMS),
       truncated: true,
@@ -34,8 +35,12 @@ const formatPreviewValue = (value: unknown, truncated: boolean): string => {
 };
 
 export const evaluatePreview = (expression: string, data: unknown): PreviewResult => {
-  if (expression === cachedExpression && data === cachedData && cachedResult !== null) {
-    return cachedResult;
+  const isCachedExpression = expression === cachedExpression;
+  const isCachedData = data === cachedData;
+  const hasCachedResult = cachedResult !== null;
+  const canUseCache = isCachedExpression && isCachedData && hasCachedResult;
+  if (canUseCache) {
+    return cachedResult!;
   }
 
   try {

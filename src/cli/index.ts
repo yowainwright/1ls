@@ -4,8 +4,7 @@ import { parseArgs } from "./parser";
 import { showHelp } from "./help";
 import { processInput } from "./stream";
 import { readFile, listFiles, grep } from "../fs";
-import { Formatter } from "../formatter/output";
-import { warning, info } from "../formatter/colors";
+import { Formatter, warning, info } from "../formatter";
 import { expandShortcuts, shortenExpression, getShortcutHelp } from "../shortcuts";
 import { detectFormat } from "../formats";
 import { CliOptions } from "../types";
@@ -135,7 +134,10 @@ export async function main(args: string[]): Promise<void> {
     return;
   }
 
-  if (options.grep && options.find) {
+  const hasGrepQuery = options.grep !== undefined;
+  const hasFindPattern = options.find !== undefined;
+  const hasGrepOperation = hasGrepQuery && hasFindPattern;
+  if (hasGrepOperation) {
     await handleGrepOperation(options);
     return;
   }

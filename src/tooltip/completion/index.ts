@@ -73,8 +73,8 @@ const describeValue = (value: unknown): string => {
 };
 
 const buildPropertySuggestions = (value: unknown, isRoot: boolean): Suggestion[] => {
-  const isObjectLike =
-    value !== null && typeof value === "object" && !Array.isArray(value);
+  const isObject = value !== null && typeof value === "object";
+  const isObjectLike = isObject && !Array.isArray(value);
   if (!isObjectLike) {
     return [];
   }
@@ -89,7 +89,10 @@ const buildPropertySuggestions = (value: unknown, isRoot: boolean): Suggestion[]
 };
 
 const evaluateExpression = (expression: string, data: unknown): unknown => {
-  if (!expression || expression === ROOT_EXPRESSION) {
+  const isEmptyExpression = expression.length === 0;
+  const isRootExpression = expression === ROOT_EXPRESSION;
+  const shouldUseRootData = isEmptyExpression || isRootExpression;
+  if (shouldUseRootData) {
     return data;
   }
 

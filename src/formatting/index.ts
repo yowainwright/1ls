@@ -8,5 +8,5 @@ export {
   warning,
   info,
   dim,
-} from "./colors";
-export { Formatter } from "./output";
+} from "../formatter";
+export { Formatter } from "../formatter";

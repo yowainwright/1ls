@@ -55,6 +55,9 @@ export const parseMessage = (raw: string): Message | null => {
 let lastSuggestions: ReturnType<typeof complete>["suggestions"] = [];
 const fileCache = new Map<string, { mtimeMs: number; data: unknown }>();
 
+const getNonEmptyLines = (raw: string): string[] =>
+  raw.split("\n").filter((line) => line.length > 0);
+
 const writeResponseWithSelected = (): void => {
   const selectedIdx = getSelectedIndex();
   const selected = lastSuggestions[selectedIdx];
@@ -65,7 +68,8 @@ const writeResponseWithSelected = (): void => {
 const readCachedFile = async (filePath: string): Promise<unknown> => {
   const { mtimeMs } = statSync(filePath);
   const cached = fileCache.get(filePath);
-  if (cached && cached.mtimeMs === mtimeMs) {
+  const hasCurrentCache = cached !== undefined && cached.mtimeMs === mtimeMs;
+  if (hasCurrentCache) {
     return cached.data;
   }
 
@@ -117,7 +121,9 @@ export const handleMessage = async (msg: Message): Promise<void> => {
   }
 
   const isNextAction = msg.action === "next";
-  if (isNextAction && lastSuggestions.length > 0) {
+  const hasNavigationSuggestions = lastSuggestions.length > 0;
+  const shouldSelectNext = isNextAction && hasNavigationSuggestions;
+  if (shouldSelectNext) {
     selectNext(lastSuggestions.length);
     render(lastSuggestions);
     writeResponseWithSelected();
@@ -125,7 +131,8 @@ export const handleMessage = async (msg: Message): Promise<void> => {
   }
 
   const isPrevAction = msg.action === "prev";
-  if (isPrevAction && lastSuggestions.length > 0) {
+  const shouldSelectPrevious = isPrevAction && hasNavigationSuggestions;
+  if (shouldSelectPrevious) {
     selectPrev(lastSuggestions.length);
     render(lastSuggestions);
     writeResponseWithSelected();
@@ -188,8 +195,7 @@ export const startServer = async (): Promise<void> => {
       if (isDone) continue;
 
       const raw = new TextDecoder().decode(value);
-      const nonEmpty = (line: string): boolean => line.length > 0;
-      const lines = raw.split("\n").filter(nonEmpty);
+      const lines = getNonEmptyLines(raw);
 
       await processLines(lines);
     } finally {

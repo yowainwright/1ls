@@ -75,7 +75,8 @@ const renderBuildModeTitle = (state: State): string => {
 const renderArrowFnModeTitle = (state: State): string => {
   const hasBuilder = state.builder !== null;
   const hasContext = state.builder?.arrowFnContext !== null;
-  if (!hasBuilder || !hasContext) return "";
+  const isMissingContext = !hasBuilder || !hasContext;
+  if (isMissingContext) return "";
 
   const title = "Expression Builder - Arrow Function";
   const color = colors.bright.concat(colors.cyan);
@@ -108,7 +109,10 @@ const renderVisibleMethods = (state: State): string => {
   const endIndex = Math.min(methodMatches.length, startIndex + MAX_VISIBLE_ITEMS);
 
   const actualVisible = endIndex - startIndex;
-  if (actualVisible < MAX_VISIBLE_ITEMS && methodMatches.length >= MAX_VISIBLE_ITEMS) {
+  const hasTooFewVisibleItems = actualVisible < MAX_VISIBLE_ITEMS;
+  const hasEnoughMethodMatches = methodMatches.length >= MAX_VISIBLE_ITEMS;
+  const shouldShiftWindow = hasTooFewVisibleItems && hasEnoughMethodMatches;
+  if (shouldShiftWindow) {
     startIndex = Math.max(0, endIndex - MAX_VISIBLE_ITEMS);
   }
 
@@ -126,7 +130,8 @@ const renderVisibleMethods = (state: State): string => {
 const renderVisibleProperties = (state: State): string => {
   const hasBuilder = state.builder === null;
   const hasContext = state.builder?.arrowFnContext === null;
-  if (hasBuilder || hasContext) return "";
+  const isMissingContext = hasBuilder || hasContext;
+  if (isMissingContext) return "";
 
   const propertyMatches = state.propertyMatches;
   const selectedIndex = state.selectedIndex;
@@ -140,7 +145,10 @@ const renderVisibleProperties = (state: State): string => {
   const endIndex = Math.min(propertyMatches.length, startIndex + MAX_VISIBLE_ITEMS);
 
   const actualVisible = endIndex - startIndex;
-  if (actualVisible < MAX_VISIBLE_ITEMS && propertyMatches.length >= MAX_VISIBLE_ITEMS) {
+  const hasTooFewVisibleItems = actualVisible < MAX_VISIBLE_ITEMS;
+  const hasEnoughPropertyMatches = propertyMatches.length >= MAX_VISIBLE_ITEMS;
+  const shouldShiftWindow = hasTooFewVisibleItems && hasEnoughPropertyMatches;
+  if (shouldShiftWindow) {
     startIndex = Math.max(0, endIndex - MAX_VISIBLE_ITEMS);
   }
 

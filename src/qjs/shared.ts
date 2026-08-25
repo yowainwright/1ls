@@ -60,7 +60,8 @@ export function runCli(args: string[], host: QuickJsHost): CliResult {
   if (options.shorten) return success(shortenExpression(options.shorten));
   if (options.expand) return success(expandShortcuts(options.expand));
 
-  if (options.list || options.grep || options.find) {
+  const hasUnsupportedFileOperation = options.list || options.grep || options.find;
+  if (hasUnsupportedFileOperation) {
     return getUnsupportedFeature("File listing and grep");
   }
 

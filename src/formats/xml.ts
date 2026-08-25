@@ -118,7 +118,7 @@ function splitXMLElements(content: string): string[] {
 
         if (isSelfClosing) {
           const selfClosingTag = isSelfClosing[0];
-          selfClosingTag.split("").forEach((c) => state.buffer.push(c));
+          state.buffer.push(...selfClosingTag);
 
           const isTopLevel = state.depth === 0;
           if (isTopLevel) {
@@ -150,8 +150,9 @@ function splitXMLElements(content: string): string[] {
       const bufferContent = state.buffer.join("").trim();
       const hasContent = bufferContent.length > 0;
       const isNotWhitespace = !char.match(/\s/);
+      const hasTopLevelContent = isTopLevel && hasContent && isNotWhitespace;
 
-      if (isTopLevel && hasContent && isNotWhitespace) {
+      if (hasTopLevelContent) {
         const hasCompleteTags = bufferContent.match(XML.COMPLETE_TAGS);
         if (hasCompleteTags) {
           state.elements.push(bufferContent);
@@ -193,6 +194,12 @@ function mergeXMLElement(result: Record<string, unknown>, key: string, value: un
   result[key] = [existing, value];
 }
 
+function mergeXMLElementObject(result: Record<string, unknown>, parsed: object): void {
+  Object.entries(parsed).forEach(([key, value]) => {
+    mergeXMLElement(result, key, value);
+  });
+}
+
 export function parseXMLChildren(content: string): Record<string, unknown> {
   const elements = splitXMLElements(content);
 
@@ -201,11 +208,7 @@ export function parseXMLChildren(content: string): Record<string, unknown> {
       const parsed = parseXMLElement(element);
       const isObject = typeof parsed === "object" && parsed !== null;
 
-      if (isObject) {
-        Object.entries(parsed).forEach(([key, value]) => {
-          mergeXMLElement(result, key, value);
-        });
-      }
+      if (isObject) mergeXMLElementObject(result, parsed);
 
       return result;
     },

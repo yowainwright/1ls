@@ -15,8 +15,9 @@ import {
 export const enterBuildMode = (state: State): State => {
   const hasMatches = state.matches.length > 0;
   const hasValidIndex = state.selectedIndex >= 0 && state.selectedIndex < state.matches.length;
+  const canEnterBuildMode = hasMatches && hasValidIndex;
 
-  if (!hasMatches || !hasValidIndex) {
+  if (!canEnterBuildMode) {
     return state;
   }
 
@@ -155,10 +156,13 @@ export const completeArrowFn = (state: State): State => {
 
   const builder = state.builder;
   const context = builder.arrowFnContext;
-  const hasValidContext = context && context.expression;
+  if (!context) return state;
+
+  const hasExpression = Boolean(context?.expression);
   const method = builder.currentMethod;
   const template = method?.template || "";
-  if (!hasValidContext || !template) return state;
+  const canComplete = hasExpression && template.length > 0;
+  if (!canComplete) return state;
 
   const finalExpression = replaceTemplateWithExpression(
     builder.expression,
@@ -219,7 +223,11 @@ const findLastTopLevelMethodDot = (expression: string, startIndex: number): numb
       continue;
     }
 
-    if (char === "\"" || char === "'" || char === "`") {
+    const isDoubleQuote = char === '"';
+    const isSingleQuote = char === "'";
+    const isTemplateQuote = char === "`";
+    const isQuote = isDoubleQuote || isSingleQuote || isTemplateQuote;
+    if (isQuote) {
       quote = char;
       continue;
     }
@@ -249,8 +257,12 @@ const findLastTopLevelMethodDot = (expression: string, startIndex: number): numb
       continue;
     }
 
-    const isTopLevel = parenDepth === 0 && bracketDepth === 0 && braceDepth === 0;
-    if (char === "." && isTopLevel) {
+    const isTopLevelParen = parenDepth === 0;
+    const isTopLevelBracket = bracketDepth === 0;
+    const isTopLevelBrace = braceDepth === 0;
+    const isTopLevel = isTopLevelParen && isTopLevelBracket && isTopLevelBrace;
+    const isTopLevelDot = char === "." && isTopLevel;
+    if (isTopLevelDot) {
       lastDotIndex = i;
     }
   }
@@ -275,7 +287,10 @@ export const undoLastSegment = (state: State): State => {
 
   const newExpression = expression.substring(0, lastDotIndex);
 
-  if (!newExpression || newExpression === builder.basePath) {
+  const hasNoExpression = !newExpression;
+  const isBasePath = newExpression === builder.basePath;
+  const shouldExitBuildMode = hasNoExpression || isBasePath;
+  if (shouldExitBuildMode) {
     return exitBuildMode(state);
   }
 

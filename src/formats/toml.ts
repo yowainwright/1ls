@@ -28,27 +28,49 @@ export function parseTOMLValue(value: string): unknown {
 
   const isInlineTable = value.startsWith("{") && value.endsWith("}");
   if (isInlineTable) {
-    const table: Record<string, unknown> = {};
-    const pairs = value.slice(1, -1).split(",");
-
-    pairs.forEach((pair) => {
-      const [k, v] = pair.split("=").map((s) => s.trim());
-      if (k && v) {
-        table[k] = parseTOMLValue(v);
-      }
-    });
-
-    return table;
+    return parseTOMLInlineTable(value);
   }
 
   return value;
+}
+
+const parseTOMLPair = (pair: string): [string | undefined, string | undefined] => {
+  const [key, value] = pair.split("=");
+  return [key?.trim(), value?.trim()];
+};
+
+function parseTOMLInlineTable(value: string): Record<string, unknown> {
+  const table: Record<string, unknown> = {};
+  const pairs = value.slice(1, -1).split(",");
+
+  pairs.forEach((pair) => {
+    const [key, parsedValue] = parseTOMLPair(pair);
+    if (!key) return;
+    if (!parsedValue) return;
+    table[key] = parseTOMLValue(parsedValue);
+  });
+
+  return table;
+}
+
+function getTOMLSection(
+  result: Record<string, unknown>,
+  sectionPath: string[],
+): Record<string, unknown> {
+  let section = result;
+
+  sectionPath.forEach((part) => {
+    if (!section[part]) section[part] = {};
+    section = section[part] as Record<string, unknown>;
+  });
+
+  return section;
 }
 
 export function parseTOML(input: string): unknown {
   const lines = input.trim().split("\n");
   const result: Record<string, unknown> = {};
   let currentSection: Record<string, unknown> = result;
-  let currentSectionPath: string[] = [];
 
   lines.forEach((rawLine) => {
     let line = rawLine;
@@ -68,16 +90,7 @@ export function parseTOML(input: string): unknown {
     const isSection = trimmed.startsWith("[") && trimmed.endsWith("]");
     if (isSection) {
       const sectionPath = trimmed.slice(1, -1).split(".");
-      currentSection = result;
-      currentSectionPath = [];
-
-      sectionPath.forEach((part) => {
-        if (!currentSection[part]) {
-          currentSection[part] = {};
-        }
-        currentSection = currentSection[part] as Record<string, unknown>;
-        currentSectionPath.push(part);
-      });
+      currentSection = getTOMLSection(result, sectionPath);
       return;
     }
 

@@ -1,3 +1,4 @@
+export { Formatter } from "./output";
 export {
   COLORS,
   COLOR_PATTERNS,
@@ -7,4 +8,4 @@ export {
   warning,
   info,
   dim,
-} from "../formatter/colors";
+} from "./colors";

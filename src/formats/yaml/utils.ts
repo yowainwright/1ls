@@ -108,16 +108,28 @@ const parseInlineArray = (content: string): unknown[] | null => {
     .map((v) => parseYAMLValue(v.trim()));
 };
 
+const parseInlineObjectPair = (pair: string): readonly [string, string] | null => {
+  const [key, value] = pair.split(":");
+  const trimmedKey = key?.trim();
+  const trimmedValue = value?.trim();
+  const hasKeyAndValue = Boolean(trimmedKey && trimmedValue);
+
+  return hasKeyAndValue ? [trimmedKey, trimmedValue] : null;
+};
+
 const parseInlineObject = (content: string): Record<string, unknown> | null => {
   const isInlineObject = content.startsWith("{") && content.endsWith("}");
   if (!isInlineObject) return null;
 
-  return content
-    .slice(1, -1)
-    .split(",")
-    .map((pair) => pair.split(":").map((s) => s.trim()))
-    .filter(([k, v]) => k && v)
-    .reduce<Record<string, unknown>>((obj, [k, v]) => ({ ...obj, [k]: parseYAMLValue(v) }), {});
+  const pairs = content.slice(1, -1).split(",");
+  return pairs.reduce<Record<string, unknown>>((object, pair) => {
+    const parsedPair = parseInlineObjectPair(pair);
+    if (!parsedPair) return object;
+
+    const [key, value] = parsedPair;
+    object[key] = parseYAMLValue(value);
+    return object;
+  }, {});
 };
 
 export const parseYAMLValue = (value: string): unknown => {

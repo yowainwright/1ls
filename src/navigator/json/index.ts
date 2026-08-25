@@ -101,7 +101,8 @@ export class JsonNavigator {
     const baseValue = ast.object ? this.evaluate(ast.object, data) : data;
     const result = getPropertyFromObject(baseValue, ast.property);
 
-    if (this.options.strict && result === undefined) {
+    const shouldRejectUndefined = this.options.strict && result === undefined;
+    if (shouldRejectUndefined) {
       const path = ast.property;
       throw new Error(`Property "${path}" is undefined`);
     }
@@ -155,7 +156,10 @@ export class JsonNavigator {
 
     if (Array.isArray(data)) {
       data.forEach((item) => this.collectAllValues(item, result));
-    } else if (data !== null && typeof data === "object") {
+    } else {
+      const isObject = data !== null && typeof data === "object";
+      if (!isObject) return result;
+
       Object.values(data as Record<string, unknown>).forEach((val) =>
         this.collectAllValues(val, result),
       );

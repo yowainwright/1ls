@@ -6,6 +6,18 @@ import { BUILTIN_SHORTCUTS } from "../shortcuts";
 
 const BUILTIN_NAMES = Object.values(BUILTIN_FUNCTIONS);
 const SHORTCUT_NAMES = BUILTIN_SHORTCUTS.map((s) => s.short);
+const VALID_OUTPUT_FORMAT_SET = new Set<string>(VALID_OUTPUT_FORMATS);
+const VALID_INPUT_FORMAT_SET = new Set<DataFormat>(VALID_INPUT_FORMATS);
+
+const startsWithFunctionName = (arg: string, names: string[]): boolean =>
+  names.some((name) => arg.startsWith(`${name}(`));
+
+const isExpressionArgument = (arg: string): boolean => {
+  const isDotOrBracket = arg.startsWith(".") || arg.startsWith("[");
+  const isBuiltinFunction = startsWithFunctionName(arg, BUILTIN_NAMES);
+  const isShortcutFunction = startsWithFunctionName(arg, SHORTCUT_NAMES);
+  return isDotOrBracket || isBuiltinFunction || isShortcutFunction;
+};
 
 export function parseArgs(args: string[]): CliOptions {
   const options: CliOptions = { ...DEFAULT_OPTIONS };
@@ -47,24 +59,21 @@ export function parseArgs(args: string[]): CliOptions {
 
       case "--format":
         i++;
-        if (i < args.length) {
-          const format = args[i];
-          const isValidFormat = (VALID_OUTPUT_FORMATS as readonly string[]).includes(format);
-          if (format && isValidFormat) {
-            options.format = format as CliOptions["format"];
-          }
+        const format = args[i];
+        const hasFormat = typeof format === "string";
+        const isValidFormat = hasFormat && VALID_OUTPUT_FORMAT_SET.has(format);
+        if (isValidFormat) {
+          options.format = format as CliOptions["format"];
         }
         break;
 
       case "--input-format":
       case "-if":
         i++;
-        if (i < args.length) {
-          const inputFormat = args[i] as DataFormat;
-          const isValidInputFormat = VALID_INPUT_FORMATS.includes(inputFormat);
-          if (isValidInputFormat) {
-            options.inputFormat = inputFormat;
-          }
+        const inputFormat = args[i] as DataFormat;
+        const isValidInputFormat = VALID_INPUT_FORMAT_SET.has(inputFormat);
+        if (isValidInputFormat) {
+          options.inputFormat = inputFormat;
         }
         break;
 
@@ -173,12 +182,7 @@ export function parseArgs(args: string[]): CliOptions {
         break;
 
       default:
-        const isDotOrBracket = arg.startsWith(".") || arg.startsWith("[");
-        const isBuiltinFunction = BUILTIN_NAMES.some((name) => arg.startsWith(`${name}(`));
-        const isShortcutFunction = SHORTCUT_NAMES.some((name) => arg.startsWith(`${name}(`));
-        if (isDotOrBracket || isBuiltinFunction || isShortcutFunction) {
-          options.expression = arg;
-        }
+        if (isExpressionArgument(arg)) options.expression = arg;
         break;
     }
     i++;

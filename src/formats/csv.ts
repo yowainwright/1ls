@@ -56,6 +56,15 @@ export function parseCSVValue(value: string): unknown {
   return trimmed;
 }
 
+function createCSVRow(headers: string[], line: string, delimiter: string): Record<string, unknown> | null {
+  const values = parseCSVLine(line, delimiter);
+  if (values.length === 0) return null;
+
+  return Object.fromEntries(
+    headers.map((header, j) => [header, parseCSVValue(values[j] || "")]),
+  );
+}
+
 export function parseCSV(input: string, delimiter = ","): unknown[] {
   const lines = input.trim().split("\n");
   if (lines.length === 0) return [];
@@ -63,16 +72,12 @@ export function parseCSV(input: string, delimiter = ","): unknown[] {
   const headers = parseCSVLine(lines[0], delimiter);
   if (lines.length === 1) return [];
 
-  return lines.slice(1).reduce((data: unknown[], line) => {
-    const values = parseCSVLine(line, delimiter);
-    if (values.length === 0) return data;
+  const rows = lines
+    .slice(1)
+    .map((line) => createCSVRow(headers, line, delimiter))
+    .filter((row): row is Record<string, unknown> => row !== null);
 
-    const row = Object.fromEntries(
-      headers.map((header, j) => [header, parseCSVValue(values[j] || "")]),
-    );
-
-    return [...data, row];
-  }, []);
+  return rows;
 }
 
 export function parseTSV(input: string): unknown[] {

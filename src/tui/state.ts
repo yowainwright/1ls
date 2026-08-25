@@ -100,7 +100,8 @@ export const getSelectedPath = (state: State): JsonPath | null => {
   const hasMatches = state.matches.length > 0;
   const hasValidIndex = state.selectedIndex >= 0 && state.selectedIndex < state.matches.length;
 
-  if (hasMatches && hasValidIndex) {
+  const canSelectPath = hasMatches && hasValidIndex;
+  if (canSelectPath) {
     return state.matches[state.selectedIndex].item;
   }
 

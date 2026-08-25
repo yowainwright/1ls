@@ -59,17 +59,21 @@ type InputResult = { state: State | null; output: string | null };
 const handleExploreMode = (state: State, key: string): InputResult => {
   const isTooltipActive = state.tooltip.visible;
 
-  if (isTooltipActive && (isTabKey(key) || isRightKey(key))) {
+  const isAcceptKey = isTabKey(key) || isRightKey(key);
+  const shouldAcceptTooltip = isTooltipActive && isAcceptKey;
+  if (shouldAcceptTooltip) {
     const newState = acceptTooltipHint(state);
     return { state: newState, output: null };
   }
 
-  if (isTooltipActive && isUpKey(key)) {
+  const shouldMoveTooltipUp = isTooltipActive && isUpKey(key);
+  if (shouldMoveTooltipUp) {
     const newState = updateSelection(state, -1);
     return { state: newState, output: null };
   }
 
-  if (isTooltipActive && isDownKey(key)) {
+  const shouldMoveTooltipDown = isTooltipActive && isDownKey(key);
+  if (shouldMoveTooltipDown) {
     const newState = updateSelection(state, 1);
     return { state: newState, output: null };
   }
@@ -123,7 +127,8 @@ const handleBuildMode = (state: State, key: string): InputResult => {
     return { state: null, output };
   }
 
-  if (isRightKey(key) || isTabKey(key)) {
+  const isAcceptKey = isRightKey(key) || isTabKey(key);
+  if (isAcceptKey) {
     const hasNoBuilder = !state.builder;
     if (hasNoBuilder) return { state, output: null };
 
@@ -170,7 +175,8 @@ const handleArrowFnMode = (state: State, key: string): InputResult => {
     return { state: null, output };
   }
 
-  if (isRightKey(key) || isTabKey(key)) {
+  const isAcceptKey = isRightKey(key) || isTabKey(key);
+  if (isAcceptKey) {
     const withPath = updateArrowFnExpression(state, state.selectedIndex);
     const completed = completeArrowFn(withPath);
     return { state: completed, output: null };

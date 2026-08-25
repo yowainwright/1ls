@@ -58,7 +58,10 @@ const transformCodeSegments = (
       continue;
     }
 
-    const isQuote = char === '"' || char === "'" || char === "`";
+    const isDoubleQuote = char === '"';
+    const isSingleQuote = char === "'";
+    const isTemplateQuote = char === "`";
+    const isQuote = isDoubleQuote || isSingleQuote || isTemplateQuote;
     if (isQuote) {
       flushCode();
       quote = char;

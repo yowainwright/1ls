@@ -1,7 +1,7 @@
 import { Lexer } from "./lexer";
 import { ExpressionParser } from "./expression";
 import { JsonNavigator } from "./navigator/json";
-import { Formatter } from "./formatter/output";
+import { Formatter } from "./formatter";
 import { parseInputSync } from "./formats/sync";
 import { expandShortcuts } from "./shortcuts";
 import type { CliOptions } from "./types";
