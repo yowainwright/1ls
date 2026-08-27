@@ -107,20 +107,11 @@ const detectByFirstChar = (
   const isUnsupportedCode = DETECTION.UNSUPPORTED_CODE_FEATURES.test(trimmed);
   if (isUnsupportedCode) return "text";
 
-  switch (firstChar) {
-    case "{":
-    case "[":
-      return detectJSONLike(trimmed, firstChar, lastChar);
-
-    case "<":
-      return detectXML(trimmed);
-
-    case "-":
-      return trimmed.startsWith("---") ? "yaml" : null;
-
-    default:
-      return null;
-  }
+  const isJSONLike = firstChar === "{" || firstChar === "[";
+  if (isJSONLike) return detectJSONLike(trimmed, firstChar, lastChar);
+  if (firstChar === "<") return detectXML(trimmed);
+  if (firstChar === "-") return trimmed.startsWith("---") ? "yaml" : null;
+  return null;
 };
 
 const detectByContent = (trimmed: string): DataFormat | null => {

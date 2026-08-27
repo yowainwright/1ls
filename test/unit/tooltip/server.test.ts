@@ -1,7 +1,10 @@
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
-import { existsSync, readFileSync, unlinkSync } from "fs";
-import { RESPONSE_PATH } from "../../../src/tooltip/constants";
-import { handleMessage, parseMessage } from "../../../src/tooltip/server";
+import { existsSync, mkdirSync, readFileSync, unlinkSync } from "fs";
+import { join } from "path";
+import { handleMessage, parseMessage, configureDaemon } from "../../../src/tooltip/server";
+
+const TEST_ROOT = join(process.cwd(), ".cache", "tests");
+const RESPONSE_PATH = join(TEST_ROOT, "1ls-response");
 
 const removeResponseFile = (): void => {
   if (existsSync(RESPONSE_PATH)) {
@@ -10,7 +13,11 @@ const removeResponseFile = (): void => {
 };
 
 describe("tooltip/server", () => {
-  beforeEach(removeResponseFile);
+  beforeEach(() => {
+    mkdirSync(TEST_ROOT, { recursive: true });
+    configureDaemon({ responsePath: RESPONSE_PATH });
+    removeResponseFile();
+  });
   afterEach(removeResponseFile);
 
   describe("parseMessage", () => {
@@ -66,7 +73,7 @@ describe("tooltip/server", () => {
       expect(result).not.toBeNull();
       expect(result?.file).toBe("file.json");
       expect(result?.expr).toBe(".user.na");
-      expect(result?.input).toContain('.user.na');
+      expect(result?.input).toContain(".user.na");
     });
 
     test("handles invalid JSON gracefully", () => {

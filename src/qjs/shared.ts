@@ -69,10 +69,6 @@ export function runCli(args: string[], host: QuickJsHost): CliResult {
     return getUnsupportedFeature("The tooltip daemon");
   }
 
-  if (options.interactive) {
-    return getUnsupportedFeature("Interactive mode");
-  }
-
   try {
     if (options.readFile) {
       const { filePath, expression } = resolveReadFileInvocation(args);

@@ -1,6 +1,5 @@
 import { describe, test, expect, beforeEach, afterEach } from "bun:test";
 import { mkdtemp, rm, writeFile as fsWriteFile, mkdir } from "node:fs/promises";
-import { tmpdir } from "node:os";
 import { join } from "node:path";
 import {
   readFile,
@@ -21,13 +20,16 @@ import {
   createGrepResult,
   logVerboseError,
   extractMatchesFromLine,
+  searchFileContent,
 } from "../../src/fs";
 
 describe("file utilities", () => {
   let testDir: string;
+  const testRoot = join(process.cwd(), ".cache", "tests");
 
   beforeEach(async () => {
-    testDir = await mkdtemp(join(tmpdir(), "1ls-test-"));
+    await mkdir(testRoot, { recursive: true });
+    testDir = await mkdtemp(join(testRoot, "1ls-test-"));
   });
 
   afterEach(async () => {
@@ -111,6 +113,12 @@ describe("file utilities", () => {
       await writeFile(nestedPath, "content");
       const content = await Bun.file(nestedPath).text();
       expect(content).toBe("content");
+    });
+
+    test("reports a clear error when the target cannot be written", async () => {
+      await expect(writeFile(testDir, "content")).rejects.toThrow(
+        `Failed to write file ${testDir}`,
+      );
     });
   });
 
@@ -348,6 +356,12 @@ describe("file utilities", () => {
       expect(results.length).toBeGreaterThan(0);
       const resultWithContext = results.find((r) => r.context !== undefined);
       expect(resultWithContext?.context).toBeDefined();
+    });
+
+    test("returns no results when a file cannot be read", async () => {
+      const results = await searchFileContent(join(testDir, "missing.txt"), /hello/g, {});
+
+      expect(results).toEqual([]);
     });
   });
 

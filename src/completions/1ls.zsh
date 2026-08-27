@@ -27,7 +27,6 @@ _1ls() {
         '--strict[Strict mode]'
         '--slurp[Read all inputs into array]'
         '--null-input[Use null as input]'
-        '--interactive[Interactive mode]'
     )
 
     subcmds=(

@@ -46,16 +46,10 @@ export class Formatter {
       return this.formatWithType(data);
     }
 
-    switch (this.options.format) {
-      case "yaml":
-        return this.formatYaml(data);
-      case "csv":
-        return this.formatCsv(data);
-      case "table":
-        return this.formatTable(data);
-      default:
-        return this.formatJson(data);
-    }
+    if (this.options.format === "yaml") return this.formatYaml(data);
+    if (this.options.format === "csv") return this.formatCsv(data);
+    if (this.options.format === "table") return this.formatTable(data);
+    return this.formatJson(data);
   }
 
   private formatRaw(data: unknown): string {

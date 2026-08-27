@@ -31,33 +31,17 @@ const parseTextInput = (input: string): unknown => {
 export function parseInputSync(input: string, format?: DataFormat): unknown {
   const actualFormat = format ?? detectFormat(input);
 
-  switch (actualFormat) {
-    case "json":
-      return parseJsonWithPreview(input);
-    case "json5":
-      return parseJSON5(input);
-    case "yaml":
-      return parseYAML(input);
-    case "toml":
-      return parseTOML(input);
-    case "xml":
-      return parseXML(input);
-    case "ini":
-      return parseINI(input);
-    case "csv":
-      return parseCSV(input);
-    case "tsv":
-      return parseTSV(input);
-    case "protobuf":
-      return parseProtobuf(input);
-    case "env":
-      return parseENV(input);
-    case "ndjson":
-      return parseNDJSON(input);
-    case "lines":
-      return parseLines(input);
-    case "text":
-    default:
-      return parseTextInput(input);
-  }
+  if (actualFormat === "json") return parseJsonWithPreview(input);
+  if (actualFormat === "json5") return parseJSON5(input);
+  if (actualFormat === "yaml") return parseYAML(input);
+  if (actualFormat === "toml") return parseTOML(input);
+  if (actualFormat === "xml") return parseXML(input);
+  if (actualFormat === "ini") return parseINI(input);
+  if (actualFormat === "csv") return parseCSV(input);
+  if (actualFormat === "tsv") return parseTSV(input);
+  if (actualFormat === "protobuf") return parseProtobuf(input);
+  if (actualFormat === "env") return parseENV(input);
+  if (actualFormat === "ndjson") return parseNDJSON(input);
+  if (actualFormat === "lines") return parseLines(input);
+  return parseTextInput(input);
 }

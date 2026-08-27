@@ -1,3 +1,5 @@
+import { mkdir, readFile as readTextFile, writeFile as writeTextFile } from "node:fs/promises";
+import { dirname } from "node:path";
 import { parseInput } from "../formats";
 import type { DataFormat } from "../formats/types";
 
@@ -10,8 +12,7 @@ export async function readFile(
   path: string,
   parseOption: boolean | DataFormat = true,
 ): Promise<unknown> {
-  const file = Bun.file(path);
-  const content = await file.text();
+  const content = await readTextFile(path, "utf8");
 
   if (parseOption === false) return content;
 
@@ -26,8 +27,9 @@ export const serializeContent = (content: unknown): string => {
 
 export const writeFile = async (path: string, content: unknown): Promise<void> => {
   try {
+    await mkdir(dirname(path), { recursive: true });
     const data = serializeContent(content);
-    await Bun.write(path, data);
+    await writeTextFile(path, data, "utf8");
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     throw new Error(`Failed to write file ${path}: ${errorMessage}`);

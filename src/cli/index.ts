@@ -2,7 +2,7 @@
 
 import { parseArgs } from "./parser";
 import { showHelp } from "./help";
-import { processInput } from "./stream";
+import { processInput, readStdin } from "./stream";
 import { readFile, listFiles, grep } from "../fs";
 import { Formatter, warning, info } from "../formatter";
 import { expandShortcuts, shortenExpression, getShortcutHelp } from "../shortcuts";
@@ -12,7 +12,6 @@ import { VERSION } from "../version";
 import { processData } from "../executor";
 import { resolveReadFileInvocation } from "./read-file";
 
-export const getInteractive = () => import("../tui/app");
 export const getDaemon = () => import("../tooltip/index");
 
 export async function handleGrepOperation(options: CliOptions): Promise<void> {
@@ -118,7 +117,7 @@ export async function main(args: string[]): Promise<void> {
       console.error("Error: --detect requires input from stdin");
       process.exit(1);
     }
-    const input = await Bun.stdin.text();
+    const input = await readStdin();
     const format = detectFormat(input);
     console.log(format);
     process.exit(0);
@@ -143,25 +142,12 @@ export async function main(args: string[]): Promise<void> {
   }
 
   if (options.readFile) {
-    const { filePath, expression, hasExplicitExpression } = resolveReadFileInvocation(args);
+    const { filePath, expression } = resolveReadFileInvocation(args);
     const data = await readDataFile(filePath, options);
-
-    const shouldUseInteractive = options.interactive || !hasExplicitExpression;
-
-    if (shouldUseInteractive) {
-      const { runInteractive } = await getInteractive();
-      await runInteractive(data, options);
-      return;
-    }
 
     options.expression = expression;
     await processExpression(options, data);
     return;
-  }
-
-  if (options.interactive) {
-    console.error("Error: Interactive mode requires a file path. Use: 1ls readFile <path>");
-    process.exit(1);
   }
 
   const jsonData = await loadData(options, args);

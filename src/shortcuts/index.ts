@@ -6,9 +6,6 @@ export { BUILTIN_SHORTCUTS, SHORTCUTS } from "./constants";
 
 export const escapeRegExp = (str: string): string => str.replace(REGEX_SPECIAL_CHARS, "\\$&");
 
-const shortToFull = new Map(SHORTCUTS.map((s) => [s.short, s.full]));
-const fullToShort = new Map(SHORTCUTS.map((s) => [s.full, s.short]));
-
 const EXPAND_PATTERNS = SHORTCUTS.map((s) => ({
   regex: new RegExp(`${escapeRegExp(s.short)}(?![a-zA-Z])`, "g"),
   replacement: s.full,
@@ -211,10 +208,10 @@ Examples:
 };
 
 export const isShortcut = (method: string): boolean =>
-  shortToFull.has(method) || fullToShort.has(method);
+  SHORTCUTS.some((shortcut) => shortcut.short === method || shortcut.full === method);
 
 export const getFullMethod = (shortMethod: string): string | undefined =>
-  shortToFull.get(shortMethod);
+  SHORTCUTS.find((shortcut) => shortcut.short === shortMethod)?.full;
 
 export const getShortMethod = (fullMethod: string): string | undefined =>
-  fullToShort.get(fullMethod);
+  SHORTCUTS.find((shortcut) => shortcut.full === fullMethod)?.short;

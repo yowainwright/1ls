@@ -62,16 +62,13 @@ export const evaluateObjectOperation = (
 ): unknown => {
   if (!isValidObject(obj)) return undefined;
 
-  switch (operation) {
-    case "keys":
-      return Object.keys(obj);
-    case "values":
-      return Object.values(obj);
-    case "entries":
-      return Object.entries(obj);
-    case "length":
-      return Array.isArray(obj) ? obj.length : Object.keys(obj).length;
+  if (operation === "keys") return Object.keys(obj);
+  if (operation === "values") return Object.values(obj);
+  if (operation === "entries") return Object.entries(obj);
+  if (operation === "length") {
+    return Array.isArray(obj) ? obj.length : Object.keys(obj).length;
   }
+  return undefined;
 };
 
 export const isCallableMethod = (target: unknown, method: string): boolean => {

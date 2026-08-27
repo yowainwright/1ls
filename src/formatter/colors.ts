@@ -14,13 +14,13 @@ export const COLORS = {
 };
 
 export const COLOR_PATTERNS = [
+  { regex: /([{[])/g, replacement: `${COLORS.gray}$1${COLORS.reset}` },
+  { regex: /([}\]])/g, replacement: `${COLORS.gray}$1${COLORS.reset}` },
   { regex: /"([^"]+)":/g, replacement: `${COLORS.cyan}"$1"${COLORS.reset}:` },
   { regex: /: "([^"]*)"/g, replacement: `: ${COLORS.green}"$1"${COLORS.reset}` },
   { regex: /: (-?\d+\.?\d*)/g, replacement: `: ${COLORS.yellow}$1${COLORS.reset}` },
   { regex: /: (true|false)/g, replacement: `: ${COLORS.magenta}$1${COLORS.reset}` },
   { regex: /: (null)/g, replacement: `: ${COLORS.gray}$1${COLORS.reset}` },
-  { regex: /([{[])/g, replacement: `${COLORS.gray}$1${COLORS.reset}` },
-  { regex: /([}\]])/g, replacement: `${COLORS.gray}$1${COLORS.reset}` },
 ];
 
 const hasNoColor = (): boolean => {

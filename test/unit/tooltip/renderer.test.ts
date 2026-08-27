@@ -1,6 +1,5 @@
 import { afterEach, describe, expect, test } from "bun:test";
-import { existsSync, mkdtempSync, readFileSync, rmSync } from "fs";
-import { tmpdir } from "os";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync } from "fs";
 import { join } from "path";
 import { BORDER } from "../../../src/tooltip/constants";
 import {
@@ -16,6 +15,13 @@ import {
 afterEach(() => {
   closeTty();
 });
+
+const TEST_ROOT = join(process.cwd(), ".cache", "tests");
+
+const createTestDir = (): string => {
+  mkdirSync(TEST_ROOT, { recursive: true });
+  return mkdtempSync(join(TEST_ROOT, "1ls-tooltip-renderer-"));
+};
 
 describe("tooltip/renderer selection", () => {
   test("selectNext wraps using the suggestion count", () => {
@@ -46,7 +52,7 @@ describe("tooltip/renderer selection", () => {
   });
 
   test("render sizes borders from visible text length", () => {
-    const dir = mkdtempSync(join(tmpdir(), "1ls-tooltip-renderer-"));
+    const dir = createTestDir();
     const ttyPath = join(dir, "tty");
 
     try {
@@ -64,19 +70,15 @@ describe("tooltip/renderer selection", () => {
       const output = readFileSync(ttyPath, "utf8");
       const expectedInnerWidth = 20;
 
-      expect(output).toContain(
-        `${BORDER.TL}${BORDER.H.repeat(expectedInnerWidth)}${BORDER.TR}`
-      );
-      expect(output).not.toContain(
-        `${BORDER.TL}${BORDER.H.repeat(expectedInnerWidth + 10)}`
-      );
+      expect(output).toContain(`${BORDER.TL}${BORDER.H.repeat(expectedInnerWidth)}${BORDER.TR}`);
+      expect(output).not.toContain(`${BORDER.TL}${BORDER.H.repeat(expectedInnerWidth + 10)}`);
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }
   });
 
   test("openTty reuses an active descriptor", () => {
-    const dir = mkdtempSync(join(tmpdir(), "1ls-tooltip-renderer-"));
+    const dir = createTestDir();
     const firstTtyPath = join(dir, "first-tty");
     const secondTtyPath = join(dir, "second-tty");
 

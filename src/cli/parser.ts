@@ -26,38 +26,19 @@ export function parseArgs(args: string[]): CliOptions {
   while (i < args.length) {
     const arg = args[i];
 
-    switch (arg) {
-      case "--help":
-      case "-h":
-        options.help = true;
-        break;
-
-      case "--version":
-      case "-v":
-        options.version = true;
-        break;
-
-      case "--raw":
-      case "-r":
-        options.raw = true;
-        break;
-
-      case "--pretty":
-      case "-p":
-        options.pretty = true;
-        break;
-
-      case "--compact":
-      case "-c":
-        options.compact = true;
-        break;
-
-      case "--type":
-      case "-t":
-        options.type = true;
-        break;
-
-      case "--format":
+    if (arg === "--help" || arg === "-h") {
+      options.help = true;
+    } else if (arg === "--version" || arg === "-v") {
+      options.version = true;
+    } else if (arg === "--raw" || arg === "-r") {
+      options.raw = true;
+    } else if (arg === "--pretty" || arg === "-p") {
+      options.pretty = true;
+    } else if (arg === "--compact" || arg === "-c") {
+      options.compact = true;
+    } else if (arg === "--type" || arg === "-t") {
+      options.type = true;
+    } else if (arg === "--format") {
         i++;
         const format = args[i];
         const hasFormat = typeof format === "string";
@@ -65,125 +46,71 @@ export function parseArgs(args: string[]): CliOptions {
         if (isValidFormat) {
           options.format = format as CliOptions["format"];
         }
-        break;
-
-      case "--input-format":
-      case "-if":
+    } else if (arg === "--input-format" || arg === "-if") {
         i++;
         const inputFormat = args[i] as DataFormat;
         const isValidInputFormat = VALID_INPUT_FORMAT_SET.has(inputFormat);
         if (isValidInputFormat) {
           options.inputFormat = inputFormat;
         }
-        break;
-
-      case "readFile":
-      case "rf":
+    } else if (arg === "readFile" || arg === "rf") {
         options.readFile = true;
-        break;
-
-      case "--find":
-      case "-f":
+    } else if (arg === "--find" || arg === "-f") {
         i++;
         if (i < args.length) {
           options.find = args[i];
         }
-        break;
-
-      case "--grep":
-      case "-g":
+    } else if (arg === "--grep" || arg === "-g") {
         i++;
         if (i < args.length) {
           options.grep = args[i];
         }
-        break;
-
-      case "--list":
-      case "-l":
+    } else if (arg === "--list" || arg === "-l") {
         i++;
         if (i < args.length) {
           options.list = args[i];
         }
-        break;
-
-      case "--recursive":
-      case "-R":
+    } else if (arg === "--recursive" || arg === "-R") {
         options.recursive = true;
-        break;
-
-      case "--interactive":
-        options.interactive = true;
-        break;
-
-      case "--ignore-case":
-      case "-i":
+    } else if (arg === "--ignore-case" || arg === "-i") {
         options.ignoreCase = true;
-        break;
-
-      case "--line-numbers":
-      case "-n":
+    } else if (arg === "--line-numbers" || arg === "-n") {
         options.showLineNumbers = true;
-        break;
-
-      case "--ext":
+    } else if (arg === "--ext") {
         i++;
         if (i < args.length) {
           const extensions = args[i].split(",");
           options.extensions = extensions.map((ext) => (ext.startsWith(".") ? ext : `.${ext}`));
         }
-        break;
-
-      case "--max-depth":
+    } else if (arg === "--max-depth") {
         i++;
         if (i < args.length) {
           options.maxDepth = parseInt(args[i], 10);
         }
-        break;
-
-      case "--shorten":
+    } else if (arg === "--shorten") {
         i++;
         if (i < args.length) {
           options.shorten = args[i];
         }
-        break;
-
-      case "--expand":
+    } else if (arg === "--expand") {
         i++;
         if (i < args.length) {
           options.expand = args[i];
         }
-        break;
-
-      case "--shortcuts":
+    } else if (arg === "--shortcuts") {
         options.shortcuts = true;
-        break;
-
-      case "--detect":
+    } else if (arg === "--detect") {
         options.detect = true;
-        break;
-
-      case "--strict":
-      case "-s":
+    } else if (arg === "--strict" || arg === "-s") {
         options.strict = true;
-        break;
-
-      case "--daemon":
+    } else if (arg === "--daemon") {
         options.daemon = true;
-        break;
-
-      case "--slurp":
-      case "-S":
+    } else if (arg === "--slurp" || arg === "-S") {
         options.slurp = true;
-        break;
-
-      case "--null-input":
-      case "-N":
+    } else if (arg === "--null-input" || arg === "-N") {
         options.nullInput = true;
-        break;
-
-      default:
-        if (isExpressionArgument(arg)) options.expression = arg;
-        break;
+    } else if (isExpressionArgument(arg)) {
+      options.expression = arg;
     }
     i++;
   }

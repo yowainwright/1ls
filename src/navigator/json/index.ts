@@ -23,6 +23,17 @@ import {
   callMethod,
 } from "./utils";
 
+type AccessNode = Extract<ASTNode, { type: "IndexAccess" | "SliceAccess" | "ArraySpread" }>;
+
+const ACCESS_NODE_TYPES = new Set<AccessNode["type"]>([
+  "IndexAccess",
+  "SliceAccess",
+  "ArraySpread",
+]);
+
+const isAccessNode = (ast: ASTNode): ast is AccessNode =>
+  ACCESS_NODE_TYPES.has(ast.type as AccessNode["type"]);
+
 export { OPERATORS } from "./constants";
 export type { NavigatorOptions } from "./types";
 export {
@@ -49,49 +60,39 @@ export class JsonNavigator {
   }
 
   evaluate(ast: ASTNode, data: unknown): unknown {
-    switch (ast.type) {
-      case "Root":
-        return ast.expression ? this.evaluate(ast.expression, data) : data;
-
-      case "PropertyAccess":
-        return this.evaluatePropertyAccess(ast, data);
-
-      case "IndexAccess":
-        return getArrayElement(ast.object ? this.evaluate(ast.object, data) : data, ast.index);
-
-      case "SliceAccess":
-        return sliceArray(ast.object ? this.evaluate(ast.object, data) : data, ast.start, ast.end);
-
-      case "ArraySpread":
-        return ast.object ? this.evaluate(ast.object, data) : data;
-
-      case "MethodCall":
-        return this.evaluateMethodCall(ast, data);
-
-      case "ObjectOperation":
-        return evaluateObjectOperation(
-          ast.object ? this.evaluate(ast.object, data) : data,
-          ast.operation,
-        );
-
-      case "Literal":
-        return ast.value;
-
-      case "ArrowFunction":
-        return this.createFunction(ast);
-
-      case "RecursiveDescent":
-        return this.evaluateRecursiveDescent(ast, data);
-
-      case "OptionalAccess":
-        return this.evaluateOptionalAccess(ast, data);
-
-      case "NullCoalescing":
-        return this.evaluateNullCoalescing(ast, data);
-
-      default:
-        throw new Error(`Unknown AST node type: ${(ast as ASTNode).type}`);
+    if (ast.type === "Root") return ast.expression ? this.evaluate(ast.expression, data) : data;
+    if (ast.type === "PropertyAccess") return this.evaluatePropertyAccess(ast, data);
+    if (isAccessNode(ast)) return this.evaluateAccess(ast, data);
+    if (ast.type === "MethodCall") return this.evaluateMethodCall(ast, data);
+    if (ast.type === "ObjectOperation") {
+      const target = ast.object ? this.evaluate(ast.object, data) : data;
+      return evaluateObjectOperation(target, ast.operation);
     }
+    return this.evaluateValue(ast, data);
+  }
+
+  private evaluateAccess(
+    ast: AccessNode,
+    data: unknown,
+  ): unknown {
+    if (ast.type === "IndexAccess") {
+      const target = ast.object ? this.evaluate(ast.object, data) : data;
+      return getArrayElement(target, ast.index);
+    }
+    if (ast.type === "SliceAccess") {
+      const target = ast.object ? this.evaluate(ast.object, data) : data;
+      return sliceArray(target, ast.start, ast.end);
+    }
+    return ast.object ? this.evaluate(ast.object, data) : data;
+  }
+
+  private evaluateValue(ast: ASTNode, data: unknown): unknown {
+    if (ast.type === "Literal") return ast.value;
+    if (ast.type === "ArrowFunction") return this.createFunction(ast);
+    if (ast.type === "RecursiveDescent") return this.evaluateRecursiveDescent(ast, data);
+    if (ast.type === "OptionalAccess") return this.evaluateOptionalAccess(ast, data);
+    if (ast.type === "NullCoalescing") return this.evaluateNullCoalescing(ast, data);
+    throw new Error(`Unknown AST node type: ${ast.type}`);
   }
 
   private evaluatePropertyAccess(
@@ -126,18 +127,26 @@ export class JsonNavigator {
 
     const target = ast.object ? this.evaluate(ast.object, data) : data;
 
-    if (isBuiltin(ast.method)) {
-      const evaluatedArgs = ast.args.map((arg) => this.evaluateArg(arg, data));
-      return executeBuiltin(ast.method, target, evaluatedArgs);
-    }
+    if (isBuiltin(ast.method)) return this.evaluateBuiltinCall(ast, target, data);
 
     const isOperator = isOperatorMethod(ast.method);
-    if (isOperator) {
-      const operator = extractOperator(ast.method);
-      const evaluatedArg = this.evaluate(ast.args[0], data);
-      return executeOperator(target, operator, evaluatedArg);
-    }
+    if (isOperator) return this.evaluateOperatorCall(ast, target, data);
 
+    return this.evaluateRegularCall(ast, target, data);
+  }
+
+  private evaluateBuiltinCall(ast: MethodCallNode, target: unknown, data: unknown): unknown {
+    const evaluatedArgs = ast.args.map((arg) => this.evaluateArg(arg, data));
+    return executeBuiltin(ast.method, target, evaluatedArgs);
+  }
+
+  private evaluateOperatorCall(ast: MethodCallNode, target: unknown, data: unknown): unknown {
+    const operator = extractOperator(ast.method);
+    const evaluatedArg = this.evaluate(ast.args[0], data);
+    return executeOperator(target, operator, evaluatedArg);
+  }
+
+  private evaluateRegularCall(ast: MethodCallNode, target: unknown, data: unknown): unknown {
     const evaluatedArgs = ast.args.map((arg) => this.evaluateArg(arg, data));
     return callMethod(target, ast.method, evaluatedArgs);
   }
@@ -190,22 +199,13 @@ export class JsonNavigator {
   }
 
   private evaluateFunctionBody(ast: ASTNode, context: EvaluationContext): unknown {
-    switch (ast.type) {
-      case "PropertyAccess":
-        return this.evaluatePropertyAccessInFunction(ast, context);
-
-      case "MethodCall":
-        return this.evaluateMethodCallInFunction(ast, context);
-
-      case "Literal":
-        return ast.value;
-
-      case "Root":
-        return ast.expression ? this.evaluateFunctionBody(ast.expression, context) : context;
-
-      default:
-        return this.evaluate(ast, getImplicitParameter(context));
+    if (ast.type === "PropertyAccess") return this.evaluatePropertyAccessInFunction(ast, context);
+    if (ast.type === "MethodCall") return this.evaluateMethodCallInFunction(ast, context);
+    if (ast.type === "Literal") return ast.value;
+    if (ast.type === "Root") {
+      return ast.expression ? this.evaluateFunctionBody(ast.expression, context) : context;
     }
+    return this.evaluate(ast, getImplicitParameter(context));
   }
 
   private evaluatePropertyAccessInFunction(

@@ -43,7 +43,7 @@
     "test:bench": "docker build -f test/benchmarks/Dockerfile -t 1ls-bench . && docker run --rm 1ls-bench",
     "test:bench:update": "bash test/benchmarks/update.sh",
     "lint": "oxlint src/",
-    "lint:legibility": "npx --package eslint-plugin-legibility@0.3.3 lint-changed --comments=forbid",
+    "lint:legibility": "lint-changed --comments=forbid",
     "lint:fix": "oxlint src/ --fix",
     "format": "oxfmt src/",
     "format:fix": "oxfmt src/ --write",
@@ -78,6 +78,7 @@
     "oxfmt": "^0.36.0",
     "oxlint": "^1.65.0",
     "release-it": "^19.2.4",
+    "scriptc": "^0.0.35",
     "turbo": "^2.9.14",
     "typescript": "5.9.3"
   },

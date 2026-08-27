@@ -6,7 +6,7 @@ _1ls_complete() {
     cur="${COMP_WORDS[COMP_CWORD]}"
     prev="${COMP_WORDS[COMP_CWORD-1]}"
 
-    opts="--help -h --version -v --raw -r --pretty -p --compact -c --type -t --format --input-format -if --detect --list -l --grep -g --find -f --recursive -R --ignore-case -i --line-numbers -n --ext --max-depth --shortcuts --shorten --expand --strict -s --slurp -S --null-input -N --interactive readFile"
+    opts="--help -h --version -v --raw -r --pretty -p --compact -c --type -t --format --input-format -if --detect --list -l --grep -g --find -f --recursive -R --ignore-case -i --line-numbers -n --ext --max-depth --shortcuts --shorten --expand --strict -s --slurp -S --null-input -N readFile"
     format_opts="json yaml csv table"
     input_format_opts="json json5 yaml toml xml ini csv tsv env ndjson lines text"
     json_paths=". .[] .. .{keys} .{values} .{entries} .foo? .foo ?? default"

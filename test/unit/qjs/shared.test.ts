@@ -45,11 +45,55 @@ describe("qjs/shared", () => {
     expect(result.stdout).toBe("yaml");
   });
 
-  test("returns a clear error for unsupported interactive mode", () => {
-    const result = runCli(["--interactive", "readFile", "data.json"], createHost());
+  test("handles informational and shortcut commands", () => {
+    const help = runCli(["--help"], createHost());
+    const version = runCli(["--version"], createHost());
+    const shortcuts = runCli(["--shortcuts"], createHost());
+    const shortened = runCli(["--shorten", ".map(x => x)"], createHost());
+    const expanded = runCli(["--expand", ".mp(x => x)"], createHost());
+
+    expect(help.stdout).toContain("Usage:");
+    expect(version.exitCode).toBe(0);
+    expect(version.stdout).toMatch(/^\d+\.\d+\.\d+/);
+    expect(shortcuts.stdout).toContain("Shorthand Reference:");
+    expect(shortened.stdout).toBe(".mp(x => x)");
+    expect(expanded.stdout).toBe(".map(x => x)");
+  });
+
+  test("rejects unsupported file operations in the terminal build", () => {
+    const result = runCli(["--grep", "needle"], createHost());
 
     expect(result.exitCode).toBe(1);
-    expect(result.stderr).toContain("Interactive mode");
+    expect(result.stderr).toContain("File listing and grep");
+  });
+
+  test("reports unsupported daemon mode", () => {
+    const result = runCli(["--daemon"], createHost());
+
+    expect(result.exitCode).toBe(1);
+    expect(result.stderr).toContain("tooltip daemon");
+  });
+
+  test("reports a missing readFile result", () => {
+    const result = runCli(["readFile", "missing.json"], createHost());
+
+    expect(result.exitCode).toBe(1);
+    expect(result.stderr).toContain("Failed to read file: missing.json");
+  });
+
+  test("reports missing input for detect and processing", () => {
+    const detect = runCli(["--detect"], createHost("  \n"));
+    const process = runCli([], createHost("  \n"));
+
+    expect(detect.stderr).toBe("Error: --detect requires input from stdin");
+    expect(process.stderr).toBe("Error: No input provided");
+  });
+
+  test("turns parser and processing errors into CLI failures", () => {
+    const result = runCli(["readFile"], createHost());
+
+    expect(result.exitCode).toBe(1);
+    expect(result.stderr).toContain("Missing file path for readFile command");
   });
 
 });

@@ -1,8 +1,19 @@
-import { unlinkSync, existsSync, writeFileSync, statSync } from "fs";
+import { unlinkSync, existsSync, writeFileSync, statSync, readFileSync } from "fs";
 import { spawnSync } from "child_process";
-import { complete } from "./completion";
-import { openTty, closeTty, render, hide, resetSelection, selectNext, selectPrev, getSelectedIndex, renderPreview } from "./renderer";
+import { complete } from "../ac";
+import {
+  openTty,
+  closeTty,
+  render,
+  hide,
+  resetSelection,
+  selectNext,
+  selectPrev,
+  getSelectedIndex,
+  renderPreview,
+} from "./renderer";
 import { FIFO_PATH, RESPONSE_PATH } from "./constants";
+import type { DaemonConfig } from "./types";
 import { readFile } from "../fs";
 import { Lexer } from "../lexer";
 import { ExpressionParser } from "../expression";
@@ -25,14 +36,14 @@ export const createFifo = (path: string): boolean => {
 export const cleanup = (): void => {
   closeTty();
 
-  const fifoExists = existsSync(FIFO_PATH);
+  const fifoExists = existsSync(config.fifoPath);
   if (fifoExists) {
-    unlinkSync(FIFO_PATH);
+    unlinkSync(config.fifoPath);
   }
 
-  const responseExists = existsSync(RESPONSE_PATH);
+  const responseExists = existsSync(config.responsePath);
   if (responseExists) {
-    unlinkSync(RESPONSE_PATH);
+    unlinkSync(config.responsePath);
   }
 };
 
@@ -54,6 +65,14 @@ export const parseMessage = (raw: string): Message | null => {
 
 let lastSuggestions: ReturnType<typeof complete>["suggestions"] = [];
 const fileCache = new Map<string, { mtimeMs: number; data: unknown }>();
+let config: DaemonConfig = {
+  fifoPath: FIFO_PATH,
+  responsePath: RESPONSE_PATH,
+};
+
+export const configureDaemon = (nextConfig: Partial<DaemonConfig>): void => {
+  config = { ...config, ...nextConfig };
+};
 
 const getNonEmptyLines = (raw: string): string[] =>
   raw.split("\n").filter((line) => line.length > 0);
@@ -62,7 +81,7 @@ const writeResponseWithSelected = (): void => {
   const selectedIdx = getSelectedIndex();
   const selected = lastSuggestions[selectedIdx];
   const value = selected?.insertText || selected?.signature || "";
-  writeFileSync(RESPONSE_PATH, value);
+  writeFileSync(config.responsePath, value);
 };
 
 const readCachedFile = async (filePath: string): Promise<unknown> => {
@@ -110,7 +129,7 @@ export const handleMessage = async (msg: Message): Promise<void> => {
   if (isHideAction) {
     hide();
     lastSuggestions = [];
-    writeFileSync(RESPONSE_PATH, "");
+    writeFileSync(config.responsePath, "");
     return;
   }
 
@@ -162,7 +181,7 @@ export const handleMessage = async (msg: Message): Promise<void> => {
     writeResponseWithSelected();
   } else {
     hide();
-    writeFileSync(RESPONSE_PATH, "");
+    writeFileSync(config.responsePath, "");
   }
 };
 
@@ -176,31 +195,18 @@ export const processLines = async (lines: string[]): Promise<void> => {
 export const startServer = async (): Promise<void> => {
   cleanup();
 
-  const created = createFifo(FIFO_PATH);
+  const created = createFifo(config.fifoPath);
   if (!created) {
-    throw new Error(`Failed to create FIFO at ${FIFO_PATH}`);
+    throw new Error(`Failed to create FIFO at ${config.fifoPath}`);
   }
 
-  console.log(`1ls daemon listening on ${FIFO_PATH}`);
-
-  const file = Bun.file(FIFO_PATH);
+  console.log(`1ls daemon listening on ${config.fifoPath}`);
 
   while (true) {
-    const stream = file.stream();
-    const reader = stream.getReader();
+    const raw = readFileSync(config.fifoPath, "utf8");
+    if (!raw) continue;
 
-    try {
-      const { value, done } = await reader.read();
-      const isDone = done || !value;
-      if (isDone) continue;
-
-      const raw = new TextDecoder().decode(value);
-      const lines = getNonEmptyLines(raw);
-
-      await processLines(lines);
-    } finally {
-      reader.releaseLock();
-    }
+    await processLines(getNonEmptyLines(raw));
   }
 };
 

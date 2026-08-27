@@ -24,7 +24,6 @@ export const CLI_FLAGS = [
   { long: "--strict", short: "-s", description: "Strict mode" },
   { long: "--slurp", short: "-S", description: "Read all inputs into array" },
   { long: "--null-input", short: "-N", description: "Use null as input" },
-  { long: "--interactive", short: null, description: "Interactive mode" },
 ] as const;
 
 export type CliFlag = (typeof CLI_FLAGS)[number];

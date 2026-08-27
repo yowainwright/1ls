@@ -9,10 +9,10 @@ import {
   SCORE_PREFIX_MATCH,
   SCORE_CONTAINS_MATCH,
   SCORE_FUZZY_MATCH,
-} from "../../src/completion";
-import type { FuzzyMatch, Suggestion } from "../../src/completion";
+} from "../../src/ac";
+import type { Suggestion } from "../../src/ac";
 
-describe("completion module", () => {
+describe("ac", () => {
   describe("fuzzySearch", () => {
     const items = [
       { name: "map" },
@@ -58,19 +58,13 @@ describe("completion module", () => {
     });
 
     test("scores consecutive matches higher", () => {
-      const testItems = [
-        { name: "abc" },
-        { name: "a_b_c" },
-      ];
+      const testItems = [{ name: "abc" }, { name: "a_b_c" }];
       const results = fuzzySearch(testItems, "abc", (item) => item.name);
       expect(results[0].item.name).toBe("abc");
     });
 
     test("scores matches at start higher", () => {
-      const testItems = [
-        { name: "xmap" },
-        { name: "map" },
-      ];
+      const testItems = [{ name: "xmap" }, { name: "map" }];
       const results = fuzzySearch(testItems, "map", (item) => item.name);
       expect(results[0].item.name).toBe("map");
     });
@@ -78,7 +72,7 @@ describe("completion module", () => {
 
   describe("suggestion constants", () => {
     test("METHODS contains standard array/string methods", () => {
-      const methodNames = METHODS.map((m) => m.name);
+      const methodNames = METHODS.map((method) => method.name);
       expect(methodNames).toContain("map");
       expect(methodNames).toContain("filter");
       expect(methodNames).toContain("reduce");
@@ -86,7 +80,7 @@ describe("completion module", () => {
     });
 
     test("BUILTINS contains 1ls builtins", () => {
-      const builtinNames = BUILTINS.map((b) => b.name);
+      const builtinNames = BUILTINS.map((builtin) => builtin.name);
       expect(builtinNames).toContain("head");
       expect(builtinNames).toContain("tail");
       expect(builtinNames).toContain("keys");
@@ -94,7 +88,7 @@ describe("completion module", () => {
     });
 
     test("SHORTCUTS contains shorthand methods", () => {
-      const shortcutNames = SHORTCUTS.map((s) => s.name);
+      const shortcutNames = SHORTCUTS.map((shortcut) => shortcut.name);
       expect(shortcutNames).toContain("mp");
       expect(shortcutNames).toContain("flt");
       expect(shortcutNames).toContain("fnd");
@@ -106,12 +100,12 @@ describe("completion module", () => {
     });
 
     test("each suggestion has required fields", () => {
-      ALL_SUGGESTIONS.forEach((s) => {
-        expect(s.name).toBeDefined();
-        expect(s.signature).toBeDefined();
-        expect(s.description).toBeDefined();
-        expect(s.type).toBeDefined();
-        expect(["method", "builtin", "shortcut", "path"]).toContain(s.type);
+      ALL_SUGGESTIONS.forEach((suggestion: Suggestion) => {
+        expect(suggestion.name).toBeDefined();
+        expect(suggestion.signature).toBeDefined();
+        expect(suggestion.description).toBeDefined();
+        expect(suggestion.type).toBeDefined();
+        expect(["method", "builtin", "shortcut", "path"]).toContain(suggestion.type);
       });
     });
   });

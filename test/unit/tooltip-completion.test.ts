@@ -1,7 +1,7 @@
 import { describe, test, expect } from "bun:test";
-import { complete, extractPartialMethod } from "../../src/tooltip/completion";
+import { complete, extractPartialMethod } from "../../src/ac";
 
-describe("tooltip/completion", () => {
+describe("ac", () => {
   describe("extractPartialMethod", () => {
     test("returns null for input without dot", () => {
       const result = extractPartialMethod("foo bar");
@@ -136,7 +136,7 @@ describe("tooltip/completion", () => {
       });
 
       expect(result.suggestions[0]?.type).toBe("path");
-      expect(result.suggestions[0]?.insertText).toBe("[\"sp ace\"]");
+      expect(result.suggestions[0]?.insertText).toBe('["sp ace"]');
     });
 
     test("filters methods by array context", () => {

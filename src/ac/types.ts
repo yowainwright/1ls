@@ -24,3 +24,8 @@ export interface PartialMethod {
   prefix: string;
   startIndex: number;
 }
+
+export interface CompletionOptions {
+  data?: unknown;
+  expression?: string;
+}
