@@ -20,7 +20,7 @@
     "prerender": "node scripts/prerender.ts",
     "preview": "vite preview",
     "deploy": "pnpm run build && gh-pages -d dist",
-    "test": "pnpm run build:browser && rm -rf tmp/test-build && esbuild \"src/**/*.test.ts\" \"src/**/*.test.tsx\" --bundle --platform=node --format=esm --target=node24 --packages=external --sourcemap=inline --sources-content=true --outdir=tmp/test-build --outbase=. --alias:@=./src && node --import ./src/test/setup.ts --test \"tmp/test-build/src/**/*.test.js\" \"scripts/**/*.test.ts\" \"vite.config.test.ts\""
+    "test": "pnpm run build:browser && rm -rf tmp/test-build && esbuild \"src/**/*.test.ts\" \"src/**/*.test.tsx\" --bundle --platform=node --format=esm --target=node24 --packages=external --sourcemap=inline --sources-content=true --outdir=tmp/test-build --outbase=. --alias:@=./src --alias:1ls/browser=../dist/browser/index.js && node --import ./src/test/setup.ts --test \"tmp/test-build/src/**/*.test.js\" \"scripts/**/*.test.ts\" \"vite.config.test.ts\""
   },
   "dependencies": {
     "1ls": "file:..",
