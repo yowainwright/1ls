@@ -17,6 +17,7 @@ coverage
 
 # Dependency directories
 node_modules/
+.pnpm-store/
 
 # Build output
 dist/
@@ -36,9 +37,6 @@ bin/
 # OS
 .DS_Store
 Thumbs.db
-
-# Bun
-bun.lockb
 
 # Test artifacts
 *.test.js

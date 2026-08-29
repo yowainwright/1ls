@@ -1,4 +1,5 @@
-import { beforeEach, describe, test, expect } from "bun:test";
+import { beforeEach, describe, test } from "node:test";
+import assert from "node:assert/strict";
 import {
   encodeShareableState,
   decodeShareableState,
@@ -14,20 +15,20 @@ describe("encodeShareableState", () => {
   test("encodes state to base64 string", () => {
     const state = { format: "json" as const, input: '{"test": true}', expression: ".test" };
     const encoded = encodeShareableState(state);
-    expect(typeof encoded).toBe("string");
-    expect(encoded.length).toBeGreaterThan(0);
+    assert.strictEqual(typeof encoded, "string");
+    assert.ok(encoded.length > 0);
   });
 
   test("produces different output for different states", () => {
     const state1 = { format: "json" as const, input: "a", expression: ".a" };
     const state2 = { format: "yaml" as const, input: "b", expression: ".b" };
-    expect(encodeShareableState(state1)).not.toBe(encodeShareableState(state2));
+    assert.notStrictEqual(encodeShareableState(state1), encodeShareableState(state2));
   });
 
   test("handles special characters in input", () => {
     const state = { format: "json" as const, input: '{"emoji": "🎉"}', expression: ".emoji" };
     const encoded = encodeShareableState(state);
-    expect(typeof encoded).toBe("string");
+    assert.strictEqual(typeof encoded, "string");
   });
 
   test("handles newlines in input", () => {
@@ -37,7 +38,7 @@ describe("encodeShareableState", () => {
       expression: ".filter(x => x)",
     };
     const encoded = encodeShareableState(state);
-    expect(typeof encoded).toBe("string");
+    assert.strictEqual(typeof encoded, "string");
   });
 });
 
@@ -46,24 +47,24 @@ describe("decodeShareableState", () => {
     const original = { format: "json" as const, input: '{"test": true}', expression: ".test" };
     const encoded = encodeShareableState(original);
     const decoded = decodeShareableState(encoded);
-    expect(decoded).toEqual(original);
+    assert.deepStrictEqual(decoded, original);
   });
 
   test("returns null for invalid base64", () => {
     const result = decodeShareableState("not-valid-base64!!!");
-    expect(result).toBeNull();
+    assert.strictEqual(result, null);
   });
 
   test("returns null for valid base64 but invalid JSON", () => {
     const invalidJson = btoa("not json");
     const result = decodeShareableState(invalidJson);
-    expect(result).toBeNull();
+    assert.strictEqual(result, null);
   });
 
   test("returns null for valid JSON but missing required fields", () => {
     const missingFields = btoa(encodeURIComponent(JSON.stringify({ f: "json" })));
     const result = decodeShareableState(missingFields);
-    expect(result).toBeNull();
+    assert.strictEqual(result, null);
   });
 
   test("returns null for invalid format value", () => {
@@ -71,12 +72,12 @@ describe("decodeShareableState", () => {
       encodeURIComponent(JSON.stringify({ f: "bad", i: "{}", e: "." })),
     );
     const result = decodeShareableState(invalidFormat);
-    expect(result).toBeNull();
+    assert.strictEqual(result, null);
   });
 
   test("returns null for empty string", () => {
     const result = decodeShareableState("");
-    expect(result).toBeNull();
+    assert.strictEqual(result, null);
   });
 
   test("preserves special characters", () => {
@@ -87,7 +88,7 @@ describe("decodeShareableState", () => {
     };
     const encoded = encodeShareableState(original);
     const decoded = decodeShareableState(encoded);
-    expect(decoded).toEqual(original);
+    assert.deepStrictEqual(decoded, original);
   });
 
   test("preserves newlines", () => {
@@ -98,7 +99,7 @@ describe("decodeShareableState", () => {
     };
     const encoded = encodeShareableState(original);
     const decoded = decodeShareableState(encoded);
-    expect(decoded).toEqual(original);
+    assert.deepStrictEqual(decoded, original);
   });
 
   test("preserves all format types", () => {
@@ -107,7 +108,7 @@ describe("decodeShareableState", () => {
       const original = { format, input: "test", expression: ".test" };
       const encoded = encodeShareableState(original);
       const decoded = decodeShareableState(encoded);
-      expect(decoded?.format).toBe(format);
+      assert.strictEqual(decoded?.format, format);
     });
   });
 });
@@ -116,28 +117,28 @@ describe("getShareableUrl", () => {
   test("produces URL with ?s= param", () => {
     const state = { format: "json" as const, input: '{"test":true}', expression: ".test" };
     const url = getShareableUrl(state);
-    expect(url).toContain("?s=");
+    assert.ok(url.includes("?s="));
   });
 
   test("URL is parseable and contains encoded state", () => {
     const state = { format: "yaml" as const, input: "name: Alice", expression: ".name" };
     const url = getShareableUrl(state);
     const parsed = new URL(url);
-    expect(parsed.searchParams.has("s")).toBe(true);
-    expect(parsed.searchParams.get("s")).toBeTruthy();
+    assert.strictEqual(parsed.searchParams.has("s"), true);
+    assert.ok(parsed.searchParams.get("s"));
   });
 
   test("different states produce different URLs", () => {
     const s1 = { format: "json" as const, input: '{"a":1}', expression: ".a" };
     const s2 = { format: "yaml" as const, input: "b: 2", expression: ".b" };
-    expect(getShareableUrl(s1)).not.toBe(getShareableUrl(s2));
+    assert.notStrictEqual(getShareableUrl(s1), getShareableUrl(s2));
   });
 });
 
 describe("getStateFromUrl", () => {
   test("returns null when no s param in URL", () => {
     window.location.href = "http://localhost/";
-    expect(getStateFromUrl()).toBeNull();
+    assert.strictEqual(getStateFromUrl(), null);
   });
 
   test("returns decoded state when valid s param present", () => {
@@ -145,12 +146,12 @@ describe("getStateFromUrl", () => {
     const encoded = encodeShareableState(state);
     window.location.href = `http://localhost/?s=${encoded}`;
     const decoded = getStateFromUrl();
-    expect(decoded).toEqual(state);
+    assert.deepStrictEqual(decoded, state);
   });
 
   test("returns null for invalid s param", () => {
     window.location.href = "http://localhost/?s=not-valid-base64!!!";
-    expect(getStateFromUrl()).toBeNull();
+    assert.strictEqual(getStateFromUrl(), null);
   });
 
   test("returns null for invalid format in s param", () => {
@@ -158,7 +159,7 @@ describe("getStateFromUrl", () => {
       encodeURIComponent(JSON.stringify({ f: "bad", i: "{}", e: "." })),
     );
     window.location.href = `http://localhost/?s=${encoded}`;
-    expect(getStateFromUrl()).toBeNull();
+    assert.strictEqual(getStateFromUrl(), null);
   });
 });
 
@@ -181,7 +182,7 @@ describe("roundtrip encoding/decoding", () => {
     };
     const encoded = encodeShareableState(original);
     const decoded = decodeShareableState(encoded);
-    expect(decoded).toEqual(original);
+    assert.deepStrictEqual(decoded, original);
   });
 
   test("YAML state survives roundtrip", () => {
@@ -196,7 +197,7 @@ describe("roundtrip encoding/decoding", () => {
     };
     const encoded = encodeShareableState(original);
     const decoded = decodeShareableState(encoded);
-    expect(decoded).toEqual(original);
+    assert.deepStrictEqual(decoded, original);
   });
 
   test("CSV state survives roundtrip", () => {
@@ -209,7 +210,7 @@ Bob,25,LA`,
     };
     const encoded = encodeShareableState(original);
     const decoded = decodeShareableState(encoded);
-    expect(decoded).toEqual(original);
+    assert.deepStrictEqual(decoded, original);
   });
 
   test("text state with log lines survives roundtrip", () => {
@@ -222,7 +223,7 @@ WARN: Low memory`,
     };
     const encoded = encodeShareableState(original);
     const decoded = decodeShareableState(encoded);
-    expect(decoded).toEqual(original);
+    assert.deepStrictEqual(decoded, original);
   });
 
   test("state survives URL roundtrip", () => {
@@ -231,6 +232,6 @@ WARN: Low memory`,
     const parsed = new URL(url);
     window.location.href = parsed.toString();
     const decoded = getStateFromUrl();
-    expect(decoded).toEqual(original);
+    assert.deepStrictEqual(decoded, original);
   });
 });

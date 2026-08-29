@@ -15,49 +15,40 @@ jobs:
       matrix:
         include:
           - os: macos-latest
-            artifact: 1ls-qjs-darwin-arm64
+            artifact: 1ls-darwin-arm64
           - os: macos-15-intel
-            artifact: 1ls-qjs-darwin-x64
+            artifact: 1ls-darwin-x64
           - os: ubuntu-latest
-            artifact: 1ls-qjs-linux-x64
+            artifact: 1ls-linux-x64
           - os: ubuntu-24.04-arm
-            artifact: 1ls-qjs-linux-arm64
+            artifact: 1ls-linux-arm64
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
         with:
-          bun-version: 1.4.0
+          node-version: 24
+          cache: pnpm
 
-      - name: Install QuickJS (macOS)
-        if: runner.os == 'macOS'
-        run: brew install quickjs
-
-      - name: Install QuickJS (Linux)
+      - name: Install clang
         if: runner.os == 'Linux'
-        run: |
-          git clone https://github.com/bellard/quickjs.git /tmp/quickjs
-          cd /tmp/quickjs
-          make -j$(nproc)
-          sudo make install
+        run: sudo apt-get update && sudo apt-get install -y clang
 
       - name: Install dependencies
-        run: bun install
+        run: pnpm install --frozen-lockfile
 
-      - name: Build QuickJS bundle
+      - name: Check scriptc coverage
+        run: pnpm run scriptc:coverage
+
+      - name: Build scriptc binary
         run: |
-          mkdir -p dist/qjs
-          bun build ./src/browser/index.ts --outfile dist/qjs/core.js --target browser --minify --format esm
-          bun run build:qjs:bundle
-          cp src/qjs/cli.js dist/qjs/
-          cp src/qjs/constants.js dist/qjs/
-          VERSION=$(node -p "require('./package.json').version")
-          sed -i.bak "s/__VERSION__/$VERSION/g" dist/qjs/constants.js && rm dist/qjs/constants.js.bak
-
-      - name: Build QuickJS binary
-        run: qjsc -m -o ./dist/${{ matrix.artifact }} dist/qjs/cli.js
+          mkdir -p dist
+          ./node_modules/.bin/scriptc build ./src/scriptc/cli.ts --no-keep-c -o ./dist/${{ matrix.artifact }}
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
@@ -81,7 +72,7 @@ jobs:
 
       - name: Flatten artifacts
         run: |
-          for artifact in 1ls-qjs-darwin-arm64 1ls-qjs-darwin-x64 1ls-qjs-linux-x64 1ls-qjs-linux-arm64; do
+          for artifact in 1ls-darwin-arm64 1ls-darwin-x64 1ls-linux-x64 1ls-linux-arm64; do
             mv "./dist/${artifact}/${artifact}" "./dist/${artifact}.tmp"
             rm -rf "./dist/${artifact}"
             mv "./dist/${artifact}.tmp" "./dist/${artifact}"
@@ -91,10 +82,10 @@ jobs:
         run: |
           VERSION="${{ github.ref_name }}"
           VERSION="${VERSION#v}"
-          SHA_ARM64=$(shasum -a 256 ./dist/1ls-qjs-darwin-arm64 | cut -d ' ' -f 1)
-          SHA_X64=$(shasum -a 256 ./dist/1ls-qjs-darwin-x64 | cut -d ' ' -f 1)
-          SHA_LINUX_X64=$(shasum -a 256 ./dist/1ls-qjs-linux-x64 | cut -d ' ' -f 1)
-          SHA_LINUX_ARM64=$(shasum -a 256 ./dist/1ls-qjs-linux-arm64 | cut -d ' ' -f 1)
+          SHA_ARM64=$(shasum -a 256 ./dist/1ls-darwin-arm64 | cut -d ' ' -f 1)
+          SHA_X64=$(shasum -a 256 ./dist/1ls-darwin-x64 | cut -d ' ' -f 1)
+          SHA_LINUX_X64=$(shasum -a 256 ./dist/1ls-linux-x64 | cut -d ' ' -f 1)
+          SHA_LINUX_ARM64=$(shasum -a 256 ./dist/1ls-linux-arm64 | cut -d ' ' -f 1)
 
           echo "=== Checksums ==="
           echo "VERSION: ${VERSION}"
@@ -155,10 +146,10 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           files: |
-            ./dist/1ls-qjs-darwin-arm64
-            ./dist/1ls-qjs-darwin-x64
-            ./dist/1ls-qjs-linux-x64
-            ./dist/1ls-qjs-linux-arm64
+            ./dist/1ls-darwin-arm64
+            ./dist/1ls-darwin-x64
+            ./dist/1ls-linux-x64
+            ./dist/1ls-linux-arm64
           generate_release_notes: true
           body: |
             ## Install
@@ -168,9 +159,9 @@ jobs:
             brew install yowainwright/tap/1ls
             ```
 
-            ### npm/bun
+            ### pnpm
             ```bash
-            npm install -g 1ls
+            pnpm add -g 1ls
             ```
 
             ### curl
@@ -179,9 +170,9 @@ jobs:
             ```
 
             ### Binary Downloads
-            - `1ls-qjs-darwin-arm64` - macOS Apple Silicon
-            - `1ls-qjs-darwin-x64` - macOS Intel
-            - `1ls-qjs-linux-x64` - Linux x64
-            - `1ls-qjs-linux-arm64` - Linux ARM64
+            - `1ls-darwin-arm64` - macOS Apple Silicon
+            - `1ls-darwin-x64` - macOS Intel
+            - `1ls-linux-x64` - Linux x64
+            - `1ls-linux-arm64` - Linux ARM64
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

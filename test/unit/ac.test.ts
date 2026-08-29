@@ -1,4 +1,5 @@
-import { describe, test, expect } from "bun:test";
+import { describe, test } from "node:test";
+import assert from "node:assert/strict";
 import {
   fuzzySearch,
   ALL_SUGGESTIONS,
@@ -9,8 +10,8 @@ import {
   SCORE_PREFIX_MATCH,
   SCORE_CONTAINS_MATCH,
   SCORE_FUZZY_MATCH,
-} from "../../src/ac";
-import type { Suggestion } from "../../src/ac";
+} from "../../src/ac/index.ts";
+import type { Suggestion } from "../../src/ac/index.ts";
 
 describe("ac", () => {
   describe("fuzzySearch", () => {
@@ -24,103 +25,103 @@ describe("ac", () => {
 
     test("returns all items when pattern is empty", () => {
       const results = fuzzySearch(items, "", (item) => item.name);
-      expect(results.length).toBe(5);
-      expect(results[0].score).toBe(0);
+      assert.strictEqual(results.length, 5);
+      assert.strictEqual(results[0].score, 0);
     });
 
     test("filters items by fuzzy pattern", () => {
       const results = fuzzySearch(items, "map", (item) => item.name);
-      expect(results.length).toBe(2);
-      expect(results[0].item.name).toBe("map");
-      expect(results[1].item.name).toBe("flatMap");
+      assert.strictEqual(results.length, 2);
+      assert.strictEqual(results[0].item.name, "map");
+      assert.strictEqual(results[1].item.name, "flatMap");
     });
 
     test("scores exact matches higher", () => {
       const results = fuzzySearch(items, "map", (item) => item.name);
-      expect(results[0].score).toBeGreaterThan(results[1].score);
+      assert.ok(results[0].score > results[1].score);
     });
 
     test("returns empty array when no matches", () => {
       const results = fuzzySearch(items, "xyz", (item) => item.name);
-      expect(results.length).toBe(0);
+      assert.strictEqual(results.length, 0);
     });
 
     test("is case insensitive", () => {
       const results = fuzzySearch(items, "MAP", (item) => item.name);
-      expect(results.length).toBe(2);
-      expect(results[0].item.name).toBe("map");
+      assert.strictEqual(results.length, 2);
+      assert.strictEqual(results[0].item.name, "map");
     });
 
     test("tracks match positions correctly", () => {
       const results = fuzzySearch(items, "mp", (item) => item.name);
       const mapMatch = results.find((r) => r.item.name === "map");
-      expect(mapMatch?.matches).toEqual([0, 2]);
+      assert.deepStrictEqual(mapMatch?.matches, [0, 2]);
     });
 
     test("scores consecutive matches higher", () => {
       const testItems = [{ name: "abc" }, { name: "a_b_c" }];
       const results = fuzzySearch(testItems, "abc", (item) => item.name);
-      expect(results[0].item.name).toBe("abc");
+      assert.strictEqual(results[0].item.name, "abc");
     });
 
     test("scores matches at start higher", () => {
       const testItems = [{ name: "xmap" }, { name: "map" }];
       const results = fuzzySearch(testItems, "map", (item) => item.name);
-      expect(results[0].item.name).toBe("map");
+      assert.strictEqual(results[0].item.name, "map");
     });
   });
 
   describe("suggestion constants", () => {
     test("METHODS contains standard array/string methods", () => {
       const methodNames = METHODS.map((method) => method.name);
-      expect(methodNames).toContain("map");
-      expect(methodNames).toContain("filter");
-      expect(methodNames).toContain("reduce");
-      expect(methodNames).toContain("find");
+      assert.ok(methodNames.includes("map"));
+      assert.ok(methodNames.includes("filter"));
+      assert.ok(methodNames.includes("reduce"));
+      assert.ok(methodNames.includes("find"));
     });
 
     test("BUILTINS contains 1ls builtins", () => {
       const builtinNames = BUILTINS.map((builtin) => builtin.name);
-      expect(builtinNames).toContain("head");
-      expect(builtinNames).toContain("tail");
-      expect(builtinNames).toContain("keys");
-      expect(builtinNames).toContain("vals");
+      assert.ok(builtinNames.includes("head"));
+      assert.ok(builtinNames.includes("tail"));
+      assert.ok(builtinNames.includes("keys"));
+      assert.ok(builtinNames.includes("vals"));
     });
 
     test("SHORTCUTS contains shorthand methods", () => {
       const shortcutNames = SHORTCUTS.map((shortcut) => shortcut.name);
-      expect(shortcutNames).toContain("mp");
-      expect(shortcutNames).toContain("flt");
-      expect(shortcutNames).toContain("fnd");
+      assert.ok(shortcutNames.includes("mp"));
+      assert.ok(shortcutNames.includes("flt"));
+      assert.ok(shortcutNames.includes("fnd"));
     });
 
     test("ALL_SUGGESTIONS combines all suggestion types", () => {
       const total = METHODS.length + BUILTINS.length + SHORTCUTS.length;
-      expect(ALL_SUGGESTIONS.length).toBe(total);
+      assert.strictEqual(ALL_SUGGESTIONS.length, total);
     });
 
     test("each suggestion has required fields", () => {
       ALL_SUGGESTIONS.forEach((suggestion: Suggestion) => {
-        expect(suggestion.name).toBeDefined();
-        expect(suggestion.signature).toBeDefined();
-        expect(suggestion.description).toBeDefined();
-        expect(suggestion.type).toBeDefined();
-        expect(["method", "builtin", "shortcut", "path"]).toContain(suggestion.type);
+        assert.notStrictEqual(suggestion.name, undefined);
+        assert.notStrictEqual(suggestion.signature, undefined);
+        assert.notStrictEqual(suggestion.description, undefined);
+        assert.notStrictEqual(suggestion.type, undefined);
+        assert.ok(["method", "builtin", "shortcut", "path"].includes(suggestion.type));
       });
     });
   });
 
   describe("scoring constants", () => {
     test("score constants are defined", () => {
-      expect(MAX_SUGGESTIONS).toBe(8);
-      expect(SCORE_PREFIX_MATCH).toBe(100);
-      expect(SCORE_CONTAINS_MATCH).toBe(50);
-      expect(SCORE_FUZZY_MATCH).toBe(25);
+      assert.strictEqual(MAX_SUGGESTIONS, 8);
+      assert.strictEqual(SCORE_PREFIX_MATCH, 100);
+      assert.strictEqual(SCORE_CONTAINS_MATCH, 50);
+      assert.strictEqual(SCORE_FUZZY_MATCH, 25);
     });
 
     test("prefix score > contains score > fuzzy score", () => {
-      expect(SCORE_PREFIX_MATCH).toBeGreaterThan(SCORE_CONTAINS_MATCH);
-      expect(SCORE_CONTAINS_MATCH).toBeGreaterThan(SCORE_FUZZY_MATCH);
+      assert.ok(SCORE_PREFIX_MATCH > SCORE_CONTAINS_MATCH);
+      assert.ok(SCORE_CONTAINS_MATCH > SCORE_FUZZY_MATCH);
     });
   });
 });

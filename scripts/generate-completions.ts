@@ -1,8 +1,8 @@
-import { generateBashCompletions, generateZshCompletions } from "../src/completions/index";
+import { generateBashCompletions, generateZshCompletions } from "../src/completions/index.ts";
 import { writeFileSync } from "fs";
 import { join } from "path";
 
-const dir = join(import.meta.dir, "../src/completions");
+const dir = join(process.cwd(), "src/completions");
 
 writeFileSync(join(dir, "1ls.bash"), generateBashCompletions());
 writeFileSync(join(dir, "1ls.zsh"), generateZshCompletions());

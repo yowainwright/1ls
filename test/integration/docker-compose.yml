@@ -11,4 +11,4 @@ services:
     environment:
       - NODE_ENV=test
       - NO_COLOR=1
-    command: bun test test/integration/
+    command: pnpm run test:integration

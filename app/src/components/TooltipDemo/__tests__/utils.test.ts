@@ -1,4 +1,5 @@
-import { describe, test, expect } from "bun:test";
+import { describe, test } from "node:test";
+import assert from "node:assert/strict";
 import { getSearchTerm, filterHints } from "../utils";
 import type { MethodHint } from "../types";
 
@@ -12,55 +13,55 @@ const hints: MethodHint[] = [
 
 describe("getSearchTerm", () => {
   test("extracts text after last dot", () => {
-    expect(getSearchTerm(".filter(x => x).ma", 0)).toBe("ma");
+    assert.strictEqual(getSearchTerm(".filter(x => x).ma", 0), "ma");
   });
 
   test("uses triggerAt when no dot found", () => {
-    expect(getSearchTerm("filter", 0)).toBe("filter");
+    assert.strictEqual(getSearchTerm("filter", 0), "filter");
   });
 
   test("handles dot at end", () => {
-    expect(getSearchTerm(".items.", 0)).toBe("");
+    assert.strictEqual(getSearchTerm(".items.", 0), "");
   });
 
   test("lowercases the result", () => {
-    expect(getSearchTerm(".MAP", 0)).toBe("map");
+    assert.strictEqual(getSearchTerm(".MAP", 0), "map");
   });
 
   test("falls back to triggerAt slice when no dot", () => {
-    expect(getSearchTerm("abcdef", 2)).toBe("cdef");
+    assert.strictEqual(getSearchTerm("abcdef", 2), "cdef");
   });
 });
 
 describe("filterHints", () => {
   test("returns all hints when searchTerm is empty", () => {
-    expect(filterHints(hints, "")).toHaveLength(hints.length);
+    assert.strictEqual(filterHints(hints, "").length, hints.length);
   });
 
   test("filters by prefix match on method name", () => {
     const results = filterHints(hints, "fi");
-    expect(results.some((h) => h.signature.includes("filter"))).toBe(true);
-    expect(results.some((h) => h.signature.includes("find"))).toBe(true);
-    expect(results.every((h) => !h.signature.includes(".map"))).toBe(true);
+    assert.strictEqual(results.some((h) => h.signature.includes("filter")), true);
+    assert.strictEqual(results.some((h) => h.signature.includes("find")), true);
+    assert.strictEqual(results.every((h) => !h.signature.includes(".map")), true);
   });
 
   test("filters to multi-match", () => {
     const results = filterHints(hints, "ma");
-    expect(results.length).toBeGreaterThanOrEqual(1);
-    expect(results.some((h) => h.signature.includes("map") || h.signature.includes("max"))).toBe(true);
+    assert.ok(results.length >= 1);
+    assert.strictEqual(results.some((h) => h.signature.includes("map") || h.signature.includes("max")), true);
   });
 
   test("handles dot-prefixed signatures (data properties)", () => {
     const results = filterHints(hints, "na");
-    expect(results.some((h) => h.signature === ".name")).toBe(true);
+    assert.strictEqual(results.some((h) => h.signature === ".name"), true);
   });
 
   test("returns empty array when no hints match", () => {
-    expect(filterHints(hints, "xyz")).toHaveLength(0);
+    assert.strictEqual(filterHints(hints, "xyz").length, 0);
   });
 
   test("is case-insensitive via lowercased searchTerm", () => {
     const results = filterHints(hints, "ma");
-    expect(results.length).toBeGreaterThan(0);
+    assert.ok(results.length > 0);
   });
 });

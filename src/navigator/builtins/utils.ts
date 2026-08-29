@@ -1,8 +1,13 @@
-export const isArray = (x: unknown): x is unknown[] => Array.isArray(x);
+export const isArray = (x: unknown): x is unknown[] => {
+  const isArrayValue = Array.isArray(x);
+  return isArrayValue;
+};
 
 export const isObject = (x: unknown): x is Record<string, unknown> => {
   const isObjectValue = x !== null && typeof x === "object";
-  return isObjectValue && !Array.isArray(x);
+  if (!isObjectValue) return false;
+
+  return !Array.isArray(x);
 };
 
 export const isNil = (x: unknown): x is null | undefined => x === null || x === undefined;
@@ -69,6 +74,25 @@ export const getValueAtPath = (data: unknown, path: (string | number)[]): unknow
     return undefined;
   }, data);
 
+const getChildData = (
+  data: unknown,
+  key: string | number,
+  isArrayKey: boolean,
+  isObjectKey: boolean,
+): unknown => {
+  if (isArrayKey) return (data as unknown[])[key as number];
+  if (isObjectKey) return (data as Record<string, unknown>)[key as string];
+
+  return undefined;
+};
+
+const createArrayWithValue = (index: number, value: unknown): unknown[] =>
+  Array.from({ length: index + 1 }, (_, i) => {
+    if (i === index) return value;
+
+    return undefined;
+  });
+
 export const setValueAtPath = (
   data: unknown,
   path: (string | number)[],
@@ -79,36 +103,22 @@ export const setValueAtPath = (
   const [first, ...rest] = path;
   const isArrayKey = isArray(data) && typeof first === "number";
   const isObjectKey = isObject(data) && typeof first === "string";
-  const childData = isArrayKey
-    ? data[first as number]
-    : isObjectKey
-      ? data[first as string]
-      : undefined;
+  const childData = getChildData(data, first, isArrayKey, isObjectKey);
   const nestedValue = rest.length === 0 ? value : setValueAtPath(childData, rest, value);
 
-  if (isArrayKey) {
-    return data.map((item, i) => (i === first ? nestedValue : item));
-  }
-
-  if (isObjectKey) {
-    return { ...data, [first]: nestedValue };
-  }
-
-  if (typeof first === "number") {
-    return Array.from({ length: first + 1 }, (_, i) => (i === first ? nestedValue : undefined));
-  }
+  if (isArrayKey) return data.map((item, i) => (i === first ? nestedValue : item));
+  if (isObjectKey) return { ...data, [first]: nestedValue };
+  if (typeof first === "number") return createArrayWithValue(first, nestedValue);
 
   return { [first]: nestedValue };
 };
 
 export const collectAllValues = (data: unknown): unknown[] => {
   const self = [data];
-  const children = isArray(data)
-    ? data.flatMap(collectAllValues)
-    : isObject(data)
-      ? Object.values(data).flatMap(collectAllValues)
-      : [];
-  return [...self, ...children];
+  if (isArray(data)) return [...self, ...data.flatMap(collectAllValues)];
+  if (isObject(data)) return [...self, ...Object.values(data).flatMap(collectAllValues)];
+
+  return self;
 };
 
 export const collectPaths = (

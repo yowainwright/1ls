@@ -5,7 +5,7 @@
  * Compare with: good-example.ts
  */
 
-// BAD: Async parser — format parsers must be sync for QuickJS NG
+// BAD: Async parser — format parsers must stay sync
 // Fix: remove async/await, use sync string parsing only
 async function parseFromURL(input: string): Promise<unknown> {
   const response = await fetch(input);
@@ -26,14 +26,14 @@ function parseLinesMutating(input: string): string[] {
   return result;
 }
 
-// BAD: Uses TextDecoder — not available in QuickJS NG
+// BAD: Uses TextDecoder — parsers should work from strings
 // Fix: work directly with strings, not byte streams
 function parseUTF8(input: Uint8Array): unknown {
   const text = new TextDecoder("utf-8").decode(input);
   return JSON.parse(text);
 }
 
-// BAD: Uses URL constructor — not available in QuickJS NG
+// BAD: Uses URL constructor — URL parsing is outside data format parsing
 // Fix: use string.split() or regex for URL parsing
 function parseQueryString(input: string): Record<string, string> {
   const url = new URL(input);
@@ -44,7 +44,7 @@ function parseQueryString(input: string): Record<string, string> {
   return params;
 }
 
-// BAD: Regex lookbehind — not supported in all QuickJS NG builds
+// BAD: Regex lookbehind — keep regexes simple and portable
 // Fix: use capturing groups, split, or manual parsing
 function parseCamelKeys(input: string): string[] {
   return input.split(/(?<=[a-z])(?=[A-Z])/);

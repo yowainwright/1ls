@@ -1,39 +1,44 @@
-import { test, expect, beforeEach, afterEach } from "bun:test";
-import { spawn } from "bun";
-import { mkdtemp, rm, mkdir, writeFile, readdir } from "fs/promises";
-import { join } from "path";
-import { tmpdir } from "os";
+import { test, beforeEach, afterEach } from "node:test";
+import assert from "node:assert/strict";
+import { spawn } from "node:child_process";
+import { existsSync } from "node:fs";
+import { mkdtemp, rm, mkdir, writeFile, readdir, readFile } from "node:fs/promises";
+import { join } from "node:path";
+import { text } from "node:stream/consumers";
 
-const SCRIPT = join(import.meta.dir, "../../scripts/install-skills.sh");
+const SCRIPT = join(import.meta.dirname, "../../scripts/install-skills.sh");
+const TEST_ROOT = join(import.meta.dirname, "../../tmp/install-skills");
 
 async function run(
   env: Record<string, string>,
 ): Promise<{ exitCode: number; stdout: string; stderr: string }> {
-  const proc = spawn(["bash", SCRIPT], {
+  const proc = spawn("bash", [SCRIPT], {
     env: { ...process.env, ...env },
-    stdout: "pipe",
-    stderr: "pipe",
+    stdio: ["ignore", "pipe", "pipe"],
   });
-  const stdout = await new Response(proc.stdout).text();
-  const stderr = await new Response(proc.stderr).text();
-  await proc.exited;
-  return { exitCode: proc.exitCode ?? 1, stdout, stderr };
+  const stdout = await text(proc.stdout);
+  const stderr = await text(proc.stderr);
+  const exitCode = await new Promise<number>((resolve) => {
+    proc.on("close", (code) => resolve(code ?? 1));
+  });
+  return { exitCode, stdout, stderr };
 }
 
 async function makeSkillsFixture(dir: string): Promise<void> {
   const skillA = join(dir, "add-builtin");
-  const skillB = join(dir, "qjs-compat");
+  const skillB = join(dir, "add-format");
   await mkdir(skillA, { recursive: true });
   await mkdir(skillB, { recursive: true });
   await writeFile(join(skillA, "SKILL.md"), "# Add Builtin");
-  await writeFile(join(skillB, "SKILL.md"), "# QJS Compat");
+  await writeFile(join(skillB, "SKILL.md"), "# Add Format");
   await writeFile(join(dir, "agents.md"), "# Agents");
 }
 
 let tmp = "";
 
 beforeEach(async () => {
-  tmp = await mkdtemp(join(tmpdir(), "1ls-install-skills-"));
+  await mkdir(TEST_ROOT, { recursive: true });
+  tmp = await mkdtemp(join(TEST_ROOT, "case-"));
 });
 
 afterEach(async () => {
@@ -48,11 +53,11 @@ test("copies skill dirs and agents.md into INSTALL_DIR/skills", async () => {
 
   const result = await run({ SKILLS_SRC: src, INSTALL_DIR: installDir, CODEX_DEST: codexDest });
 
-  expect(result.exitCode).toBe(0);
+  assert.strictEqual(result.exitCode, 0);
   const entries = await readdir(join(installDir, "skills"));
-  expect(entries).toContain("add-builtin");
-  expect(entries).toContain("qjs-compat");
-  expect(entries).toContain("agents.md");
+  assert.ok(entries.includes("add-builtin"));
+  assert.ok(entries.includes("add-format"));
+  assert.ok(entries.includes("agents.md"));
 });
 
 test("creates INSTALL_DIR/skills if it does not exist", async () => {
@@ -63,9 +68,9 @@ test("creates INSTALL_DIR/skills if it does not exist", async () => {
 
   const result = await run({ SKILLS_SRC: src, INSTALL_DIR: installDir, CODEX_DEST: codexDest });
 
-  expect(result.exitCode).toBe(0);
+  assert.strictEqual(result.exitCode, 0);
   const entries = await readdir(join(installDir, "skills"));
-  expect(entries.length).toBeGreaterThan(0);
+  assert.ok(entries.length > 0);
 });
 
 test("copies nested files inside skill dirs", async () => {
@@ -79,10 +84,10 @@ test("copies nested files inside skill dirs", async () => {
 
   const result = await run({ SKILLS_SRC: src, INSTALL_DIR: installDir, CODEX_DEST: codexDest });
 
-  expect(result.exitCode).toBe(0);
+  assert.strictEqual(result.exitCode, 0);
   const entries = await readdir(join(installDir, "skills", "add-builtin"));
-  expect(entries).toContain("SKILL.md");
-  expect(entries).toContain("good-example.ts");
+  assert.ok(entries.includes("SKILL.md"));
+  assert.ok(entries.includes("good-example.ts"));
 });
 
 test("is idempotent — second run does not fail", async () => {
@@ -95,8 +100,8 @@ test("is idempotent — second run does not fail", async () => {
   const first = await run(env);
   const second = await run(env);
 
-  expect(first.exitCode).toBe(0);
-  expect(second.exitCode).toBe(0);
+  assert.strictEqual(first.exitCode, 0);
+  assert.strictEqual(second.exitCode, 0);
 });
 
 test("exits non-zero when SKILLS_SRC does not exist", async () => {
@@ -106,8 +111,8 @@ test("exits non-zero when SKILLS_SRC does not exist", async () => {
     CODEX_DEST: join(tmp, ".codex", "AGENTS.md"),
   });
 
-  expect(result.exitCode).not.toBe(0);
-  expect(result.stderr).toContain("Error");
+  assert.notStrictEqual(result.exitCode, 0);
+  assert.ok(result.stderr.includes("Error"));
 });
 
 test("prints confirmation message on success", async () => {
@@ -118,8 +123,8 @@ test("prints confirmation message on success", async () => {
 
   const result = await run({ SKILLS_SRC: src, INSTALL_DIR: installDir, CODEX_DEST: codexDest });
 
-  expect(result.stdout).toContain("✓ Skills installed to");
-  expect(result.stdout).toContain(join(installDir, "skills"));
+  assert.ok(result.stdout.includes("✓ Skills installed to"));
+  assert.ok(result.stdout.includes(join(installDir, "skills")));
 });
 
 test("copies agents.md into .codex/AGENTS.md", async () => {
@@ -129,9 +134,9 @@ test("copies agents.md into .codex/AGENTS.md", async () => {
 
   const result = await run({ SKILLS_SRC: src, INSTALL_DIR: join(tmp, ".claude"), CODEX_DEST: codexDest });
 
-  expect(result.exitCode).toBe(0);
-  const content = await Bun.file(codexDest).text();
-  expect(content).toBe("# Agents");
+  assert.strictEqual(result.exitCode, 0);
+  const content = await readFile(codexDest, "utf8");
+  assert.strictEqual(content, "# Agents");
 });
 
 test("creates .codex/ dir if it does not exist", async () => {
@@ -141,8 +146,8 @@ test("creates .codex/ dir if it does not exist", async () => {
 
   const result = await run({ SKILLS_SRC: src, INSTALL_DIR: join(tmp, ".claude"), CODEX_DEST: codexDest });
 
-  expect(result.exitCode).toBe(0);
-  expect(await Bun.file(codexDest).exists()).toBe(true);
+  assert.strictEqual(result.exitCode, 0);
+  assert.strictEqual(existsSync(codexDest), true);
 });
 
 test("prints confirmation for codex install", async () => {
@@ -152,8 +157,8 @@ test("prints confirmation for codex install", async () => {
 
   const result = await run({ SKILLS_SRC: src, INSTALL_DIR: join(tmp, ".claude"), CODEX_DEST: codexDest });
 
-  expect(result.stdout).toContain("✓ AGENTS.md installed to");
-  expect(result.stdout).toContain(codexDest);
+  assert.ok(result.stdout.includes("✓ AGENTS.md installed to"));
+  assert.ok(result.stdout.includes(codexDest));
 });
 
 test("codex install is idempotent", async () => {
@@ -165,6 +170,6 @@ test("codex install is idempotent", async () => {
   const first = await run(env);
   const second = await run(env);
 
-  expect(first.exitCode).toBe(0);
-  expect(second.exitCode).toBe(0);
+  assert.strictEqual(first.exitCode, 0);
+  assert.strictEqual(second.exitCode, 0);
 });

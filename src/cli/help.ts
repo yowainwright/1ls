@@ -1,5 +1,4 @@
-export function showHelp(): void {
-  console.log(`
+const HELP_TEXT = `
 1ls - 1 line script for JSON manipulation and file operations
 
 Usage:
@@ -73,5 +72,8 @@ Examples:
   1ls --shorten ".map(x => x * 2)"        # Convert to shorthand
   1ls --expand ".mp(x => x * 2)"          # Convert to full form
   1ls --shortcuts                          # Show all shortcuts
-  `);
+  `;
+
+export function showHelp(): void {
+  console.log(HELP_TEXT);
 }

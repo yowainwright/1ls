@@ -1,45 +1,46 @@
-import { describe, test, expect } from "bun:test";
+import { describe, test } from "node:test";
+import assert from "node:assert/strict";
 import { siteConfig } from "../config";
 
 describe("siteConfig", () => {
   test("has required top-level keys", () => {
-    expect("name" in siteConfig).toBe(true);
-    expect("tagline" in siteConfig).toBe(true);
-    expect("description" in siteConfig).toBe(true);
-    expect("hero" in siteConfig).toBe(true);
-    expect("links" in siteConfig).toBe(true);
+    assert.strictEqual("name" in siteConfig, true);
+    assert.strictEqual("tagline" in siteConfig, true);
+    assert.strictEqual("description" in siteConfig, true);
+    assert.strictEqual("hero" in siteConfig, true);
+    assert.strictEqual("links" in siteConfig, true);
   });
 
   test("name is a non-empty string", () => {
-    expect(typeof siteConfig.name).toBe("string");
-    expect(siteConfig.name.length).toBeGreaterThan(0);
+    assert.strictEqual(typeof siteConfig.name, "string");
+    assert.ok(siteConfig.name.length > 0);
   });
 
   test("hero has required fields", () => {
     const { hero } = siteConfig;
-    expect(typeof hero.title).toBe("string");
-    expect(typeof hero.subtitle).toBe("string");
-    expect(typeof hero.cta).toBe("string");
-    expect(typeof hero.ctaHref).toBe("string");
+    assert.strictEqual(typeof hero.title, "string");
+    assert.strictEqual(typeof hero.subtitle, "string");
+    assert.strictEqual(typeof hero.cta, "string");
+    assert.strictEqual(typeof hero.ctaHref, "string");
   });
 
   test("hero.ctaHref is a URL", () => {
-    expect(() => new URL(siteConfig.hero.ctaHref)).not.toThrow();
+    assert.doesNotThrow(() => new URL(siteConfig.hero.ctaHref));
   });
 
   test("links has github, npm, docs", () => {
-    expect(typeof siteConfig.links.github).toBe("string");
-    expect(typeof siteConfig.links.npm).toBe("string");
-    expect(typeof siteConfig.links.docs).toBe("string");
+    assert.strictEqual(typeof siteConfig.links.github, "string");
+    assert.strictEqual(typeof siteConfig.links.npm, "string");
+    assert.strictEqual(typeof siteConfig.links.docs, "string");
   });
 
   test("links are valid URLs", () => {
-    expect(() => new URL(siteConfig.links.github)).not.toThrow();
-    expect(() => new URL(siteConfig.links.npm)).not.toThrow();
-    expect(() => new URL(siteConfig.links.docs)).not.toThrow();
+    assert.doesNotThrow(() => new URL(siteConfig.links.github));
+    assert.doesNotThrow(() => new URL(siteConfig.links.npm));
+    assert.doesNotThrow(() => new URL(siteConfig.links.docs));
   });
 
   test("github link points to expected repo", () => {
-    expect(siteConfig.links.github).toContain("1ls");
+    assert.ok(siteConfig.links.github.includes("1ls"));
   });
 });

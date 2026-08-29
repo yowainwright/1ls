@@ -1,8 +1,10 @@
-import { describe, test, expect, mock, beforeEach, afterEach } from "bun:test";
+import { mock, describe, test, beforeEach, afterEach } from "node:test";
+import assert from "node:assert/strict";
+import { isDeepStrictEqual } from "node:util";
 import { render, fireEvent, waitFor } from "@testing-library/react";
 import { CopyButton } from "../CopyButton";
 
-const mockWriteText = mock(() => Promise.resolve());
+const mockWriteText = mock.fn(() => Promise.resolve());
 
 const originalClipboard = navigator.clipboard;
 
@@ -12,7 +14,7 @@ beforeEach(() => {
     writable: true,
     configurable: true,
   });
-  mockWriteText.mockClear();
+  mockWriteText.mock.resetCalls();
 });
 
 afterEach(() => {
@@ -27,13 +29,13 @@ describe("CopyButton", () => {
   test("renders copy button", () => {
     const { container } = render(<CopyButton code="test code" />);
     const button = container.querySelector("button");
-    expect(button).toBeInTheDocument();
+    assert.ok(button);
   });
 
   test("has correct aria-label", () => {
     const { container } = render(<CopyButton code="test code" />);
     const button = container.querySelector("button");
-    expect(button?.getAttribute("aria-label")).toBe("Copy code");
+    assert.strictEqual(button?.getAttribute("aria-label"), "Copy code");
   });
 
   test("copies code to clipboard when clicked", async () => {
@@ -43,7 +45,7 @@ describe("CopyButton", () => {
       fireEvent.click(button);
     }
     await waitFor(() => {
-      expect(mockWriteText).toHaveBeenCalledWith("test code");
+      assert.ok(mockWriteText.mock.calls.some((call) => isDeepStrictEqual(call.arguments, ["test code"])));
     });
   });
 
@@ -54,19 +56,19 @@ describe("CopyButton", () => {
       fireEvent.click(button);
     }
     await waitFor(() => {
-      expect(button?.getAttribute("aria-label")).toBe("Copied!");
+      assert.strictEqual(button?.getAttribute("aria-label"), "Copied!");
     });
   });
 
   test("applies custom className", () => {
     const { container } = render(<CopyButton code="test" className="custom-class" />);
     const button = container.querySelector("button");
-    expect(button?.className).toContain("custom-class");
+    assert.ok(button?.className.includes("custom-class"));
   });
 
   test("has absolute positioning by default", () => {
     const { container } = render(<CopyButton code="test" />);
     const button = container.querySelector("button");
-    expect(button?.className).toContain("absolute");
+    assert.ok(button?.className.includes("absolute"));
   });
 });

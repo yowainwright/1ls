@@ -5,7 +5,3 @@ export function parseProtobuf(_input: string): unknown {
       "protoc --decode_raw < file.pb | 1ls",
   );
 }
-
-export function parseProtobufJSON(input: string): unknown {
-  return JSON.parse(input);
-}

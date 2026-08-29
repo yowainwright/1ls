@@ -1,38 +1,47 @@
-import { parseBooleanValue, parseNullValue, tryParseNumber } from "./utils";
+import { parseBooleanValue, parseNullValue, tryParseNumber } from "./utils.ts";
+
+interface CSVLineState {
+  fields: string[];
+  current: string;
+  inQuotes: boolean;
+  skipNext: boolean;
+}
+
+const appendCSVField = (state: CSVLineState): CSVLineState => ({
+  fields: [...state.fields, state.current],
+  current: "",
+  inQuotes: state.inQuotes,
+  skipNext: false,
+});
+
+const parseCSVChar = (
+  state: CSVLineState,
+  char: string,
+  nextChar: string | undefined,
+  delimiter: string,
+): CSVLineState => {
+  if (state.skipNext) return { ...state, skipNext: false };
+  const isEscapedQuote = state.inQuotes && char === '"' && nextChar === '"';
+  if (isEscapedQuote) return { ...state, current: state.current + '"', skipNext: true };
+  if (char === '"') return { ...state, inQuotes: !state.inQuotes };
+  const isDelimiter = char === delimiter && !state.inQuotes;
+  if (isDelimiter) return appendCSVField(state);
+  return { ...state, current: state.current + char };
+};
 
 export function parseCSVLine(line: string, delimiter: string): string[] {
-  const result = [];
-  let current = "";
-  let inQuotes = false;
-
   const chars = line.split("");
-  chars.forEach((char, i) => {
-    const nextChar = chars[i + 1];
-
-    const isQuote = char === '"';
-    if (isQuote) {
-      const isEscapedQuote = inQuotes && nextChar === '"';
-      if (isEscapedQuote) {
-        current += '"';
-        chars.splice(i + 1, 1);
-        return;
-      }
-      inQuotes = !inQuotes;
-      return;
-    }
-
-    const isUnquotedDelimiter = char === delimiter && !inQuotes;
-    if (isUnquotedDelimiter) {
-      result.push(current);
-      current = "";
-      return;
-    }
-
-    current += char;
-  });
-
-  result.push(current);
-  return result.map((field) => field.trim());
+  const initialState: CSVLineState = {
+    fields: [],
+    current: "",
+    inQuotes: false,
+    skipNext: false,
+  };
+  const finalState = chars.reduce(
+    (state, char, i) => parseCSVChar(state, char, chars[i + 1], delimiter),
+    initialState,
+  );
+  return [...finalState.fields, finalState.current].map((field) => field.trim());
 }
 
 export function parseCSVValue(value: string): unknown {

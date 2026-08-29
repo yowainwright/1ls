@@ -24,14 +24,14 @@ const zipNoGuard: BuiltinFn = (data, [other]) => {
   return (data as unknown[]).map((item, i) => [item, (other as unknown[])[i]]);
 };
 
-// BAD: Uses async/await — not available in QuickJS NG CLI context
+// BAD: Uses async/await — builtins must stay synchronous
 // Fix: keep builtins synchronous, no Promises
 const fetchData = async (data: unknown) => {
   const response = await fetch(String(data));
   return response.json();
 };
 
-// BAD: Uses Intl — not available in QuickJS NG (no ICU)
+// BAD: Uses Intl — locale behavior is not part of the native core
 // Fix: use manual string comparison or locale-free sorting
 const sortLocale: BuiltinFn = (data) => {
   if (!Array.isArray(data)) return [];
@@ -40,7 +40,7 @@ const sortLocale: BuiltinFn = (data) => {
   );
 };
 
-// BAD: Uses structuredClone — not in QuickJS NG
+// BAD: Uses structuredClone — avoid runtime-specific cloning in builtins
 // Fix: use { ...obj } for shallow clone or JSON.parse(JSON.stringify(obj)) for deep
 const cloneData: BuiltinFn = (data) => {
   return structuredClone(data);
@@ -72,14 +72,14 @@ class BuiltinFactory {
 }
 const reverseOverEngineered = new BuiltinFactory("reverse").create();
 
-// BAD: Uses regex lookbehind — not supported in all QuickJS NG builds
+// BAD: Uses regex lookbehind — keep regexes simple and portable
 // Fix: use lookahead, capturing groups, or manual string parsing
 const splitCamelCase: BuiltinFn = (data) => {
   if (typeof data !== "string") return [];
   return data.split(/(?<=[a-z])(?=[A-Z])/);
 };
 
-// BAD: Uses TextEncoder — not available in QuickJS NG
+// BAD: Uses TextEncoder — byte encoding is outside builtin scope
 // Fix: use manual byte counting if needed, or avoid altogether
 const byteLength: BuiltinFn = (data) => {
   if (typeof data !== "string") return 0;

@@ -1,7 +1,7 @@
 import { openSync, writeSync, closeSync } from "fs";
-import type { Suggestion } from "../ac";
-import { ANSI } from "../formatting";
-import { CURSOR, BORDER } from "./constants";
+import type { Suggestion } from "../ac/index.ts";
+import { ANSI } from "../formatting/index.ts";
+import { CURSOR, BORDER } from "./constants.ts";
 
 const TYPE_COLORS: Record<Suggestion["type"], string> = {
   method: ANSI.cyan,
@@ -146,7 +146,10 @@ const PREVIEW_MAX_LINES = 5;
 
 const truncateLine = (line: string, maxWidth: number): string => {
   const needsTruncation = line.length > maxWidth;
-  return needsTruncation ? line.slice(0, maxWidth - 1) + "…" : line;
+  if (!needsTruncation) return line;
+
+  const truncatedWidth = maxWidth - 1;
+  return line.slice(0, truncatedWidth) + "…";
 };
 
 const formatPreviewLine = (line: string): string => {

@@ -1,19 +1,18 @@
-import { TOML } from "./constants";
+import { TOML } from "./constants.ts";
 
 export function parseTOMLValue(value: string): unknown {
   const hasDoubleQuotes = value.startsWith('"') && value.endsWith('"');
-  if (hasDoubleQuotes) {
-    return value.slice(1, -1).replace(/\\"/g, '"');
-  }
+  if (hasDoubleQuotes) return value.slice(1, -1).replace(/\\"/g, '"');
 
   const hasSingleQuotes = value.startsWith("'") && value.endsWith("'");
-  if (hasSingleQuotes) {
-    return value.slice(1, -1);
-  }
+  if (hasSingleQuotes) return value.slice(1, -1);
 
   if (value === "true") return true;
   if (value === "false") return false;
+  return parseTOMLStructuredValue(value);
+}
 
+function parseTOMLStructuredValue(value: string): unknown {
   const isInteger = TOML.INTEGER.test(value);
   if (isInteger) return parseInt(value, 10);
 
@@ -67,41 +66,40 @@ function getTOMLSection(
   return section;
 }
 
+const stripTOMLComment = (line: string): string => {
+  const commentIdx = line.indexOf("#");
+  if (commentIdx < 0) return line;
+  const beforeComment = line.substring(0, commentIdx);
+  const quoteCount = (beforeComment.match(/["']/g) || []).length;
+  const isOutsideQuotes = quoteCount % 2 === 0;
+  if (!isOutsideQuotes) return line;
+  return beforeComment;
+};
+
+const parseTOMLLine = (
+  result: Record<string, unknown>,
+  currentSection: Record<string, unknown>,
+  rawLine: string,
+): Record<string, unknown> => {
+  const trimmed = stripTOMLComment(rawLine).trim();
+  if (!trimmed) return currentSection;
+  const isSection = trimmed.startsWith("[") && trimmed.endsWith("]");
+  if (isSection) return getTOMLSection(result, trimmed.slice(1, -1).split("."));
+  const equalsIndex = trimmed.indexOf("=");
+  if (equalsIndex <= 0) return currentSection;
+  const key = trimmed.substring(0, equalsIndex).trim();
+  const value = trimmed.substring(equalsIndex + 1).trim();
+  currentSection[key] = parseTOMLValue(value);
+  return currentSection;
+};
+
 export function parseTOML(input: string): unknown {
   const lines = input.trim().split("\n");
   const result: Record<string, unknown> = {};
   let currentSection: Record<string, unknown> = result;
 
   lines.forEach((rawLine) => {
-    let line = rawLine;
-
-    const commentIdx = line.indexOf("#");
-    if (commentIdx >= 0) {
-      const beforeComment = line.substring(0, commentIdx);
-      const quoteCount = (beforeComment.match(/["']/g) || []).length;
-      if (quoteCount % 2 === 0) {
-        line = beforeComment;
-      }
-    }
-
-    const trimmed = line.trim();
-    if (!trimmed) return;
-
-    const isSection = trimmed.startsWith("[") && trimmed.endsWith("]");
-    if (isSection) {
-      const sectionPath = trimmed.slice(1, -1).split(".");
-      currentSection = getTOMLSection(result, sectionPath);
-      return;
-    }
-
-    const equalsIndex = trimmed.indexOf("=");
-    const isKeyValue = equalsIndex > 0;
-
-    if (isKeyValue) {
-      const key = trimmed.substring(0, equalsIndex).trim();
-      const value = trimmed.substring(equalsIndex + 1).trim();
-      currentSection[key] = parseTOMLValue(value);
-    }
+    currentSection = parseTOMLLine(result, currentSection, rawLine);
   });
 
   return result;

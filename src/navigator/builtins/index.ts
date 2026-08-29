@@ -1,5 +1,5 @@
-import type { BuiltinFn, KeyExtractor, Predicate } from "./types";
-import { EMPTY_SYMBOL, BUILTIN_FUNCTIONS } from "./constants";
+import type { BuiltinFn, KeyExtractor, Predicate } from "./types.ts";
+import { EMPTY_SYMBOL, BUILTIN_FUNCTIONS } from "./constants.ts";
 import {
   isArray,
   isObject,
@@ -13,10 +13,10 @@ import {
   setValueAtPath,
   collectAllValues,
   collectPaths,
-} from "./utils";
+} from "./utils.ts";
 
-export { EMPTY_SYMBOL, BUILTIN_FUNCTIONS } from "./constants";
-export type { BuiltinFn, KeyExtractor, Predicate } from "./types";
+export { EMPTY_SYMBOL, BUILTIN_FUNCTIONS } from "./constants.ts";
+export type { BuiltinFn, KeyExtractor, Predicate } from "./types.ts";
 
 export const BUILTINS: Record<string, BuiltinFn> = {
   [BUILTIN_FUNCTIONS.HEAD]: (data) => (isArray(data) ? data[0] : undefined),
@@ -138,9 +138,9 @@ export const BUILTINS: Record<string, BuiltinFn> = {
     if (isString(data)) return data.length === 0;
     return false;
   },
-  [BUILTIN_FUNCTIONS.ISNIL]: (data) => isNil(data),
+  [BUILTIN_FUNCTIONS.ISNIL]: isNil,
   [BUILTIN_FUNCTIONS.IDENTITY]: (data) => data,
-  [BUILTIN_FUNCTIONS.TYPE]: (data) => getType(data),
+  [BUILTIN_FUNCTIONS.TYPE]: getType,
   [BUILTIN_FUNCTIONS.RANGE]: (_, args) => {
     const [start, end, step = 1] = args as number[];
     const hasOnlyOneArg = end === undefined;
@@ -184,7 +184,7 @@ export const BUILTINS: Record<string, BuiltinFn> = {
   [BUILTIN_FUNCTIONS.GETPATH]: (data, [path]) => getValueAtPath(data, path as (string | number)[]),
   [BUILTIN_FUNCTIONS.SETPATH]: (data, [path, value]) =>
     setValueAtPath(data, path as (string | number)[], value),
-  [BUILTIN_FUNCTIONS.RECURSE]: (data) => collectAllValues(data),
+  [BUILTIN_FUNCTIONS.RECURSE]: collectAllValues,
   [BUILTIN_FUNCTIONS.SPLIT]: (data, [sep]) => {
     if (!isString(data)) return [];
     const separator = sep as string;

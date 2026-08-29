@@ -5,11 +5,11 @@ import type {
   RecursiveDescentNode,
   OptionalAccessNode,
   NullCoalescingNode,
-} from "../../types";
-import type { EvaluationContext } from "../types";
-import type { NavigatorOptions } from "./types";
-import { BUILTIN_FUNCTIONS } from "../builtins/constants";
-import { isBuiltin, executeBuiltin } from "../builtins";
+} from "../../types.ts";
+import type { EvaluationContext } from "../types.ts";
+import type { NavigatorOptions } from "./types.ts";
+import { BUILTIN_FUNCTIONS } from "../builtins/constants.ts";
+import { isBuiltin, executeBuiltin } from "../builtins/index.ts";
 import {
   isOperatorMethod,
   extractOperator,
@@ -21,7 +21,7 @@ import {
   sliceArray,
   evaluateObjectOperation,
   callMethod,
-} from "./utils";
+} from "./utils.ts";
 
 type AccessNode = Extract<ASTNode, { type: "IndexAccess" | "SliceAccess" | "ArraySpread" }>;
 
@@ -34,8 +34,8 @@ const ACCESS_NODE_TYPES = new Set<AccessNode["type"]>([
 const isAccessNode = (ast: ASTNode): ast is AccessNode =>
   ACCESS_NODE_TYPES.has(ast.type as AccessNode["type"]);
 
-export { OPERATORS } from "./constants";
-export type { NavigatorOptions } from "./types";
+export { OPERATORS } from "./constants.ts";
+export type { NavigatorOptions } from "./types.ts";
 export {
   isOperatorMethod,
   extractOperator,
@@ -50,7 +50,7 @@ export {
   evaluateObjectOperation,
   isCallableMethod,
   callMethod,
-} from "./utils";
+} from "./utils.ts";
 
 export class JsonNavigator {
   private options: NavigatorOptions;
@@ -104,8 +104,7 @@ export class JsonNavigator {
 
     const shouldRejectUndefined = this.options.strict && result === undefined;
     if (shouldRejectUndefined) {
-      const path = ast.property;
-      throw new Error(`Property "${path}" is undefined`);
+      throw new Error(`Property "${ast.property}" is undefined`);
     }
 
     return result;
@@ -160,21 +159,19 @@ export class JsonNavigator {
     return this.collectAllValues(baseData);
   }
 
-  private collectAllValues(data: unknown, result: unknown[] = []): unknown[] {
-    result.push(data);
-
+  private collectAllValues(data: unknown): unknown[] {
     if (Array.isArray(data)) {
-      data.forEach((item) => this.collectAllValues(item, result));
-    } else {
-      const isObject = data !== null && typeof data === "object";
-      if (!isObject) return result;
-
-      Object.values(data as Record<string, unknown>).forEach((val) =>
-        this.collectAllValues(val, result),
-      );
+      const childValues = data.flatMap((item) => this.collectAllValues(item));
+      return [data, ...childValues];
     }
 
-    return result;
+    const isObject = data !== null && typeof data === "object";
+    if (!isObject) return [data];
+
+    const childValues = Object.values(data as Record<string, unknown>).flatMap((value) =>
+      this.collectAllValues(value),
+    );
+    return [data, ...childValues];
   }
 
   private evaluateOptionalAccess(ast: OptionalAccessNode, data: unknown): unknown {

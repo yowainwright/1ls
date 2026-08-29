@@ -2,9 +2,9 @@ import { readdirSync, statSync, readFileSync, writeFileSync, mkdirSync, rmSync }
 import { dirname, join } from "path";
 import { pathToFileURL } from "url";
 
-const ROUTES_DIR = join(import.meta.dir, "../src/routes");
-const DIST_DIR = join(import.meta.dir, "../dist");
-const SSR_DIR = join(import.meta.dir, "../dist-ssr");
+const ROUTES_DIR = join(import.meta.dirname, "../src/routes");
+const DIST_DIR = join(import.meta.dirname, "../dist");
+const SSR_DIR = join(import.meta.dirname, "../dist-ssr");
 const SSR_ENTRY = join(SSR_DIR, "entry-server.js");
 const ROOT_ELEMENT = '<div id="root"></div>';
 const NON_STATIC_MARKERS = ['<template id="B:', '<div hidden id="S:', "data-msg="];

@@ -21,19 +21,23 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
         with:
-          bun-version: 1.4.0
+          node-version: 24
+          cache: pnpm
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
 
       - name: Install dependencies
-        run: bun install
+        run: pnpm install --frozen-lockfile
 
       - name: Build main package
-        run: bun run build
+        run: pnpm run build
 
       - name: Link workspace package
         run: |
@@ -42,7 +46,7 @@ jobs:
 
       - name: Build site
         working-directory: ./app
-        run: bun run build
+        run: pnpm run build
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3

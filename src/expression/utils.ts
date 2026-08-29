@@ -14,11 +14,15 @@ import type {
   RecursiveDescentNode,
   OptionalAccessNode,
   NullCoalescingNode,
-} from "../types";
-import { BOOLEAN_LITERALS, VALID_OBJECT_OPERATIONS } from "./constants";
+} from "../types.ts";
+import { BOOLEAN_LITERALS, VALID_OBJECT_OPERATIONS } from "./constants.ts";
 
-export const isBooleanLiteral = (value: string): value is (typeof BOOLEAN_LITERALS)[number] =>
-  (BOOLEAN_LITERALS as readonly string[]).includes(value);
+const BOOLEAN_LITERAL_SET = new Set<string>(BOOLEAN_LITERALS);
+
+export const isBooleanLiteral = (value: string): value is (typeof BOOLEAN_LITERALS)[number] => {
+  const normalizedValue = value.toLowerCase();
+  return BOOLEAN_LITERAL_SET.has(normalizedValue);
+};
 
 export const createLiteralNode = (value: string | number | boolean | null): LiteralNode => ({
   type: "Literal",

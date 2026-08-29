@@ -1,27 +1,28 @@
-import { describe, it, expect } from "bun:test";
+import { describe, test as it } from "node:test";
+import assert from "node:assert/strict";
 import { NAV_LINKS, GITHUB_URL } from "./constants";
 
 describe("NAV_LINKS", () => {
   it("contains expected navigation items", () => {
-    expect(NAV_LINKS).toHaveLength(3);
+    assert.strictEqual(NAV_LINKS.length, 3);
 
     const hrefs = NAV_LINKS.map((link) => link.href);
-    expect(hrefs).toContain("/");
-    expect(hrefs).toContain("/docs");
-    expect(hrefs).toContain("/playground");
+    assert.ok(hrefs.includes("/"));
+    assert.ok(hrefs.includes("/docs"));
+    assert.ok(hrefs.includes("/playground"));
   });
 
   it("all links have required properties", () => {
     NAV_LINKS.forEach((link) => {
-      expect(link.href).toBeDefined();
-      expect(link.label).toBeDefined();
-      expect(link.icon).toBeDefined();
+      assert.notStrictEqual(link.href, undefined);
+      assert.notStrictEqual(link.label, undefined);
+      assert.notStrictEqual(link.icon, undefined);
     });
   });
 });
 
 describe("GITHUB_URL", () => {
   it("points to the correct repository", () => {
-    expect(GITHUB_URL).toBe("https://github.com/yowainwright/1ls");
+    assert.strictEqual(GITHUB_URL, "https://github.com/yowainwright/1ls");
   });
 });

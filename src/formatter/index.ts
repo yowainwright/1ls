@@ -1,4 +1,4 @@
-export { Formatter } from "./output";
+export { Formatter } from "./output.ts";
 export {
   COLORS,
   COLOR_PATTERNS,
@@ -8,4 +8,4 @@ export {
   warning,
   info,
   dim,
-} from "./colors";
+} from "./colors.ts";

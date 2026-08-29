@@ -1,7 +1,8 @@
-import { describe, test, expect, beforeEach, afterEach } from "bun:test";
+import { describe, test, beforeEach, afterEach } from "node:test";
+import assert from "node:assert/strict";
 import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, existsSync, rmSync } from "fs";
-import { join } from "path";
-import { tmpdir } from "os";
+import { dirname, join } from "path";
+import { fileURLToPath } from "url";
 import {
   isSkipped,
   toRoutePath,
@@ -11,7 +12,15 @@ import {
   toHtmlPath,
   writeRoutes,
   type RenderRoute,
-} from "./prerender";
+} from "./prerender.ts";
+
+const THIS_DIR = dirname(fileURLToPath(import.meta.url));
+const TEST_ROOT = join(THIS_DIR, "..", "..", "tmp", "app-prerender");
+
+function makeTestDir(prefix: string): string {
+  mkdirSync(TEST_ROOT, { recursive: true });
+  return mkdtempSync(join(TEST_ROOT, prefix));
+}
 
 function makeRoutesFixture(base: string): void {
   const mk = (p: string) => mkdirSync(join(base, p), { recursive: true });
@@ -35,42 +44,42 @@ let routesDir = "";
 
 describe("isSkipped", () => {
   test("skips private dirs starting with -", () => {
-    expect(isSkipped("-components")).toBe(true);
+    assert.strictEqual(isSkipped("-components"), true);
   });
 
   test("skips TanStack special files starting with __", () => {
-    expect(isSkipped("__root.tsx")).toBe(true);
+    assert.strictEqual(isSkipped("__root.tsx"), true);
   });
 
   test("skips route.tsx and route.ts layout files", () => {
-    expect(isSkipped("route.tsx")).toBe(true);
-    expect(isSkipped("route.ts")).toBe(true);
+    assert.strictEqual(isSkipped("route.tsx"), true);
+    assert.strictEqual(isSkipped("route.ts"), true);
   });
 
   test("does not skip regular route files", () => {
-    expect(isSkipped("index.tsx")).toBe(false);
-    expect(isSkipped("playground.tsx")).toBe(false);
+    assert.strictEqual(isSkipped("index.tsx"), false);
+    assert.strictEqual(isSkipped("playground.tsx"), false);
   });
 });
 
 describe("toRoutePath", () => {
   test("strips .tsx extension", () => {
-    expect(toRoutePath("index.tsx")).toBe("index");
+    assert.strictEqual(toRoutePath("index.tsx"), "index");
   });
 
   test("strips .ts extension", () => {
-    expect(toRoutePath("route.ts")).toBe("route");
+    assert.strictEqual(toRoutePath("route.ts"), "route");
   });
 
   test("strips .jsx and .js extensions", () => {
-    expect(toRoutePath("page.jsx")).toBe("page");
-    expect(toRoutePath("page.js")).toBe("page");
+    assert.strictEqual(toRoutePath("page.jsx"), "page");
+    assert.strictEqual(toRoutePath("page.js"), "page");
   });
 });
 
 describe("collectRoutes", () => {
   beforeEach(() => {
-    routesDir = mkdtempSync(join(tmpdir(), "prerender-routes-"));
+    routesDir = makeTestDir("routes-");
     makeRoutesFixture(routesDir);
   });
 
@@ -79,36 +88,36 @@ describe("collectRoutes", () => {
   });
 
   test("includes root route", () => {
-    expect(collectRoutes(routesDir)).toContain("/");
+    assert.ok(collectRoutes(routesDir).includes("/"));
   });
 
   test("includes top-level routes", () => {
     const routes = collectRoutes(routesDir);
-    expect(routes).toContain("/playground");
-    expect(routes).toContain("/docs");
+    assert.ok(routes.includes("/playground"));
+    assert.ok(routes.includes("/docs"));
   });
 
   test("includes nested routes", () => {
     const routes = collectRoutes(routesDir);
-    expect(routes).toContain("/docs/guides/installation");
-    expect(routes).toContain("/docs/guides");
-    expect(routes).toContain("/docs/api/builtins");
+    assert.ok(routes.includes("/docs/guides/installation"));
+    assert.ok(routes.includes("/docs/guides"));
+    assert.ok(routes.includes("/docs/api/builtins"));
   });
 
   test("all routes start with /", () => {
     const routes = collectRoutes(routesDir);
-    expect(routes.every((r) => r.startsWith("/"))).toBe(true);
+    assert.strictEqual(routes.every((r) => r.startsWith("/")), true);
   });
 
   test("excludes private component dirs", () => {
     const routes = collectRoutes(routesDir);
-    expect(routes.every((r) => !r.includes("-components"))).toBe(true);
+    assert.strictEqual(routes.every((r) => !r.includes("-components")), true);
   });
 
   test("excludes layout and special files", () => {
     const routes = collectRoutes(routesDir);
-    expect(routes.every((r) => !r.includes("__root"))).toBe(true);
-    expect(routes.every((r) => !r.includes("/route"))).toBe(true);
+    assert.strictEqual(routes.every((r) => !r.includes("__root")), true);
+    assert.strictEqual(routes.every((r) => !r.includes("/route")), true);
   });
 });
 
@@ -116,34 +125,32 @@ describe("writeRoutes", () => {
   const renderRoute: RenderRoute = async (route) => `<main>${route}</main>`;
 
   test("creates index.html for each route", async () => {
-    const tmpDir = mkdtempSync(join(tmpdir(), "prerender-test-"));
+    const tmpDir = makeTestDir("write-routes-");
     const html = '<html><body><div id="root"></div></body></html>';
 
     await writeRoutes(["/", "/docs", "/playground"], tmpDir, html, renderRoute);
 
-    expect(existsSync(join(tmpDir, "index.html"))).toBe(true);
-    expect(existsSync(join(tmpDir, "docs", "index.html"))).toBe(true);
-    expect(existsSync(join(tmpDir, "playground", "index.html"))).toBe(true);
+    assert.strictEqual(existsSync(join(tmpDir, "index.html")), true);
+    assert.strictEqual(existsSync(join(tmpDir, "docs", "index.html")), true);
+    assert.strictEqual(existsSync(join(tmpDir, "playground", "index.html")), true);
   });
 
   test("writes rendered route content", async () => {
-    const tmpDir = mkdtempSync(join(tmpdir(), "prerender-test-"));
+    const tmpDir = makeTestDir("rendered-route-");
     const html = '<html><body><div id="root"></div></body></html>';
 
     await writeRoutes(["/docs"], tmpDir, html, renderRoute);
 
-    expect(readFileSync(join(tmpDir, "docs", "index.html"), "utf-8")).toContain(
-      '<div id="root"><main>/docs</main></div>',
-    );
+    assert.ok(readFileSync(join(tmpDir, "docs", "index.html"), "utf-8").includes('<div id="root"><main>/docs</main></div>',));
   });
 
   test("creates nested directories as needed", async () => {
-    const tmpDir = mkdtempSync(join(tmpdir(), "prerender-test-"));
+    const tmpDir = makeTestDir("nested-routes-");
     const html = '<html><body><div id="root"></div></body></html>';
 
     await writeRoutes(["/docs/guides/installation"], tmpDir, html, renderRoute);
 
-    expect(existsSync(join(tmpDir, "docs", "guides", "installation", "index.html"))).toBe(true);
+    assert.strictEqual(existsSync(join(tmpDir, "docs", "guides", "installation", "index.html")), true);
   });
 });
 
@@ -151,36 +158,34 @@ describe("injectRouteMarkup", () => {
   test("injects rendered markup into the app root", () => {
     const html = '<html><body><div id="root"></div></body></html>';
 
-    expect(injectRouteMarkup(html, "<main>Static content</main>")).toContain(
-      '<div id="root"><main>Static content</main></div>',
-    );
+    assert.ok(injectRouteMarkup(html, "<main>Static content</main>").includes('<div id="root"><main>Static content</main></div>',));
   });
 
   test("rejects a template without an app root", () => {
-    expect(() => injectRouteMarkup("<html></html>", "content")).toThrow("root element");
+    assert.throws(() => injectRouteMarkup("<html></html>", "content"), /root element/);
   });
 });
 
 describe("assertStaticMarkup", () => {
   test("accepts resolved route content", () => {
-    expect(() => assertStaticMarkup("<main>Static content</main>")).not.toThrow();
+    assert.doesNotThrow(() => assertStaticMarkup("<main>Static content</main>"));
   });
 
   test("rejects empty route content", () => {
-    expect(() => assertStaticMarkup("  ")).toThrow("empty");
+    assert.throws(() => assertStaticMarkup("  "), /empty/);
   });
 
   test("rejects deferred React content", () => {
-    expect(() => assertStaticMarkup('<template id="B:0"></template>')).toThrow("deferred content");
+    assert.throws(() => assertStaticMarkup('<template id="B:0"></template>'), /deferred content/);
   });
 });
 
 describe("toHtmlPath", () => {
   test("maps the root route to the root index", () => {
-    expect(toHtmlPath("/", "/dist")).toBe("/dist/index.html");
+    assert.strictEqual(toHtmlPath("/", "/dist"), "/dist/index.html");
   });
 
   test("maps nested routes to nested indexes", () => {
-    expect(toHtmlPath("/docs/guides", "/dist")).toBe("/dist/docs/guides/index.html");
+    assert.strictEqual(toHtmlPath("/docs/guides", "/dist"), "/dist/docs/guides/index.html");
   });
 });

@@ -1,6 +1,6 @@
 import { unlinkSync, existsSync, writeFileSync, statSync, readFileSync } from "fs";
 import { spawnSync } from "child_process";
-import { complete } from "../ac";
+import { complete } from "../ac/index.ts";
 import {
   openTty,
   closeTty,
@@ -11,14 +11,14 @@ import {
   selectPrev,
   getSelectedIndex,
   renderPreview,
-} from "./renderer";
-import { FIFO_PATH, RESPONSE_PATH } from "./constants";
-import type { DaemonConfig } from "./types";
-import { readFile } from "../fs";
-import { Lexer } from "../lexer";
-import { ExpressionParser } from "../expression";
-import { JsonNavigator } from "../navigator/json";
-import { expandShortcuts } from "../shortcuts";
+} from "./renderer.ts";
+import { FIFO_PATH, RESPONSE_PATH } from "./constants.ts";
+import type { DaemonConfig } from "./types.ts";
+import { readFile } from "../fs/index.ts";
+import { Lexer } from "../lexer/index.ts";
+import { ExpressionParser } from "../expression/index.ts";
+import { JsonNavigator } from "../navigator/json/index.ts";
+import { expandShortcuts } from "../shortcuts/index.ts";
 
 export interface Message {
   input: string;
@@ -120,60 +120,47 @@ const handlePreview = async (msg: Message): Promise<void> => {
   }
 };
 
-export const handleMessage = async (msg: Message): Promise<void> => {
-  if (msg.tty) {
-    openTty(msg.tty);
-  }
+const handleHide = (): void => {
+  hide();
+  lastSuggestions = [];
+  writeFileSync(config.responsePath, "");
+};
 
-  const isHideAction = msg.action === "hide";
-  if (isHideAction) {
-    hide();
-    lastSuggestions = [];
-    writeFileSync(config.responsePath, "");
-    return;
-  }
+const handleNavigation = (msg: Message): boolean => {
+  const hasSuggestions = lastSuggestions.length > 0;
+  if (!hasSuggestions) return false;
 
-  const isPreviewAction = msg.action === "preview";
-  if (isPreviewAction) {
-    await handlePreview(msg);
-    return;
-  }
-
-  const isNextAction = msg.action === "next";
-  const hasNavigationSuggestions = lastSuggestions.length > 0;
-  const shouldSelectNext = isNextAction && hasNavigationSuggestions;
-  if (shouldSelectNext) {
+  if (msg.action === "next") {
     selectNext(lastSuggestions.length);
     render(lastSuggestions);
     writeResponseWithSelected();
-    return;
+    return true;
   }
 
-  const isPrevAction = msg.action === "prev";
-  const shouldSelectPrevious = isPrevAction && hasNavigationSuggestions;
-  if (shouldSelectPrevious) {
+  if (msg.action === "prev") {
     selectPrev(lastSuggestions.length);
     render(lastSuggestions);
     writeResponseWithSelected();
-    return;
+    return true;
   }
 
-  let result: ReturnType<typeof complete>;
+  return false;
+};
+
+const getCompletionResult = async (msg: Message): Promise<ReturnType<typeof complete>> => {
   const hasCompletionContext = Boolean(msg.file && msg.expr);
+  if (!hasCompletionContext) return complete(msg.input);
 
-  if (hasCompletionContext) {
-    try {
-      const data = await readCachedFile(msg.file!);
-      result = complete(msg.input, { data, expression: msg.expr });
-    } catch {
-      result = complete(msg.input);
-    }
-  } else {
-    result = complete(msg.input);
+  try {
+    const data = await readCachedFile(msg.file!);
+    return complete(msg.input, { data, expression: msg.expr });
+  } catch {
+    return complete(msg.input);
   }
+};
 
+const renderCompletionResult = (result: ReturnType<typeof complete>): void => {
   lastSuggestions = result.suggestions;
-
   const hasSuggestions = result.suggestions.length > 0;
   if (hasSuggestions) {
     resetSelection();
@@ -183,6 +170,16 @@ export const handleMessage = async (msg: Message): Promise<void> => {
     hide();
     writeFileSync(config.responsePath, "");
   }
+};
+
+export const handleMessage = async (msg: Message): Promise<void> => {
+  if (msg.tty) openTty(msg.tty);
+  if (msg.action === "hide") return handleHide();
+  if (msg.action === "preview") return handlePreview(msg);
+  const didNavigate = handleNavigation(msg);
+  if (didNavigate) return;
+  const result = await getCompletionResult(msg);
+  renderCompletionResult(result);
 };
 
 export const processLines = async (lines: string[]): Promise<void> => {

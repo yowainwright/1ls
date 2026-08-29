@@ -11,7 +11,7 @@ Brief description of the issue or feature request.
 
 ## Environment (if bug)
 
-- Bun version:
+- Node version:
 - 1ls version:
 - Operating system:
 

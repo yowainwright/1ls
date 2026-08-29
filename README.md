@@ -22,7 +22,7 @@ JavaScript syntax with shortcuts. JSON, YAML, TOML, XML, CSV, INI, ENV, NDJSON. 
 
 - **JavaScript Syntax**: Use familiar JavaScript array methods and syntax instead of learning jq's DSL
 - **Multi-format**: Works with JSON, JSON5, YAML, TOML, XML, INI, CSV, TSV, ENV, NDJSON, plain text, and lines
-- **Fast**: Built for speed; no deps, compiled by Bun
+- **Fast**: Built for speed; no deps, native release binaries via scriptc
 - **Intuitive**: Property access with dot notation, just like JavaScript
 - **Powerful**: Full support for array methods, arrow functions, and object operations
 - **Shortcuts**: Built-in shortcuts for common operations (e.g., `.mp` for `.map`)
@@ -93,11 +93,11 @@ echo 'name: Ada' | 1ls '.name'
 ## Installation
 
 ```bash
-# Using bun (or npm, pnpm, etc)
+# Using pnpm
 # works in the commandline or the web
-bun add -g 1ls
+pnpm add -g 1ls
 
-# Or via binaries. here you get a QuickJs build
+# Or via native binaries
 # Using Homebrew (macOS/Linux)
 brew install yowainwright/tap/1ls
 # Using curl
@@ -529,7 +529,7 @@ done
 
 ## Performance
 
-1ls is built with Bun and optimized for speed:
+1ls uses Node for development builds and scriptc for native release binaries:
 - Fast JSON parsing and stringification
 - Minimal overhead for expression evaluation
 - Efficient streaming for large files
@@ -543,16 +543,16 @@ git clone https://github.com/yowainwright/1ls.git
 cd 1ls
 
 # Install dependencies
-bun install
+pnpm install
 
 # Run tests
-bun test
+pnpm test
 
 # Build
-bun run build
+pnpm run build
 
-# Build binaries
-bun run build:binary:all
+# Build native binary
+pnpm run build:binary
 ```
 
 ## Contributing
@@ -568,7 +568,7 @@ MIT © Jeff Wainwright
 | Feature | 1ls | jq | fx |
 |---------|-----|----|----|
 | Syntax | JavaScript | DSL | JavaScript |
-| Implementation | Bun/TS | C | Go |
+| Implementation | Node/TS + scriptc | C | Go |
 | Learning Curve | Easy | Steep | Easy |
 | Multi-format | ✓ (12) | x | ✓ (JSON/YAML/TOML) |
 | Auto-detect Format | ✓ | x | x |
@@ -663,7 +663,7 @@ Lower is better. Times in milliseconds (ms).
 | uniq() | 100000 | 355.20 | 576.73 | 0.53 |
 | flatten() | 100000 | 370.08 | 760.43 | 0.51 |
 
-Run `bun run test:bench` to regenerate benchmarks.
+Run `pnpm run test:bench` to regenerate benchmarks.
 
 <!-- BENCHMARKS:END -->
 

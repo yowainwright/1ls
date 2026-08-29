@@ -1,6 +1,6 @@
-#!/usr/bin/env bun
+#!/usr/bin/env node
 
-import { startServer, stopServer } from "./server";
+import { startServer, stopServer } from "./server.ts";
 
 export const startDaemon = async (): Promise<void> => {
   process.on("SIGINT", () => {

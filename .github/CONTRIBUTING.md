@@ -5,24 +5,24 @@ Thanks for your interest in contributing to 1ls! This guide will help you get st
 ## Development Setup
 
 1. Fork and clone the repository
-2. Install Bun (recommended via mise or direct install from bun.sh)
-3. Install dependencies: `bun install`
+2. Install Node 24+
+3. Install dependencies: `pnpm install`
 
 ## Development Workflow
 
 1. Create a feature branch: `git checkout -b feature/your-feature`
 2. Make your changes
-3. Lint code: `bun run lint`
-4. Type check: `bun run typecheck`
-5. Run tests: `bun test`
-6. Build project: `bun run build`
+3. Lint code: `pnpm run lint`
+4. Type check: `pnpm run typecheck`
+5. Run tests: `pnpm test`
+6. Build project: `pnpm run build`
 
 ## Testing
 
-- Unit tests: `bun test`
-- Integration tests: `bun test test/integration/`
-- Coverage: `bun run test:coverage`
-- All checks: `bun run build && bun run lint && bun test`
+- Unit tests: `pnpm test`
+- Integration tests: `pnpm run test:integration`
+- Coverage: `pnpm run test:coverage`
+- All checks: `pnpm run build && pnpm run lint && pnpm test`
 
 ## Code Style
 
@@ -39,9 +39,9 @@ Thanks for your interest in contributing to 1ls! This guide will help you get st
 
 ## Pull Request Process
 
-1. Ensure all tests pass (`bun test`)
-2. Ensure TypeScript compilation succeeds (`bun run build`)
-3. Ensure linting passes (`bun run lint`)
+1. Ensure all tests pass (`pnpm test`)
+2. Ensure TypeScript compilation succeeds (`pnpm run build`)
+3. Ensure linting passes (`pnpm run lint`)
 4. Update documentation if needed (README.md, JSDoc comments)
 5. Create a pull request with a clear description
 6. Link any related issues
@@ -50,7 +50,7 @@ Thanks for your interest in contributing to 1ls! This guide will help you get st
 
 When reporting issues, please include:
 
-- Bun version (`bun --version`)
+- Node version (`node --version`)
 - Operating system (macOS, Linux, etc.)
 - 1ls version (`1ls --version`)
 - Minimal reproduction case

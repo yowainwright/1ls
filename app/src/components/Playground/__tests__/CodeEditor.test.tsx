@@ -1,23 +1,6 @@
-import { describe, test, expect, mock } from "bun:test";
+import { describe, test } from "node:test";
+import assert from "node:assert/strict";
 import { render } from "@testing-library/react";
-
-mock.module("react-simple-code-editor", () => ({
-  default: ({
-    value,
-    onValueChange,
-    placeholder,
-  }: {
-    value: string;
-    onValueChange: (v: string) => void;
-    placeholder?: string;
-  }) => (
-    <textarea
-      value={value}
-      onChange={(e) => onValueChange(e.target.value)}
-      placeholder={placeholder}
-    />
-  ),
-}));
 
 import { CodeEditor } from "../CodeEditor";
 
@@ -26,14 +9,14 @@ describe("CodeEditor", () => {
     const { container } = render(
       <CodeEditor label="Input" value="" onValueChange={() => {}} language="json" />,
     );
-    expect(container.textContent).toContain("Input");
+    assert.ok(container.textContent.includes("Input"));
   });
 
   test("renders editor textarea", () => {
     const { container } = render(
       <CodeEditor label="Input" value="test code" onValueChange={() => {}} language="json" />,
     );
-    expect(container.querySelector("textarea")).toBeInTheDocument();
+    assert.ok(container.querySelector("textarea"));
   });
 
   test("shows copy button when showCopy=true", () => {
@@ -46,7 +29,7 @@ describe("CodeEditor", () => {
         showCopy
       />,
     );
-    expect(container.querySelector("[aria-label='Copy code']")).toBeInTheDocument();
+    assert.ok(container.querySelector("[aria-label='Copy code']"));
   });
 
   test("hides copy button when showCopy is not set", () => {
@@ -58,7 +41,7 @@ describe("CodeEditor", () => {
         language="javascript"
       />,
     );
-    expect(container.querySelector("[aria-label='Copy code']")).not.toBeInTheDocument();
+    assert.strictEqual(container.querySelector("[aria-label='Copy code']"), null);
   });
 
   test("renders footer content", () => {
@@ -71,14 +54,14 @@ describe("CodeEditor", () => {
         footer={<button>Minify</button>}
       />,
     );
-    expect(container.textContent).toContain("Minify");
+    assert.ok(container.textContent.includes("Minify"));
   });
 
   test("does not render footer wrapper when footer is not provided", () => {
     const { container } = render(
       <CodeEditor label="Input" value="" onValueChange={() => {}} language="json" />,
     );
-    expect(container.textContent).not.toContain("Minify");
+    assert.ok(!container.textContent.includes("Minify"));
   });
 
   test("applies className to wrapper", () => {
@@ -91,7 +74,7 @@ describe("CodeEditor", () => {
         className="my-custom-class"
       />,
     );
-    expect(container.querySelector(".my-custom-class")).toBeInTheDocument();
+    assert.ok(container.querySelector(".my-custom-class"));
   });
 
   test("passes placeholder to editor", () => {
@@ -105,14 +88,14 @@ describe("CodeEditor", () => {
       />,
     );
     const textarea = container.querySelector("textarea");
-    expect(textarea?.placeholder).toBe("Paste your data here...");
+    assert.strictEqual(textarea?.placeholder, "Paste your data here...");
   });
 
   test("renders with value immediately (singleton highlighter actor)", () => {
     const { container } = render(
       <CodeEditor label="Input" value='{"a": 1}' onValueChange={() => {}} language="json" />,
     );
-    expect(container.querySelector("textarea")).toBeInTheDocument();
-    expect(container.textContent).toContain("Input");
+    assert.ok(container.querySelector("textarea"));
+    assert.ok(container.textContent.includes("Input"));
   });
 });

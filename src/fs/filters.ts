@@ -1,4 +1,4 @@
-import type { FileInfo } from "./types";
+import type { FileInfo } from "./types.ts";
 
 export const isHiddenFile = (entry: string): boolean => entry.startsWith(".");
 
@@ -7,12 +7,16 @@ export const shouldIncludeHiddenFile = (entry: string, includeHidden: boolean): 
 
 export const matchesExtensionFilter = (ext: string, extensions: string[] | undefined): boolean => {
   const hasFilter = extensions !== undefined;
-  return !hasFilter || extensions.includes(ext);
+  if (!hasFilter) return true;
+
+  return extensions.includes(ext);
 };
 
 export const matchesPatternFilter = (name: string, pattern: RegExp | undefined): boolean => {
   const hasFilter = pattern !== undefined;
-  return !hasFilter || pattern.test(name);
+  if (!hasFilter) return true;
+
+  return pattern.test(name);
 };
 
 export const shouldIncludeFile = (

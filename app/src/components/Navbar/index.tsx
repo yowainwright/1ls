@@ -8,7 +8,8 @@ import type { NavbarProps } from "./types";
 const { styles } = NAVBAR_CONSTANTS;
 
 const SCROLL_THRESHOLD = 20;
-const scrollEventType = () => (window.scrollY > SCROLL_THRESHOLD ? "SCROLLED" : "TOP") as const;
+const scrollEventType = (): "SCROLLED" | "TOP" =>
+  window.scrollY > SCROLL_THRESHOLD ? "SCROLLED" : "TOP";
 
 const navbarMachine = setup({
   actors: {

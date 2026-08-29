@@ -4,24 +4,25 @@ description: Write tests for 1ls following project patterns
 
 # Write Tests
 
-Tests use Bun's test runner (`bun:test`). Flat structure, no mocks, inline data, direct function calls.
+Tests use Node's built-in test runner (`node:test`) and assertions (`node:assert/strict`). Flat structure, no mocks, inline data, direct function calls.
 
 ## Files to Touch
 
 - **`test/unit/<module>.test.ts`** — unit tests for a specific module
-- **`test/integration/`** — integration tests (e.g., QJS binary, CLI end-to-end)
+- **`test/integration/`** — integration tests for CLI and app-facing behavior
 
 ## Patterns by Module
 
 ### Builtins — `test/unit/builtins.test.ts`
 
 ```typescript
-import { test, expect } from "bun:test";
+import { test } from "node:test";
+import assert from "node:assert/strict";
 import { executeBuiltin } from "../../src/navigator/builtins";
 
 test("myfunc does the thing", () => {
-  expect(executeBuiltin("myfunc", [1, 2, 3], [])).toEqual(expected);
-  expect(executeBuiltin("myfunc", "not array", [])).toEqual([]);
+  assert.deepStrictEqual(executeBuiltin("myfunc", [1, 2, 3], []), expected);
+  assert.deepStrictEqual(executeBuiltin("myfunc", "not array", []), []);
 });
 ```
 
@@ -31,7 +32,7 @@ test("myfunc does the thing", () => {
 import { evaluate } from "../../src/browser";
 
 test("expression: .map with transform", () => {
-  expect(evaluate([1, 2, 3], ".map(x => x * 2)")).toEqual([2, 4, 6]);
+  assert.deepStrictEqual(evaluate([1, 2, 3], ".map(x => x * 2)"), [2, 4, 6]);
 });
 ```
 
@@ -41,7 +42,7 @@ test("expression: .map with transform", () => {
 import { parseCSV } from "../../src/formats/csv";
 
 test("parseCSV handles basic input", () => {
-  expect(parseCSV("name,age\nalice,30")).toEqual([{ name: "alice", age: 30 }]);
+  assert.deepStrictEqual(parseCSV("name,age\nalice,30"), [{ name: "alice", age: 30 }]);
 });
 ```
 
@@ -62,17 +63,17 @@ test("parseCSV handles basic input", () => {
 
 ## Links
 
-- [Bun Test Runner](https://bun.sh/docs/cli/test) — test API reference
-- [Bun Test Matchers](https://bun.sh/docs/test/writing#matchers) — `expect` API
+- [Node Test Runner](https://nodejs.org/api/test.html) — test API reference
+- [Node Assert](https://nodejs.org/api/assert.html) — assertion API
 - Tests: [`test/unit/builtins.test.ts`](../../test/unit/builtins.test.ts) — builtin tests
 - Tests: [`test/unit/navigator.test.ts`](../../test/unit/navigator.test.ts) — navigator tests
 - Tests: [`test/unit/formats.test.ts`](../../test/unit/formats.test.ts) — format tests
-- Tests: [`test/integration/qjs.test.ts`](../../test/integration/qjs.test.ts) — QJS binary tests
+- Tests: [`test/integration/cli.test.ts`](../../test/integration/cli.test.ts) — CLI end-to-end tests
 
 ## Run
 
 ```bash
-bun test                              # all tests
-bun test test/unit/builtins.test.ts   # specific file
-bun test --coverage                   # with coverage (LCOV)
+pnpm test                             # all tests
+pnpm test -- --test-name-pattern builtins
+pnpm run test:coverage                # with coverage (LCOV)
 ```

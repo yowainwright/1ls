@@ -7,4 +7,4 @@ export {
   warning,
   info,
   dim,
-} from "../formatter/colors";
+} from "../formatter/colors.ts";

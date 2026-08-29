@@ -7,8 +7,8 @@ import {
   OBJECT_SUGGESTIONS,
   QUOTE_PATTERN,
   STRING_SUGGESTIONS,
-} from "./constants";
-import type { FuzzyMatch, PartialMethod, Suggestion } from "./types";
+} from "./constants.ts";
+import type { FuzzyMatch, PartialMethod, Suggestion } from "./types.ts";
 
 export const detectDataType = (value: unknown): string => {
   if (value === null) return "null";
@@ -25,12 +25,11 @@ export const detectDataType = (value: unknown): string => {
 
 const calculateScore = (text: string, pattern: string, matches: number[]): number => {
   const baseScore = matches.length * 100;
-  const firstMatch = matches[0];
-  const startBonus = firstMatch === 0 ? 10 : 0;
+  const startBonus = matches[0] === 0 ? 10 : 0;
   const lengthPenalty = text.length - pattern.length;
   const consecutiveBonus = matches.reduce(getConsecutiveBonus, 0);
-
-  return baseScore + consecutiveBonus + startBonus - lengthPenalty;
+  const rawScore = baseScore + consecutiveBonus + startBonus;
+  return rawScore - lengthPenalty;
 };
 
 const getConsecutiveBonus = (
@@ -51,18 +50,20 @@ const getConsecutiveBonus = (
 const findMatches = (text: string, pattern: string): number[] | null => {
   const lowerText = text.toLowerCase();
   const lowerPattern = pattern.toLowerCase();
-  const matches: number[] = [];
+  let matches: number[] = [];
   let patternIndex = 0;
 
   for (let textIndex = 0; textIndex < lowerText.length; textIndex++) {
     const patternChar = lowerPattern[patternIndex];
     if (lowerText[textIndex] !== patternChar) continue;
 
-    matches.push(textIndex);
+    matches = [...matches, textIndex];
     patternIndex = patternIndex + 1;
   }
 
-  return patternIndex === lowerPattern.length ? matches : null;
+  const didMatchPattern = patternIndex === lowerPattern.length;
+  if (!didMatchPattern) return null;
+  return matches;
 };
 
 const createFuzzyMatch = <T>(item: T, text: string, pattern: string): FuzzyMatch<T> | null => {
@@ -109,28 +110,16 @@ export const extractPartialMethod = (input: string): PartialMethod | null => {
 const hasSuggestionName = (names: readonly string[], suggestion: Suggestion): boolean =>
   names.includes(suggestion.name);
 
+const getSuggestionNames = (dataType?: string): readonly string[] | undefined => {
+  if (dataType === "Array") return ARRAY_SUGGESTIONS;
+  if (dataType === "String") return STRING_SUGGESTIONS;
+  if (dataType === "Object") return OBJECT_SUGGESTIONS;
+  if (dataType === "Number") return NUMBER_SUGGESTIONS;
+  return undefined;
+};
+
 export const getSuggestionsForType = (dataType?: string): Suggestion[] => {
-  if (dataType === "Array") {
-    return ALL_SUGGESTIONS.filter((suggestion) => hasSuggestionName(ARRAY_SUGGESTIONS, suggestion));
-  }
-
-  if (dataType === "String") {
-    return ALL_SUGGESTIONS.filter((suggestion) =>
-      hasSuggestionName(STRING_SUGGESTIONS, suggestion),
-    );
-  }
-
-  if (dataType === "Object") {
-    return ALL_SUGGESTIONS.filter((suggestion) =>
-      hasSuggestionName(OBJECT_SUGGESTIONS, suggestion),
-    );
-  }
-
-  if (dataType === "Number") {
-    return ALL_SUGGESTIONS.filter((suggestion) =>
-      hasSuggestionName(NUMBER_SUGGESTIONS, suggestion),
-    );
-  }
-
-  return ALL_SUGGESTIONS.slice(0, MAX_SUGGESTIONS);
+  const names = getSuggestionNames(dataType);
+  if (!names) return ALL_SUGGESTIONS.slice(0, MAX_SUGGESTIONS);
+  return ALL_SUGGESTIONS.filter((suggestion) => hasSuggestionName(names, suggestion));
 };

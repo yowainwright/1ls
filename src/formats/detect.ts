@@ -1,5 +1,5 @@
-import type { DataFormat } from "./types";
-import { DETECTION } from "./constants";
+import type { DataFormat } from "./types.ts";
+import { DETECTION } from "./constants.ts";
 
 export function parseLines(input: string): string[] {
   return input
@@ -115,15 +115,15 @@ const detectByFirstChar = (
 };
 
 const detectByContent = (trimmed: string): DataFormat | null => {
-  const hasEquals = trimmed.includes("=");
+  const hasEquals = /=/.test(trimmed);
   if (hasEquals) return detectConfigFormat(trimmed);
 
-  const hasYamlColon = trimmed.includes(": ");
+  const hasYamlColon = /: /.test(trimmed);
   const hasYamlListItem = /^[\s]*-\s+/m.test(trimmed);
   const isYAML = hasYamlColon || hasYamlListItem;
   if (isYAML) return "yaml";
 
-  const hasMultipleLines = trimmed.includes("\n");
+  const hasMultipleLines = /\n/.test(trimmed);
   if (hasMultipleLines) return detectMultiline(trimmed);
 
   return null;
@@ -133,10 +133,9 @@ export function detectFormat(input: string): DataFormat {
   const trimmed = input.trim();
   if (!trimmed) return "text";
 
-  const firstChar = trimmed[0];
   const lastChar = trimmed[trimmed.length - 1];
 
-  const formatByFirstChar = detectByFirstChar(trimmed, firstChar, lastChar);
+  const formatByFirstChar = detectByFirstChar(trimmed, trimmed[0], lastChar);
   if (formatByFirstChar) return formatByFirstChar;
 
   const formatByContent = detectByContent(trimmed);

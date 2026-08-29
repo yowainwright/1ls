@@ -1,13 +1,13 @@
-import { Lexer } from "../lexer";
-import { ExpressionParser } from "../expression";
-import { JsonNavigator } from "../navigator/json";
-import { expandShortcuts } from "../shortcuts";
-import { ALL_SUGGESTIONS, MAX_SUGGESTIONS } from "./constants";
-import { detectDataType, extractPartialMethod, fuzzySearch, getSuggestionsForType } from "./utils";
-import type { CompletionOptions, CompletionResult, Suggestion } from "./types";
+import { Lexer } from "../lexer/index.ts";
+import { ExpressionParser } from "../expression/index.ts";
+import { JsonNavigator } from "../navigator/json/index.ts";
+import { expandShortcuts } from "../shortcuts/index.ts";
+import { ALL_SUGGESTIONS, MAX_SUGGESTIONS } from "./constants.ts";
+import { detectDataType, extractPartialMethod, fuzzySearch, getSuggestionsForType } from "./utils.ts";
+import type { CompletionOptions, CompletionResult, Suggestion } from "./types.ts";
 
-export * from "./constants";
-export * from "./types";
+export * from "./constants.ts";
+export * from "./types.ts";
 export { detectDataType, extractPartialMethod, fuzzySearch, getSuggestionsForType };
 
 const EMPTY_RESULT: CompletionResult = {
@@ -21,6 +21,12 @@ const IDENTIFIER_PATTERN = /^[a-zA-Z_$][\w$]*$/;
 
 const escapePropertyKey = (key: string): string =>
   key.replaceAll("\\", "\\\\").replaceAll('"', '\\"');
+
+const isObjectLike = (value: unknown): boolean => {
+  const isRecord = value !== null && typeof value === "object";
+  if (!isRecord) return false;
+  return !Array.isArray(value);
+};
 
 const toPathInsertText = (key: string, isRoot: boolean): string => {
   if (IDENTIFIER_PATTERN.test(key)) {
@@ -39,8 +45,7 @@ const describeValue = (value: unknown): string => {
 };
 
 const buildPropertySuggestions = (value: unknown, isRoot: boolean): Suggestion[] => {
-  const isObjectLike = value !== null && typeof value === "object" && !Array.isArray(value);
-  if (!isObjectLike) return [];
+  if (!isObjectLike(value)) return [];
 
   return Object.entries(value as Record<string, unknown>).map(([key, childValue]) => {
     const insertText = toPathInsertText(key, isRoot);
@@ -80,6 +85,11 @@ const buildFallbackSuggestions = (prefix: string): Suggestion[] =>
     .slice(0, MAX_SUGGESTIONS)
     .map((match) => match.item);
 
+const filterSuggestions = (suggestions: Suggestion[], prefix: string): Suggestion[] =>
+  fuzzySearch(suggestions, prefix, (suggestion) => suggestion.name)
+    .slice(0, MAX_SUGGESTIONS)
+    .map((match) => match.item);
+
 const buildContextualSuggestions = (
   prefix: string,
   expression: string,
@@ -96,13 +106,20 @@ const buildContextualSuggestions = (
     const methods = getSuggestionsForType(dataType);
     const suggestions = properties.concat(methods);
 
-    return fuzzySearch(suggestions, prefix, (suggestion) => suggestion.name)
-      .slice(0, MAX_SUGGESTIONS)
-      .map((match) => match.item);
+    return filterSuggestions(suggestions, prefix);
   } catch {
     return buildFallbackSuggestions(prefix);
   }
 };
+
+const createCompletionResult = (
+  partial: { prefix: string; startIndex: number },
+  suggestions: Suggestion[],
+): CompletionResult => ({
+  suggestions,
+  prefix: partial.prefix,
+  startIndex: partial.startIndex,
+});
 
 export const complete = (input: string, options: CompletionOptions = {}): CompletionResult => {
   const source = options.expression ?? input;
@@ -110,13 +127,10 @@ export const complete = (input: string, options: CompletionOptions = {}): Comple
   if (partial === null) return EMPTY_RESULT;
 
   const hasDataContext = Object.hasOwn(options, "data");
-  const suggestions = hasDataContext
-    ? buildContextualSuggestions(partial.prefix, source, options.data)
-    : buildFallbackSuggestions(partial.prefix);
+  if (!hasDataContext) {
+    return createCompletionResult(partial, buildFallbackSuggestions(partial.prefix));
+  }
 
-  return {
-    suggestions,
-    prefix: partial.prefix,
-    startIndex: partial.startIndex,
-  };
+  const suggestions = buildContextualSuggestions(partial.prefix, source, options.data);
+  return createCompletionResult(partial, suggestions);
 };

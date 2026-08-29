@@ -27,7 +27,7 @@ const items: InsightStat[] = [
   {
     label: "Binary Size",
     value: "~1MB",
-    description: "Compiled with Bun for minimal footprint",
+    description: "Compiled natively for minimal footprint",
   },
   {
     label: "Startup Time",

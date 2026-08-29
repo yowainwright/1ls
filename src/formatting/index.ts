@@ -1,4 +1,4 @@
-export { ANSI, moveCursor, cursorUp, cursorDown } from "./constants";
+export { ANSI, moveCursor, cursorUp, cursorDown } from "./constants.ts";
 export {
   COLORS,
   COLOR_PATTERNS,
@@ -8,5 +8,5 @@ export {
   warning,
   info,
   dim,
-} from "../formatter";
-export { Formatter } from "../formatter";
+} from "../formatter/index.ts";
+export { Formatter } from "../formatter/index.ts";

@@ -1,14 +1,16 @@
-import type { DataFormat } from "./types";
-import { detectFormat, parseLines } from "./detect";
-import { parseCSV, parseTSV } from "./csv";
-import { parseENV } from "./env";
-import { parseINI } from "./ini";
-import { parseJSON5 } from "./json5";
-import { parseNDJSON } from "./ndjson";
-import { parseProtobuf } from "./protobuf";
-import { parseTOML } from "./toml";
-import { parseXML } from "./xml";
-import { parseYAML } from "./yaml";
+import type { DataFormat } from "./types.ts";
+import { detectFormat, parseLines } from "./detect.ts";
+import { parseCSV, parseTSV } from "./csv.ts";
+import { parseENV } from "./env.ts";
+import { parseINI } from "./ini.ts";
+import { parseJSON5 } from "./json5.ts";
+import { parseNDJSON } from "./ndjson.ts";
+import { parseProtobuf } from "./protobuf.ts";
+import { parseTOML } from "./toml.ts";
+import { parseXML } from "./xml.ts";
+import { parseYAML } from "./yaml/index.ts";
+
+type Parser = (input: string) => unknown;
 
 const parseJsonWithPreview = (input: string): unknown => {
   try {
@@ -28,20 +30,24 @@ const parseTextInput = (input: string): unknown => {
   return input;
 };
 
+const INPUT_PARSERS: Partial<Record<DataFormat, Parser>> = {
+  json: parseJsonWithPreview,
+  json5: parseJSON5,
+  yaml: parseYAML,
+  toml: parseTOML,
+  xml: parseXML,
+  ini: parseINI,
+  csv: parseCSV,
+  tsv: parseTSV,
+  protobuf: parseProtobuf,
+  env: parseENV,
+  ndjson: parseNDJSON,
+  lines: parseLines,
+};
+
 export function parseInputSync(input: string, format?: DataFormat): unknown {
   const actualFormat = format ?? detectFormat(input);
-
-  if (actualFormat === "json") return parseJsonWithPreview(input);
-  if (actualFormat === "json5") return parseJSON5(input);
-  if (actualFormat === "yaml") return parseYAML(input);
-  if (actualFormat === "toml") return parseTOML(input);
-  if (actualFormat === "xml") return parseXML(input);
-  if (actualFormat === "ini") return parseINI(input);
-  if (actualFormat === "csv") return parseCSV(input);
-  if (actualFormat === "tsv") return parseTSV(input);
-  if (actualFormat === "protobuf") return parseProtobuf(input);
-  if (actualFormat === "env") return parseENV(input);
-  if (actualFormat === "ndjson") return parseNDJSON(input);
-  if (actualFormat === "lines") return parseLines(input);
-  return parseTextInput(input);
+  const parser = INPUT_PARSERS[actualFormat];
+  if (!parser) return parseTextInput(input);
+  return parser(input);
 }

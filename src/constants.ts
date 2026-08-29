@@ -1,5 +1,5 @@
-import type { DataFormat } from "./formats/types";
-import type { ShortcutMapping } from "./shortcuts";
+import type { DataFormat } from "./formats/types.ts";
+import type { ShortcutMapping } from "./shortcuts/index.ts";
 
 export const VALID_OUTPUT_FORMATS = ["json", "yaml", "csv", "table"] as const;
 

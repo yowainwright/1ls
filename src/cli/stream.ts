@@ -1,11 +1,11 @@
-import { parseInput } from "../formats";
-import type { DataFormat } from "../formats/types";
+import { parseInput } from "../formats/index.ts";
+import type { DataFormat } from "../formats/types.ts";
 
 export async function readStdin(): Promise<string> {
-  const chunks: Uint8Array[] = [];
+  let chunks: Uint8Array[] = [];
 
   for await (const chunk of process.stdin) {
-    chunks.push(chunk);
+    chunks = [...chunks, chunk];
   }
 
   return Buffer.concat(chunks).toString("utf-8");

@@ -20,18 +20,15 @@ echo "Setting up git hooks..."
 # Create hooks directory if it doesn't exist
 mkdir -p "$HOOKS_DIR"
 
-# Setup pre-commit hook
-if [ -f "$PRE_COMMIT" ]; then
-  echo "pre-commit hook already exists, skipping..."
-else
-  cat > "$PRE_COMMIT" << 'EOF'
+cat > "$PRE_COMMIT" << 'EOF'
 #!/bin/sh
-bun run lint
-bun run test
+set -e
+CI=true pnpm run lint
+CI=true pnpm run typecheck
+CI=true pnpm test
 EOF
-  chmod +x "$PRE_COMMIT"
-  echo "✓ Created pre-commit hook"
-fi
+chmod +x "$PRE_COMMIT"
+echo "✓ Installed pre-commit hook"
 
 # Setup post-checkout hook
 if [ -f "$POST_CHECKOUT" ]; then
@@ -43,7 +40,7 @@ else
 if git rev-parse --abbrev-ref @{upstream} >/dev/null 2>&1; then
   git pull
 fi
-bun install
+pnpm install
 EOF
   chmod +x "$POST_CHECKOUT"
   echo "✓ Created post-checkout hook"

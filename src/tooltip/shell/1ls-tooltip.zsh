@@ -242,7 +242,7 @@ bindkey '^L' _1ls_accept_suggestion # Ctrl-L to accept
   if command -v 1ls &>/dev/null; then
     1ls --daemon &
   else
-    bun run src/tooltip/index.ts &
+  pnpm run daemon &
   fi
   disown
   echo "1ls daemon started"

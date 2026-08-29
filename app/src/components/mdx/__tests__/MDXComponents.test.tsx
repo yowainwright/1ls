@@ -1,4 +1,5 @@
-import { describe, test, expect, beforeAll } from "bun:test";
+import { describe, test, before as beforeAll } from "node:test";
+import assert from "node:assert/strict";
 import { act, render, waitFor, type RenderResult } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { mdxComponents } from "../MDXComponents";
@@ -24,32 +25,32 @@ async function renderPre(children: ReactNode): Promise<RenderResult> {
 describe("MDXComponents.pre", () => {
   test("renders via Codeblock (shiki-wrapper present)", async () => {
     const { container } = await renderPre(<code className="language-json">{"{"}</code>);
-    expect(container.querySelector(".shiki-wrapper")).toBeInTheDocument();
+    assert.ok(container.querySelector(".shiki-wrapper"));
   });
 
   test("shows code text in fallback during loading", async () => {
     const code = '{"key": "value"}';
     const { container } = await renderPre(<code className="language-json">{code}</code>);
-    expect(container.textContent).toContain(code);
+    assert.ok(container.textContent.includes(code));
   });
 
   test("shows language badge when language is detected", async () => {
     const { container } = await renderPre(<code className="language-bash">ls -la</code>);
     const badge = container.querySelector(".shiki-wrapper > div");
-    expect(badge).not.toBeNull();
-    expect(badge?.textContent).toBe("bash");
+    assert.notStrictEqual(badge, null);
+    assert.strictEqual(badge?.textContent, "bash");
   });
 
   test("hides language badge when no language class present", async () => {
     const { container } = await renderPre(<code>some code</code>);
     const badge = container.querySelector(".shiki-wrapper > span");
-    expect(badge).toBeNull();
+    assert.strictEqual(badge, null);
   });
 
   test("renders highlighted output after shiki resolves", async () => {
     const { container } = await renderPre(<code className="language-json">{"{"}</code>);
     await waitFor(() => {
-      expect(container.querySelector(".shiki")).toBeInTheDocument();
+      assert.ok(container.querySelector(".shiki"));
     });
   });
 
@@ -57,13 +58,13 @@ describe("MDXComponents.pre", () => {
     const { container } = await renderPre(
       <code data-language="typescript">const x = 1;</code>,
     );
-    expect(container.textContent).toContain("typescript");
+    assert.ok(container.textContent.includes("typescript"));
   });
 
   test("handles unsupported language without crashing", async () => {
     const { container } = await renderPre(<code className="language-html">{"<div />"}</code>);
     await waitFor(() => {
-      expect(container.querySelector(".shiki-wrapper")).toBeInTheDocument();
+      assert.ok(container.querySelector(".shiki-wrapper"));
     });
   });
 });

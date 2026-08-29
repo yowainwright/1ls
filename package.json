@@ -7,48 +7,46 @@
   "types": "dist/index.d.ts",
   "exports": {
     ".": {
+      "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
     },
     "./browser": {
-      "import": "./dist/browser/index.js",
-      "types": "./dist/browser/index.d.ts"
+      "types": "./dist/browser/index.d.ts",
+      "import": "./dist/browser/index.js"
     }
   },
   "bin": {
     "1ls": "./dist/index.js"
   },
   "engines": {
-    "bun": ">=1.4.0"
+    "node": ">=24"
   },
   "files": [
     "dist"
   ],
-  "workspaces": [
-    "app"
-  ],
   "scripts": {
-    "dev": "bun build ./src/browser/index.ts --outdir dist/browser --target browser --format esm && turbo dev --filter=1ls-app",
-    "dev:cli": "bun run ./src/cli/index.ts",
-    "generate:completions": "bun scripts/generate-completions.ts",
+    "dev": "esbuild ./src/browser/index.ts --bundle --platform=browser --format=esm --outfile=dist/browser/index.js && pnpm --filter 1ls-app dev",
+    "dev:cli": "pnpm run build && node ./dist/index.js",
+    "generate:completions": "node --disable-warning=ExperimentalWarning --experimental-transform-types ./scripts/generate-completions.ts",
     "install:skills": "bash scripts/install-skills.sh",
-    "build": "bun scripts/sync-version.ts && rm -rf dist bin && bun build ./src/cli/index.ts --outdir dist --target bun --minify && bun build ./src/browser/index.ts --outdir dist/browser --target browser --minify --format esm && tsc --emitDeclarationOnly --outDir dist && cp -r src/completions dist/",
-    "build:binary:all": "bun scripts/sync-version.ts && rm -rf dist bin && mkdir -p bin && bun build ./src/cli/index.ts --compile --minify --target=bun-darwin-arm64 --outfile bin/1ls-darwin-arm64 && bun build ./src/cli/index.ts --compile --minify --target=bun-darwin-x64 --outfile bin/1ls-darwin-x64 && bun build ./src/cli/index.ts --compile --minify --target=bun-linux-x64 --outfile bin/1ls-linux-x64 && bun build ./src/cli/index.ts --compile --minify --target=bun-linux-arm64 --outfile bin/1ls-linux-arm64",
-    "build:qjs": "bash scripts/build-qjs.sh",
-    "build:qjs:bundle": "mkdir -p dist/qjs && bun build ./src/qjs/shared.ts --outfile dist/qjs/shared.js --target browser --minify --format esm",
+    "build": "node ./scripts/sync-version.ts && rm -rf dist bin && esbuild ./src/cli/index.ts --bundle --platform=node --format=esm --target=node24 --outfile=dist/index.js --minify && esbuild ./src/browser/index.ts --bundle --platform=browser --format=esm --target=es2022 --outfile=dist/browser/index.js --minify && tsc --emitDeclarationOnly --outDir dist && cp -r src/completions dist/",
+    "build:binary": "node ./scripts/sync-version.ts && mkdir -p bin tmp/scriptc && TMPDIR=tmp/scriptc scriptc build ./src/scriptc/cli.ts --no-keep-c -o bin/1ls",
+    "scriptc:coverage": "mkdir -p tmp/scriptc && TMPDIR=tmp/scriptc scriptc coverage ./src/scriptc/cli.ts",
     "clean": "rm -rf dist bin",
-    "prepublishOnly": "bun run build && bun run lint && bun test",
-    "test": "bun run build && bun run build:qjs && bun test",
-    "test:coverage": "bun run build:qjs && bun test --coverage --coverage-reporter=lcov",
-    "test:integration": "bun test test/integration/",
+    "prepublishOnly": "pnpm run build && pnpm run lint && pnpm test",
+    "test": "pnpm run build && node --disable-warning=ExperimentalWarning --experimental-transform-types --test \"test/unit/**/*.test.ts\" \"test/integration/**/*.test.ts\"",
+    "test:coverage": "pnpm run build && c8 --reporter=text --reporter=lcov --include=src/**/*.ts node --disable-warning=ExperimentalWarning --experimental-transform-types --test \"test/unit/**/*.test.ts\" \"test/integration/**/*.test.ts\"",
+    "test:integration": "pnpm run build && node --disable-warning=ExperimentalWarning --experimental-transform-types --test \"test/integration/**/*.test.ts\"",
     "test:bench": "docker build -f test/benchmarks/Dockerfile -t 1ls-bench . && docker run --rm 1ls-bench",
     "test:bench:update": "bash test/benchmarks/update.sh",
-    "lint": "oxlint src/",
+    "lint": "oxlint src/ --deny-warnings",
+    "lint:agent": "oxlint src/ --format agent --deny-warnings && lint-changed --comments=forbid",
     "lint:legibility": "lint-changed --comments=forbid",
     "lint:fix": "oxlint src/ --fix",
     "format": "oxfmt src/",
     "format:fix": "oxfmt src/ --write",
     "typecheck": "tsc --noEmit",
-    "daemon": "bun run ./src/tooltip/index.ts",
+    "daemon": "node --disable-warning=ExperimentalWarning --experimental-transform-types ./src/tooltip/index.ts",
     "release": "release-it",
     "prepare": "bash scripts/setup-hooks.sh"
   },
@@ -56,7 +54,6 @@
     "json",
     "cli",
     "javascript",
-    "bun",
     "fx",
     "jq"
   ],
@@ -71,9 +68,10 @@
   },
   "homepage": "https://github.com/yowainwright/1ls",
   "devDependencies": {
-    "@socketsecurity/bun-security-scanner": "^1.1.2",
     "@total-typescript/ts-reset": "^0.6.1",
-    "bun-types": "1.4.0",
+    "@types/node": "^25.3.5",
+    "c8": "^12.0.0",
+    "esbuild": "^0.27.2",
     "eslint-plugin-legibility": "0.3.3",
     "oxfmt": "^0.36.0",
     "oxlint": "^1.65.0",
@@ -82,7 +80,7 @@
     "turbo": "^2.9.14",
     "typescript": "5.9.3"
   },
-  "packageManager": "bun@1.4.0",
+  "packageManager": "pnpm@11.18.0",
   "release-it": {
     "git": {
       "commitMessage": "chore(release): ${version}",

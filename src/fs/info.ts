@@ -1,7 +1,7 @@
-import { stat } from "node:fs/promises";
+import { statSync } from "node:fs";
 import type { Stats } from "node:fs";
 import { extname, basename } from "node:path";
-import type { FileInfo } from "./types";
+import type { FileInfo } from "./types.ts";
 
 export const createFileInfo = (
   path: string,
@@ -17,7 +17,7 @@ export const createFileInfo = (
   created: stats.birthtime,
 });
 
-export const getFileInfo = async (path: string): Promise<FileInfo> => {
-  const stats = await stat(path);
+export const getFileInfo = (path: string): FileInfo => {
+  const stats = statSync(path);
   return createFileInfo(path, stats);
 };

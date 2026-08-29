@@ -1,5 +1,3 @@
-import type { Language } from "@/components/Codeblock";
-
 export interface SpotlightCardProps {
   example: CodeExample;
 }
@@ -14,7 +12,7 @@ export interface SpotlightCardContentProps {
   input: string;
   output: string;
   command: string;
-  language: Language;
+  language: string;
 }
 
 export interface CodeExample {

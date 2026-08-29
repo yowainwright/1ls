@@ -26,7 +26,7 @@ type BuiltinFn = (data: unknown, args: unknown[]) => unknown;
 
 ## Constraints
 
-- **QuickJS NG compatible**: no `async/await`, no `Intl`, no `WeakRef`, no `fetch`, no `URL`
+- **Native-core compatible**: no `async/await`, no shell, no filesystem, no network, no host runtime APIs
 - **Pure function**: no side effects, no mutation of `data`
 - **Type guard first**: check input type at the top, return a sensible fallback for wrong types
 - **Use existing guards** from `src/navigator/builtins/utils.ts`: `isArray`, `isObject`, `isNil`, `isString`, `isNumber`
@@ -46,8 +46,6 @@ type BuiltinFn = (data: unknown, args: unknown[]) => unknown;
 
 ## Links
 
-- [QuickJS NG](https://github.com/quickjs-ng/quickjs) — runtime target
-- [QuickJS NG Docs](https://quickjs-ng.github.io/quickjs/) — ES feature support
 - [MDN Array methods](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array) — safe to use
 - [MDN Object methods](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object) — safe to use
 - Source: [`src/navigator/builtins/index.ts`](../../src/navigator/builtins/index.ts) — all builtin implementations
@@ -59,5 +57,5 @@ type BuiltinFn = (data: unknown, args: unknown[]) => unknown;
 ## Run
 
 ```bash
-bun test test/unit/builtins.test.ts
+pnpm test -- --test-name-pattern builtins
 ```

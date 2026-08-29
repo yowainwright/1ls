@@ -1,4 +1,5 @@
-import { describe, test, expect } from "bun:test";
+import { describe, test } from "node:test";
+import assert from "node:assert/strict";
 import {
   parseBooleanValue,
   parseNullValue,
@@ -8,116 +9,116 @@ import {
   isTruthyValue,
   isFalsyValue,
   isNullValue,
-} from "../../src/formats/utils";
+} from "../../src/formats/utils.ts";
 
 describe("parseBooleanValue", () => {
   test("parses truthy values", () => {
-    expect(parseBooleanValue("true")).toBe(true);
-    expect(parseBooleanValue("yes")).toBe(true);
-    expect(parseBooleanValue("on")).toBe(true);
+    assert.strictEqual(parseBooleanValue("true"), true);
+    assert.strictEqual(parseBooleanValue("yes"), true);
+    assert.strictEqual(parseBooleanValue("on"), true);
   });
 
   test("parses falsy values", () => {
-    expect(parseBooleanValue("false")).toBe(false);
-    expect(parseBooleanValue("no")).toBe(false);
-    expect(parseBooleanValue("off")).toBe(false);
+    assert.strictEqual(parseBooleanValue("false"), false);
+    assert.strictEqual(parseBooleanValue("no"), false);
+    assert.strictEqual(parseBooleanValue("off"), false);
   });
 
   test("returns undefined for non-boolean values", () => {
-    expect(parseBooleanValue("maybe")).toBeUndefined();
-    expect(parseBooleanValue("1")).toBeUndefined();
-    expect(parseBooleanValue("")).toBeUndefined();
+    assert.strictEqual(parseBooleanValue("maybe"), undefined);
+    assert.strictEqual(parseBooleanValue("1"), undefined);
+    assert.strictEqual(parseBooleanValue(""), undefined);
   });
 });
 
 describe("parseNullValue", () => {
   test("parses null values", () => {
-    expect(parseNullValue("null")).toBeNull();
-    expect(parseNullValue("~")).toBeNull();
-    expect(parseNullValue("")).toBeNull();
+    assert.strictEqual(parseNullValue("null"), null);
+    assert.strictEqual(parseNullValue("~"), null);
+    assert.strictEqual(parseNullValue(""), null);
   });
 
   test("returns undefined for non-null values", () => {
-    expect(parseNullValue("false")).toBeUndefined();
-    expect(parseNullValue("0")).toBeUndefined();
-    expect(parseNullValue("undefined")).toBeUndefined();
+    assert.strictEqual(parseNullValue("false"), undefined);
+    assert.strictEqual(parseNullValue("0"), undefined);
+    assert.strictEqual(parseNullValue("undefined"), undefined);
   });
 });
 
 describe("tryParseNumber", () => {
   test("parses integer numbers", () => {
-    expect(tryParseNumber("42")).toBe(42);
-    expect(tryParseNumber("-10")).toBe(-10);
-    expect(tryParseNumber("0")).toBe(0);
+    assert.strictEqual(tryParseNumber("42"), 42);
+    assert.strictEqual(tryParseNumber("-10"), -10);
+    assert.strictEqual(tryParseNumber("0"), 0);
   });
 
   test("parses floating point numbers", () => {
-    expect(tryParseNumber("3.14")).toBe(3.14);
-    expect(tryParseNumber("-0.5")).toBe(-0.5);
+    assert.strictEqual(tryParseNumber("3.14"), 3.14);
+    assert.strictEqual(tryParseNumber("-0.5"), -0.5);
   });
 
   test("returns undefined for empty string", () => {
-    expect(tryParseNumber("")).toBeUndefined();
+    assert.strictEqual(tryParseNumber(""), undefined);
   });
 
   test("returns undefined for non-numeric strings", () => {
-    expect(tryParseNumber("abc")).toBeUndefined();
-    expect(tryParseNumber("12abc")).toBeUndefined();
+    assert.strictEqual(tryParseNumber("abc"), undefined);
+    assert.strictEqual(tryParseNumber("12abc"), undefined);
   });
 });
 
 describe("countQuotes", () => {
   test("counts double quotes in string", () => {
-    expect(countQuotes('hello "world"', 13)).toBe(2);
-    expect(countQuotes('"test"', 6)).toBe(2);
+    assert.strictEqual(countQuotes('hello "world"', 13), 2);
+    assert.strictEqual(countQuotes('"test"', 6), 2);
   });
 
   test("counts quotes up to endPos", () => {
-    expect(countQuotes('hello "world" test', 6)).toBe(0);
-    expect(countQuotes('hello "world" test', 13)).toBe(2);
+    assert.strictEqual(countQuotes('hello "world" test', 6), 0);
+    assert.strictEqual(countQuotes('hello "world" test', 13), 2);
   });
 
   test("returns 0 for strings without quotes", () => {
-    expect(countQuotes("hello world", 11)).toBe(0);
+    assert.strictEqual(countQuotes("hello world", 11), 0);
   });
 });
 
 describe("isQuoteBalanced", () => {
   test("returns true for even quote counts", () => {
-    expect(isQuoteBalanced(0)).toBe(true);
-    expect(isQuoteBalanced(2)).toBe(true);
-    expect(isQuoteBalanced(4)).toBe(true);
+    assert.strictEqual(isQuoteBalanced(0), true);
+    assert.strictEqual(isQuoteBalanced(2), true);
+    assert.strictEqual(isQuoteBalanced(4), true);
   });
 
   test("returns false for odd quote counts", () => {
-    expect(isQuoteBalanced(1)).toBe(false);
-    expect(isQuoteBalanced(3)).toBe(false);
-    expect(isQuoteBalanced(5)).toBe(false);
+    assert.strictEqual(isQuoteBalanced(1), false);
+    assert.strictEqual(isQuoteBalanced(3), false);
+    assert.strictEqual(isQuoteBalanced(5), false);
   });
 });
 
 describe("type guard functions", () => {
   test("isTruthyValue", () => {
-    expect(isTruthyValue("true")).toBe(true);
-    expect(isTruthyValue("yes")).toBe(true);
-    expect(isTruthyValue("on")).toBe(true);
-    expect(isTruthyValue("false")).toBe(false);
-    expect(isTruthyValue("maybe")).toBe(false);
+    assert.strictEqual(isTruthyValue("true"), true);
+    assert.strictEqual(isTruthyValue("yes"), true);
+    assert.strictEqual(isTruthyValue("on"), true);
+    assert.strictEqual(isTruthyValue("false"), false);
+    assert.strictEqual(isTruthyValue("maybe"), false);
   });
 
   test("isFalsyValue", () => {
-    expect(isFalsyValue("false")).toBe(true);
-    expect(isFalsyValue("no")).toBe(true);
-    expect(isFalsyValue("off")).toBe(true);
-    expect(isFalsyValue("true")).toBe(false);
-    expect(isFalsyValue("maybe")).toBe(false);
+    assert.strictEqual(isFalsyValue("false"), true);
+    assert.strictEqual(isFalsyValue("no"), true);
+    assert.strictEqual(isFalsyValue("off"), true);
+    assert.strictEqual(isFalsyValue("true"), false);
+    assert.strictEqual(isFalsyValue("maybe"), false);
   });
 
   test("isNullValue", () => {
-    expect(isNullValue("null")).toBe(true);
-    expect(isNullValue("~")).toBe(true);
-    expect(isNullValue("")).toBe(true);
-    expect(isNullValue("false")).toBe(false);
-    expect(isNullValue("0")).toBe(false);
+    assert.strictEqual(isNullValue("null"), true);
+    assert.strictEqual(isNullValue("~"), true);
+    assert.strictEqual(isNullValue(""), true);
+    assert.strictEqual(isNullValue("false"), false);
+    assert.strictEqual(isNullValue("0"), false);
   });
 });

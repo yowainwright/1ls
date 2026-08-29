@@ -1,1 +1,1 @@
-export { Formatter } from "../formatter/output";
+export { Formatter } from "../formatter/output.ts";

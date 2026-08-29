@@ -1,4 +1,4 @@
-import type { Suggestion } from "./types";
+import type { Suggestion } from "./types.ts";
 
 export const MAX_SUGGESTIONS = 8;
 

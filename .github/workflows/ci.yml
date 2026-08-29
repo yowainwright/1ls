@@ -14,47 +14,44 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - uses: oven-sh/setup-bun@v2
-        name: Install Bun
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        name: Install Node
         with:
-          bun-version: 1.4.0
+          node-version: 24
+          cache: pnpm
 
-      - name: Get Bun cache directory
-        id: bun-cache
-        run: echo "bun_cache_dir=$(bun pm cache dir)" >> $GITHUB_OUTPUT
+      - name: Install clang
+        run: sudo apt-get update && sudo apt-get install -y clang
 
-      - uses: actions/cache@v4
-        name: Setup Bun cache
-        with:
-          path: ${{ steps.bun-cache.outputs.bun_cache_dir }}
-          key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-bun-
-
-      - run: bun install
+      - run: pnpm install --frozen-lockfile
 
       - name: Socket Security Check
         if: ${{ env.SOCKET_SECURITY_API_KEY != '' }}
         continue-on-error: true
-        run: npx --yes @socketsecurity/cli ci
+        run: pnpm dlx @socketsecurity/cli ci
 
-      - run: bun run build
+      - run: pnpm run build
         env:
           TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
           TURBO_TEAM: ${{ secrets.TURBO_TEAM }}
 
-      - run: bun run lint
+      - run: pnpm run scriptc:coverage
+
+      - run: pnpm run build:binary
+
+      - run: pnpm run lint
         env:
           TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
           TURBO_TEAM: ${{ secrets.TURBO_TEAM }}
 
-      - name: Install QuickJS
-        run: |
-          sudo apt-get update && sudo apt-get install -y build-essential
-          git clone --depth 1 https://github.com/bellard/quickjs.git /tmp/quickjs
-          cd /tmp/quickjs && make && sudo make install
+      - run: pnpm --filter 1ls-app run typecheck
 
-      - run: bun run test:coverage
+      - run: pnpm --filter 1ls-app test
+
+      - run: pnpm run test:coverage
         env:
           CI: true
           TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
@@ -85,24 +82,19 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - uses: oven-sh/setup-bun@v2
-        name: Install Bun
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        name: Install Node
         with:
-          bun-version: 1.4.0
+          node-version: 24
+          cache: pnpm
 
-      - name: Get Bun cache directory
-        id: bun-cache
-        run: echo "bun_cache_dir=$(bun pm cache dir)" >> $GITHUB_OUTPUT
+      - name: Install clang
+        run: sudo apt-get update && sudo apt-get install -y clang
 
-      - uses: actions/cache@v4
-        name: Setup Bun cache
-        with:
-          path: ${{ steps.bun-cache.outputs.bun_cache_dir }}
-          key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-bun-
-
-      - run: bun install
+      - run: pnpm install --frozen-lockfile
 
       - name: Download dist artifact
         uses: actions/download-artifact@v4
@@ -110,15 +102,7 @@ jobs:
           name: dist
           path: dist/
 
-      - name: Install QuickJS
-        run: |
-          sudo apt-get update && sudo apt-get install -y build-essential
-          git clone --depth 1 https://github.com/bellard/quickjs.git /tmp/quickjs
-          cd /tmp/quickjs && make && sudo make install
-
-      - run: bun run build:qjs
-
       - name: Run Integration Tests
-        run: bun run test:integration
+        run: pnpm run test:integration
         env:
           CI: true

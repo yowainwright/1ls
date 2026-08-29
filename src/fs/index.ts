@@ -1,12 +1,12 @@
-export type { FileInfo, ListOptions, GrepOptions, GrepResult } from "./types";
+export type { FileInfo, ListOptions, GrepOptions, GrepResult } from "./types.ts";
 export {
   SUPPORTED_CODE_EXTENSIONS,
   SUPPORTED_DATA_EXTENSIONS,
   SUPPORTED_TEXT_EXTENSIONS,
   DEFAULT_SEARCH_EXTENSIONS,
-} from "./constants";
-export { readFile, serializeContent, writeFile } from "./io";
-export { createFileInfo, getFileInfo } from "./info";
+} from "./constants.ts";
+export { readFile, serializeContent, writeFile } from "./io.ts";
+export { createFileInfo, getFileInfo } from "./info.ts";
 export {
   isHiddenFile,
   shouldIncludeHiddenFile,
@@ -14,8 +14,8 @@ export {
   matchesPatternFilter,
   shouldIncludeFile,
   isWithinDepthLimit,
-} from "./filters";
-export { processDirectoryEntry, walkDirectory, listFiles } from "./walk";
+} from "./filters.ts";
+export { processDirectoryEntry, walkDirectory, listFiles } from "./walk.ts";
 export {
   createRegexFromPattern,
   createGrepResult,
@@ -25,4 +25,4 @@ export {
   searchFileContent,
   searchInDirectory,
   grep,
-} from "./grep";
+} from "./grep.ts";

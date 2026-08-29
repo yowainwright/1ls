@@ -1,4 +1,5 @@
-import { describe, test, expect, mock, beforeEach, afterEach } from "bun:test";
+import { describe, test, beforeEach, afterEach } from "node:test";
+import assert from "node:assert/strict";
 import { Readable } from "node:stream";
 
 describe("stream utilities", () => {
@@ -23,9 +24,9 @@ describe("stream utilities", () => {
       writable: true,
     });
 
-    const { processInput } = await import("../../src/cli/stream");
+    const { processInput } = await import("../../src/cli/stream.ts");
     const result = await processInput();
-    expect(result).toEqual({ foo: "bar", num: 42 });
+    assert.deepStrictEqual(result, { foo: "bar", num: 42 });
   });
 
   test("processInput returns null for empty input", async () => {
@@ -36,9 +37,9 @@ describe("stream utilities", () => {
       writable: true,
     });
 
-    const { processInput } = await import("../../src/cli/stream");
+    const { processInput } = await import("../../src/cli/stream.ts");
     const result = await processInput();
-    expect(result).toBeNull();
+    assert.strictEqual(result, null);
   });
 
   test("processInput handles YAML format", async () => {
@@ -50,9 +51,9 @@ describe("stream utilities", () => {
       writable: true,
     });
 
-    const { processInput } = await import("../../src/cli/stream");
+    const { processInput } = await import("../../src/cli/stream.ts");
     const result = await processInput("yaml");
-    expect(result).toEqual({ name: "test", value: 42 });
+    assert.deepStrictEqual(result, { name: "test", value: 42 });
   });
 
   test("processInput auto-detects format when not specified", async () => {
@@ -64,9 +65,9 @@ describe("stream utilities", () => {
       writable: true,
     });
 
-    const { processInput } = await import("../../src/cli/stream");
+    const { processInput } = await import("../../src/cli/stream.ts");
     const result = await processInput();
-    expect(result).toEqual({ auto: "detect" });
+    assert.deepStrictEqual(result, { auto: "detect" });
   });
 
   test("processInput handles multiple chunks", async () => {
@@ -84,8 +85,8 @@ describe("stream utilities", () => {
       writable: true,
     });
 
-    const { processInput } = await import("../../src/cli/stream");
+    const { processInput } = await import("../../src/cli/stream.ts");
     const result = await processInput();
-    expect(result).toEqual([1, 2, 3]);
+    assert.deepStrictEqual(result, [1, 2, 3]);
   });
 });

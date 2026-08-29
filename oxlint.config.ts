@@ -1,16 +1,15 @@
 import { defineConfig } from "oxlint";
 import legibility from "eslint-plugin-legibility";
 
-const recommendedConfig = legibility.configs["oxlint/recommended"];
-const strictMigrationFiles = ["src/navigator/json/index.ts", "src/scriptc/**/*.ts"];
+const strictConfig = legibility.configs["oxlint/strict"];
 
 export default defineConfig({
-  ...recommendedConfig,
+  ...strictConfig,
   rules: {
-    ...recommendedConfig.rules,
-    complexity: ["warn", 10],
+    ...strictConfig.rules,
+    complexity: ["error", 10],
     "max-lines-per-function": [
-      "warn",
+      "error",
       {
         max: 20,
         skipBlankLines: true,
@@ -19,22 +18,4 @@ export default defineConfig({
       },
     ],
   },
-  overrides: [
-    {
-      files: strictMigrationFiles,
-      rules: {
-        complexity: ["error", 10],
-        "max-lines-per-function": [
-          "error",
-          {
-            max: 20,
-            skipBlankLines: true,
-            skipComments: true,
-            IIFEs: true,
-          },
-        ],
-        "legibility/no-complex-ternaries": "error",
-      },
-    },
-  ],
 });

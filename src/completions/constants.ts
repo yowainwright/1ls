@@ -1,4 +1,4 @@
-import { VALID_INPUT_FORMATS, VALID_OUTPUT_FORMATS } from "../constants";
+import { VALID_INPUT_FORMATS, VALID_OUTPUT_FORMATS } from "../constants.ts";
 
 export const CLI_FLAGS = [
   { long: "--help", short: "-h", description: "Show help" },

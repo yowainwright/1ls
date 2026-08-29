@@ -1,9 +1,10 @@
-import { describe, expect, test } from "bun:test";
-import { resolveReadFileInvocation } from "../../../src/cli/read-file";
+import { describe, test } from "node:test";
+import assert from "node:assert/strict";
+import { resolveReadFileInvocation } from "../../../src/cli/read-file.ts";
 
 describe("cli/read-file", () => {
   test("resolves readFile command with explicit expression", () => {
-    expect(resolveReadFileInvocation(["readFile", "data.json", ".name"])).toEqual({
+    assert.deepStrictEqual(resolveReadFileInvocation(["readFile", "data.json", ".name"]), {
       filePath: "data.json",
       expression: ".name",
       hasExplicitExpression: true,
@@ -11,7 +12,7 @@ describe("cli/read-file", () => {
   });
 
   test("resolves rf alias with explicit expression", () => {
-    expect(resolveReadFileInvocation(["rf", "data.json", ".items[0]"])).toEqual({
+    assert.deepStrictEqual(resolveReadFileInvocation(["rf", "data.json", ".items[0]"]), {
       filePath: "data.json",
       expression: ".items[0]",
       hasExplicitExpression: true,
@@ -19,7 +20,7 @@ describe("cli/read-file", () => {
   });
 
   test("treats missing expression as implicit identity", () => {
-    expect(resolveReadFileInvocation(["readFile", "data.json"])).toEqual({
+    assert.deepStrictEqual(resolveReadFileInvocation(["readFile", "data.json"]), {
       filePath: "data.json",
       expression: ".",
       hasExplicitExpression: false,
@@ -27,7 +28,7 @@ describe("cli/read-file", () => {
   });
 
   test("preserves explicit root expression", () => {
-    expect(resolveReadFileInvocation(["readFile", "data.json", "."])).toEqual({
+    assert.deepStrictEqual(resolveReadFileInvocation(["readFile", "data.json", "."]), {
       filePath: "data.json",
       expression: ".",
       hasExplicitExpression: true,
@@ -35,7 +36,7 @@ describe("cli/read-file", () => {
   });
 
   test("skips flags when expression is omitted", () => {
-    expect(resolveReadFileInvocation(["readFile", "data.json", "--compact"])).toEqual({
+    assert.deepStrictEqual(resolveReadFileInvocation(["readFile", "data.json", "--compact"]), {
       filePath: "data.json",
       expression: ".",
       hasExplicitExpression: false,
@@ -43,7 +44,7 @@ describe("cli/read-file", () => {
   });
 
   test("preserves explicit expression after flags", () => {
-    expect(resolveReadFileInvocation(["readFile", "data.json", "--compact", ".name"])).toEqual({
+    assert.deepStrictEqual(resolveReadFileInvocation(["readFile", "data.json", "--compact", ".name"]), {
       filePath: "data.json",
       expression: ".name",
       hasExplicitExpression: true,
@@ -51,23 +52,24 @@ describe("cli/read-file", () => {
   });
 
   test("skips flag values before explicit expression", () => {
-    expect(
+    assert.deepStrictEqual(
       resolveReadFileInvocation(["readFile", "data.json", "--format", "yaml", "-if", "json", ".name"]),
-    ).toEqual({
-      filePath: "data.json",
-      expression: ".name",
-      hasExplicitExpression: true,
-    });
+      {
+        filePath: "data.json",
+        expression: ".name",
+        hasExplicitExpression: true,
+      },
+    );
   });
 
   test("skips list targets before explicit expression", () => {
-    expect(resolveReadFileInvocation(["readFile", "data.json", "--list", "src", ".name"])).toEqual({
+    assert.deepStrictEqual(resolveReadFileInvocation(["readFile", "data.json", "--list", "src", ".name"]), {
       filePath: "data.json",
       expression: ".name",
       hasExplicitExpression: true,
     });
 
-    expect(resolveReadFileInvocation(["rf", "data.json", "-l", "src", ".items"])).toEqual({
+    assert.deepStrictEqual(resolveReadFileInvocation(["rf", "data.json", "-l", "src", ".items"]), {
       filePath: "data.json",
       expression: ".items",
       hasExplicitExpression: true,

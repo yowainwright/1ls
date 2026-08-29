@@ -1,8 +1,9 @@
-import { describe, expect, test } from "bun:test";
+import { describe, test } from "node:test";
+import assert from "node:assert/strict";
 import { join } from "path";
 import { existsSync } from "fs";
 
-const BROWSER_BUNDLE = join(import.meta.dir, "../../dist/browser/index.js");
+const BROWSER_BUNDLE = join(import.meta.dirname, "../../dist/browser/index.js");
 const HAS_BUNDLE = existsSync(BROWSER_BUNDLE);
 
 const describeBrowser = HAS_BUNDLE ? describe : describe.skip;
@@ -22,11 +23,11 @@ describeBrowser("Browser Bundle Integration", () => {
     ExpressionParser = module.ExpressionParser;
     JsonNavigator = module.JsonNavigator;
 
-    expect(typeof evaluate).toBe("function");
-    expect(typeof expandShortcuts).toBe("function");
-    expect(Lexer).toBeDefined();
-    expect(ExpressionParser).toBeDefined();
-    expect(JsonNavigator).toBeDefined();
+    assert.strictEqual(typeof evaluate, "function");
+    assert.strictEqual(typeof expandShortcuts, "function");
+    assert.notStrictEqual(Lexer, undefined);
+    assert.notStrictEqual(ExpressionParser, undefined);
+    assert.notStrictEqual(JsonNavigator, undefined);
   });
 
   describe("evaluate function", () => {
@@ -57,9 +58,9 @@ describeBrowser("Browser Bundle Integration", () => {
         },
       };
 
-      expect(evaluate(data, ".company.name")).toBe("Acme Corp");
-      expect(evaluate(data, ".company.departments[0].name")).toBe("Engineering");
-      expect(evaluate(data, ".company.departments[0].employees[0].name")).toBe("Alice");
+      assert.strictEqual(evaluate(data, ".company.name"), "Acme Corp");
+      assert.strictEqual(evaluate(data, ".company.departments[0].name"), "Engineering");
+      assert.strictEqual(evaluate(data, ".company.departments[0].employees[0].name"), "Alice");
     });
 
     test("handles array transformations", async () => {
@@ -75,13 +76,13 @@ describeBrowser("Browser Bundle Integration", () => {
       };
 
       const totals = evaluate(data, ".items.map(i => i.price * i.qty)");
-      expect(totals).toEqual([20, 20, 45]);
+      assert.deepStrictEqual(totals, [20, 20, 45]);
 
       const filtered = evaluate(data, ".items.filter(i => i.qty > 1)");
-      expect(filtered).toHaveLength(2);
+      assert.strictEqual(filtered.length, 2);
 
       const totalPrice = evaluate(data, ".items.reduce((acc, i) => acc + i.price, 0)");
-      expect(totalPrice).toBe(45);
+      assert.strictEqual(totalPrice, 45);
     });
 
     test("handles object methods", async () => {
@@ -90,15 +91,15 @@ describeBrowser("Browser Bundle Integration", () => {
 
       const data = { a: 1, b: 2, c: 3, d: 4 };
 
-      expect(evaluate(data, ".{keys}")).toEqual(["a", "b", "c", "d"]);
-      expect(evaluate(data, ".{values}")).toEqual([1, 2, 3, 4]);
-      expect(evaluate(data, ".{entries}")).toEqual([
+      assert.deepStrictEqual(evaluate(data, ".{keys}"), ["a", "b", "c", "d"]);
+      assert.deepStrictEqual(evaluate(data, ".{values}"), [1, 2, 3, 4]);
+      assert.deepStrictEqual(evaluate(data, ".{entries}"), [
         ["a", 1],
         ["b", 2],
         ["c", 3],
         ["d", 4],
       ]);
-      expect(evaluate(data, ".{length}")).toBe(4);
+      assert.strictEqual(evaluate(data, ".{length}"), 4);
     });
 
     test("handles chained operations", async () => {
@@ -118,7 +119,7 @@ describeBrowser("Browser Bundle Integration", () => {
         data,
         ".users.filter(u => u.active).filter(u => u.age > 27).map(u => u.name)",
       );
-      expect(result).toEqual(["Alice", "Carol", "Dave"]);
+      assert.deepStrictEqual(result, ["Alice", "Carol", "Dave"]);
     });
 
     test("handles string operations", async () => {
@@ -127,10 +128,10 @@ describeBrowser("Browser Bundle Integration", () => {
 
       const data = { text: "  Hello, World!  " };
 
-      expect(evaluate(data, ".text.trim()")).toBe("Hello, World!");
-      expect(evaluate(data, ".text.trim().toLowerCase()")).toBe("hello, world!");
-      expect(evaluate(data, ".text.trim().toUpperCase()")).toBe("HELLO, WORLD!");
-      expect(evaluate(data, '.text.trim().split(", ")')).toEqual(["Hello", "World!"]);
+      assert.strictEqual(evaluate(data, ".text.trim()"), "Hello, World!");
+      assert.strictEqual(evaluate(data, ".text.trim().toLowerCase()"), "hello, world!");
+      assert.strictEqual(evaluate(data, ".text.trim().toUpperCase()"), "HELLO, WORLD!");
+      assert.deepStrictEqual(evaluate(data, '.text.trim().split(", ")'), ["Hello", "World!"]);
     });
 
     test("handles sorting", async () => {
@@ -146,11 +147,11 @@ describeBrowser("Browser Bundle Integration", () => {
         ],
       };
 
-      expect(evaluate(data, ".numbers.sort((a, b) => a - b)")).toEqual([1, 2, 5, 8, 9]);
-      expect(evaluate(data, ".numbers.sort((a, b) => b - a)")).toEqual([9, 8, 5, 2, 1]);
+      assert.deepStrictEqual(evaluate(data, ".numbers.sort((a, b) => a - b)"), [1, 2, 5, 8, 9]);
+      assert.deepStrictEqual(evaluate(data, ".numbers.sort((a, b) => b - a)"), [9, 8, 5, 2, 1]);
 
       const sortedByAge = evaluate(data, ".users.sort((a, b) => a.age - b.age).map(u => u.name)");
-      expect(sortedByAge).toEqual(["Bob", "Alice", "Carol"]);
+      assert.deepStrictEqual(sortedByAge, ["Bob", "Alice", "Carol"]);
     });
   });
 
@@ -161,10 +162,10 @@ describeBrowser("Browser Bundle Integration", () => {
 
       const data = [1, 2, 3, 4, 5];
 
-      expect(evaluate(data, ".mp(x => x * 2)")).toEqual([2, 4, 6, 8, 10]);
-      expect(evaluate(data, ".flt(x => x > 3)")).toEqual([4, 5]);
-      expect(evaluate(data, ".rd((a, b) => a + b, 0)")).toBe(15);
-      expect(evaluate(data, ".len")).toBe(5);
+      assert.deepStrictEqual(evaluate(data, ".mp(x => x * 2)"), [2, 4, 6, 8, 10]);
+      assert.deepStrictEqual(evaluate(data, ".flt(x => x > 3)"), [4, 5]);
+      assert.strictEqual(evaluate(data, ".rd((a, b) => a + b, 0)"), 15);
+      assert.strictEqual(evaluate(data, ".len"), 5);
     });
 
     test("chained shortcuts work", async () => {
@@ -180,7 +181,7 @@ describeBrowser("Browser Bundle Integration", () => {
       };
 
       const result = evaluate(data, ".items.flt(i => i.price > 1).mp(i => i.name)");
-      expect(result).toEqual(["banana", "cherry"]);
+      assert.deepStrictEqual(result, ["banana", "cherry"]);
     });
   });
 
@@ -192,8 +193,8 @@ describeBrowser("Browser Bundle Integration", () => {
       const lexer = new Lexer(".users[0].name");
       const tokens = lexer.tokenize();
 
-      expect(Array.isArray(tokens)).toBe(true);
-      expect(tokens.length).toBeGreaterThan(0);
+      assert.strictEqual(Array.isArray(tokens), true);
+      assert.ok(tokens.length > 0);
     });
 
     test("ExpressionParser parses tokens", async () => {
@@ -205,8 +206,8 @@ describeBrowser("Browser Bundle Integration", () => {
       const parser = new ExpressionParser(tokens);
       const ast = parser.parse();
 
-      expect(ast).toBeDefined();
-      expect(ast.type).toBeDefined();
+      assert.notStrictEqual(ast, undefined);
+      assert.notStrictEqual(ast.type, undefined);
     });
 
     test("JsonNavigator evaluates AST", async () => {
@@ -221,7 +222,7 @@ describeBrowser("Browser Bundle Integration", () => {
       const navigator = new JsonNavigator();
       const result = navigator.evaluate(ast, data);
 
-      expect(result).toBe("baz");
+      assert.strictEqual(result, "baz");
     });
   });
 
@@ -230,18 +231,18 @@ describeBrowser("Browser Bundle Integration", () => {
       const module = await import(BROWSER_BUNDLE);
       const { evaluate } = module;
 
-      expect(evaluate([], ".map(x => x)")).toEqual([]);
-      expect(evaluate([], ".filter(x => true)")).toEqual([]);
-      expect(evaluate([], ".{length}")).toBe(0);
+      assert.deepStrictEqual(evaluate([], ".map(x => x)"), []);
+      assert.deepStrictEqual(evaluate([], ".filter(x => true)"), []);
+      assert.strictEqual(evaluate([], ".{length}"), 0);
     });
 
     test("handles empty objects", async () => {
       const module = await import(BROWSER_BUNDLE);
       const { evaluate } = module;
 
-      expect(evaluate({}, ".{keys}")).toEqual([]);
-      expect(evaluate({}, ".{values}")).toEqual([]);
-      expect(evaluate({}, ".{length}")).toBe(0);
+      assert.deepStrictEqual(evaluate({}, ".{keys}"), []);
+      assert.deepStrictEqual(evaluate({}, ".{values}"), []);
+      assert.strictEqual(evaluate({}, ".{length}"), 0);
     });
 
     test("handles null values", async () => {
@@ -249,7 +250,7 @@ describeBrowser("Browser Bundle Integration", () => {
       const { evaluate } = module;
 
       const data = { value: null };
-      expect(evaluate(data, ".value")).toBe(null);
+      assert.strictEqual(evaluate(data, ".value"), null);
     });
 
     test("handles boolean values", async () => {
@@ -257,8 +258,8 @@ describeBrowser("Browser Bundle Integration", () => {
       const { evaluate } = module;
 
       const data = { active: true, deleted: false };
-      expect(evaluate(data, ".active")).toBe(true);
-      expect(evaluate(data, ".deleted")).toBe(false);
+      assert.strictEqual(evaluate(data, ".active"), true);
+      assert.strictEqual(evaluate(data, ".deleted"), false);
     });
 
     test("handles numeric values", async () => {
@@ -266,10 +267,10 @@ describeBrowser("Browser Bundle Integration", () => {
       const { evaluate } = module;
 
       const data = { int: 42, float: 3.14, negative: -10, zero: 0 };
-      expect(evaluate(data, ".int")).toBe(42);
-      expect(evaluate(data, ".float")).toBe(3.14);
-      expect(evaluate(data, ".negative")).toBe(-10);
-      expect(evaluate(data, ".zero")).toBe(0);
+      assert.strictEqual(evaluate(data, ".int"), 42);
+      assert.strictEqual(evaluate(data, ".float"), 3.14);
+      assert.strictEqual(evaluate(data, ".negative"), -10);
+      assert.strictEqual(evaluate(data, ".zero"), 0);
     });
   });
 });

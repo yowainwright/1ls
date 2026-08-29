@@ -1,12 +1,13 @@
-import { describe, expect, test } from "bun:test";
-import { DEFAULT_OPTIONS } from "../../src/cli/constants";
+import { describe, test } from "node:test";
+import assert from "node:assert/strict";
+import { DEFAULT_OPTIONS } from "../../src/cli/constants.ts";
 import {
   evaluateExpression,
   evaluateAndFormatExpression,
   formatResult,
   processContent,
   processData,
-} from "../../src/executor";
+} from "../../src/executor.ts";
 
 describe("executor", () => {
   test("evaluates expressions with the shared runtime", () => {
@@ -14,7 +15,7 @@ describe("executor", () => {
       user: { name: "Ada" },
     });
 
-    expect(result).toBe("Ada");
+    assert.strictEqual(result, "Ada");
   });
 
   test("formats evaluated strings with raw output", () => {
@@ -24,7 +25,7 @@ describe("executor", () => {
       { ...DEFAULT_OPTIONS, raw: true },
     );
 
-    expect(output).toBe("Ada");
+    assert.strictEqual(output, "Ada");
   });
 
   test("formats evaluated arrays with compact output", () => {
@@ -34,19 +35,19 @@ describe("executor", () => {
       { ...DEFAULT_OPTIONS, compact: true },
     );
 
-    expect(output).toBe("[1,2,3]");
+    assert.strictEqual(output, "[1,2,3]");
   });
 
   test("formats values directly through the shared formatter", () => {
     const output = formatResult({ ok: true }, DEFAULT_OPTIONS);
 
-    expect(output).toContain('"ok"');
+    assert.ok(output.includes('"ok"'));
   });
 
   test("processes data without an expression", () => {
     const output = processData({ ok: true }, DEFAULT_OPTIONS);
 
-    expect(output).toContain('"ok"');
+    assert.ok(output.includes('"ok"'));
   });
 
   test("processes data with an expression", () => {
@@ -55,7 +56,7 @@ describe("executor", () => {
       { ...DEFAULT_OPTIONS, expression: ".users[0].name", raw: true },
     );
 
-    expect(output).toBe("Ada");
+    assert.strictEqual(output, "Ada");
   });
 
   test("processes raw input content", () => {
@@ -65,6 +66,6 @@ describe("executor", () => {
       raw: true,
     });
 
-    expect(output).toBe("Ada");
+    assert.strictEqual(output, "Ada");
   });
 });

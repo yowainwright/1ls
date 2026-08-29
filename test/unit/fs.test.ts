@@ -1,5 +1,6 @@
-import { describe, test, expect, beforeEach, afterEach } from "bun:test";
-import { mkdtemp, rm, writeFile as fsWriteFile, mkdir } from "node:fs/promises";
+import { describe, test, beforeEach, afterEach } from "node:test";
+import assert from "node:assert/strict";
+import { mkdtemp, rm, writeFile as fsWriteFile, mkdir, readFile as fsReadFile } from "node:fs/promises";
 import { join } from "node:path";
 import {
   readFile,
@@ -21,7 +22,7 @@ import {
   logVerboseError,
   extractMatchesFromLine,
   searchFileContent,
-} from "../../src/fs";
+} from "../../src/fs/index.ts";
 
 describe("file utilities", () => {
   let testDir: string;
@@ -38,17 +39,17 @@ describe("file utilities", () => {
 
   describe("serializeContent", () => {
     test("returns string as-is", () => {
-      expect(serializeContent("hello")).toBe("hello");
+      assert.strictEqual(serializeContent("hello"), "hello");
     });
 
     test("stringifies objects", () => {
       const obj = { foo: "bar" };
-      expect(serializeContent(obj)).toBe(JSON.stringify(obj, null, 2));
+      assert.strictEqual(serializeContent(obj), JSON.stringify(obj, null, 2));
     });
 
     test("stringifies arrays", () => {
       const arr = [1, 2, 3];
-      expect(serializeContent(arr)).toBe(JSON.stringify(arr, null, 2));
+      assert.strictEqual(serializeContent(arr), JSON.stringify(arr, null, 2));
     });
   });
 
@@ -59,7 +60,7 @@ describe("file utilities", () => {
       await fsWriteFile(filePath, JSON.stringify(data));
 
       const result = await readFile(filePath);
-      expect(result).toEqual(data);
+      assert.deepStrictEqual(result, data);
     });
 
     test("reads file as string when parseJson is false", async () => {
@@ -68,7 +69,7 @@ describe("file utilities", () => {
       await fsWriteFile(filePath, content);
 
       const result = await readFile(filePath, false);
-      expect(result).toBe(content);
+      assert.strictEqual(result, content);
     });
 
     test("parses YAML file", async () => {
@@ -77,7 +78,7 @@ describe("file utilities", () => {
       await fsWriteFile(filePath, yamlContent);
 
       const result = await readFile(filePath);
-      expect(result).toEqual({ name: "test", value: 42 });
+      assert.deepStrictEqual(result, { name: "test", value: 42 });
     });
 
     test("uses explicit input format when provided", async () => {
@@ -86,7 +87,7 @@ describe("file utilities", () => {
       await fsWriteFile(filePath, csvContent);
 
       const result = await readFile(filePath, "lines");
-      expect(result).toEqual(["name,age", "Ada,30"]);
+      assert.deepStrictEqual(result, ["name,age", "Ada,30"]);
     });
   });
 
@@ -95,8 +96,8 @@ describe("file utilities", () => {
       const filePath = join(testDir, "output.txt");
       await writeFile(filePath, "test content");
 
-      const content = await Bun.file(filePath).text();
-      expect(content).toBe("test content");
+      const content = await fsReadFile(filePath, "utf8");
+      assert.strictEqual(content, "test content");
     });
 
     test("writes object as JSON", async () => {
@@ -104,20 +105,19 @@ describe("file utilities", () => {
       const data = { foo: "bar", num: 123 };
       await writeFile(filePath, data);
 
-      const content = await Bun.file(filePath).text();
-      expect(content).toBe(JSON.stringify(data, null, 2));
+      const content = await fsReadFile(filePath, "utf8");
+      assert.strictEqual(content, JSON.stringify(data, null, 2));
     });
 
     test("writes to nested directory path", async () => {
       const nestedPath = join(testDir, "nested", "path", "file.txt");
       await writeFile(nestedPath, "content");
-      const content = await Bun.file(nestedPath).text();
-      expect(content).toBe("content");
+      const content = await fsReadFile(nestedPath, "utf8");
+      assert.strictEqual(content, "content");
     });
 
     test("reports a clear error when the target cannot be written", async () => {
-      await expect(writeFile(testDir, "content")).rejects.toThrow(
-        `Failed to write file ${testDir}`,
+      await assert.rejects(writeFile(testDir, "content"), `Failed to write file ${testDir}`,
       );
     });
   });
@@ -128,11 +128,11 @@ describe("file utilities", () => {
       await fsWriteFile(filePath, "content");
 
       const info = await getFileInfo(filePath);
-      expect(info.name).toBe("test.txt");
-      expect(info.ext).toBe(".txt");
-      expect(info.isFile).toBe(true);
-      expect(info.isDirectory).toBe(false);
-      expect(info.size).toBeGreaterThan(0);
+      assert.strictEqual(info.name, "test.txt");
+      assert.strictEqual(info.ext, ".txt");
+      assert.strictEqual(info.isFile, true);
+      assert.strictEqual(info.isDirectory, false);
+      assert.ok(info.size > 0);
     });
 
     test("returns file info for directory", async () => {
@@ -140,78 +140,78 @@ describe("file utilities", () => {
       await mkdir(dirPath);
 
       const info = await getFileInfo(dirPath);
-      expect(info.name).toBe("subdir");
-      expect(info.isFile).toBe(false);
-      expect(info.isDirectory).toBe(true);
+      assert.strictEqual(info.name, "subdir");
+      assert.strictEqual(info.isFile, false);
+      assert.strictEqual(info.isDirectory, true);
     });
   });
 
   describe("isHiddenFile", () => {
     test("returns true for hidden files", () => {
-      expect(isHiddenFile(".hidden")).toBe(true);
-      expect(isHiddenFile(".gitignore")).toBe(true);
+      assert.strictEqual(isHiddenFile(".hidden"), true);
+      assert.strictEqual(isHiddenFile(".gitignore"), true);
     });
 
     test("returns false for regular files", () => {
-      expect(isHiddenFile("visible.txt")).toBe(false);
-      expect(isHiddenFile("README.md")).toBe(false);
+      assert.strictEqual(isHiddenFile("visible.txt"), false);
+      assert.strictEqual(isHiddenFile("README.md"), false);
     });
   });
 
   describe("shouldIncludeHiddenFile", () => {
     test("includes hidden files when includeHidden is true", () => {
-      expect(shouldIncludeHiddenFile(".hidden", true)).toBe(true);
+      assert.strictEqual(shouldIncludeHiddenFile(".hidden", true), true);
     });
 
     test("excludes hidden files when includeHidden is false", () => {
-      expect(shouldIncludeHiddenFile(".hidden", false)).toBe(false);
+      assert.strictEqual(shouldIncludeHiddenFile(".hidden", false), false);
     });
 
     test("includes visible files regardless", () => {
-      expect(shouldIncludeHiddenFile("visible.txt", true)).toBe(true);
-      expect(shouldIncludeHiddenFile("visible.txt", false)).toBe(true);
+      assert.strictEqual(shouldIncludeHiddenFile("visible.txt", true), true);
+      assert.strictEqual(shouldIncludeHiddenFile("visible.txt", false), true);
     });
   });
 
   describe("matchesExtensionFilter", () => {
     test("returns true when no filter", () => {
-      expect(matchesExtensionFilter(".js", undefined)).toBe(true);
+      assert.strictEqual(matchesExtensionFilter(".js", undefined), true);
     });
 
     test("returns true when extension matches", () => {
-      expect(matchesExtensionFilter(".js", [".js", ".ts"])).toBe(true);
+      assert.strictEqual(matchesExtensionFilter(".js", [".js", ".ts"]), true);
     });
 
     test("returns false when extension doesn't match", () => {
-      expect(matchesExtensionFilter(".py", [".js", ".ts"])).toBe(false);
+      assert.strictEqual(matchesExtensionFilter(".py", [".js", ".ts"]), false);
     });
   });
 
   describe("matchesPatternFilter", () => {
     test("returns true when no pattern", () => {
-      expect(matchesPatternFilter("test.js", undefined)).toBe(true);
+      assert.strictEqual(matchesPatternFilter("test.js", undefined), true);
     });
 
     test("returns true when pattern matches", () => {
-      expect(matchesPatternFilter("test.js", /test/)).toBe(true);
+      assert.strictEqual(matchesPatternFilter("test.js", /test/), true);
     });
 
     test("returns false when pattern doesn't match", () => {
-      expect(matchesPatternFilter("foo.js", /test/)).toBe(false);
+      assert.strictEqual(matchesPatternFilter("foo.js", /test/), false);
     });
   });
 
   describe("isWithinDepthLimit", () => {
     test("returns true when depth is within limit", () => {
-      expect(isWithinDepthLimit(2, 5)).toBe(true);
+      assert.strictEqual(isWithinDepthLimit(2, 5), true);
     });
 
     test("returns false when depth exceeds limit", () => {
-      expect(isWithinDepthLimit(6, 5)).toBe(false);
+      assert.strictEqual(isWithinDepthLimit(6, 5), false);
     });
 
     test("returns true when no limit", () => {
-      expect(isWithinDepthLimit(100, undefined)).toBe(true);
+      assert.strictEqual(isWithinDepthLimit(100, undefined), true);
     });
   });
 
@@ -220,37 +220,37 @@ describe("file utilities", () => {
       const regex = /test/gi;
       const result = createRegexFromPattern(regex, false);
 
-      expect(result).not.toBe(regex);
-      expect(result.source).toBe("test");
-      expect(result.flags).toContain("g");
-      expect(result.flags).toContain("i");
+      assert.notStrictEqual(result, regex);
+      assert.strictEqual(result.source, "test");
+      assert.ok(result.flags.includes("g"));
+      assert.ok(result.flags.includes("i"));
     });
 
     test("creates case-insensitive regex from string", () => {
       const regex = createRegexFromPattern("test", true);
-      expect(regex.test("TEST")).toBe(true);
-      expect(regex.flags).toContain("i");
+      assert.strictEqual(regex.test("TEST"), true);
+      assert.ok(regex.flags.includes("i"));
     });
 
     test("creates case-sensitive regex from string", () => {
       const regex = createRegexFromPattern("test", false);
-      expect(regex.test("TEST")).toBe(false);
-      expect(regex.flags).not.toContain("i");
+      assert.strictEqual(regex.test("TEST"), false);
+      assert.ok(!regex.flags.includes("i"));
     });
   });
 
   describe("shouldStopSearching", () => {
     test("returns false when under limit", () => {
-      expect(shouldStopSearching(5, 10)).toBe(false);
+      assert.strictEqual(shouldStopSearching(5, 10), false);
     });
 
     test("returns true when at or over limit", () => {
-      expect(shouldStopSearching(10, 10)).toBe(true);
-      expect(shouldStopSearching(11, 10)).toBe(true);
+      assert.strictEqual(shouldStopSearching(10, 10), true);
+      assert.strictEqual(shouldStopSearching(11, 10), true);
     });
 
     test("returns false when no limit", () => {
-      expect(shouldStopSearching(1000, undefined)).toBe(false);
+      assert.strictEqual(shouldStopSearching(1000, undefined), false);
     });
   });
 
@@ -266,40 +266,40 @@ describe("file utilities", () => {
     test("lists all files non-recursively by default", async () => {
       const files = await listFiles(testDir);
       const fileNames = files.map((f) => f.name).sort();
-      expect(fileNames).toContain("file1.txt");
-      expect(fileNames).toContain("file2.js");
-      expect(fileNames).not.toContain("nested.txt");
+      assert.ok(fileNames.includes("file1.txt"));
+      assert.ok(fileNames.includes("file2.js"));
+      assert.ok(!fileNames.includes("nested.txt"));
     });
 
     test("lists files recursively when recursive option is true", async () => {
       const files = await listFiles(testDir, { recursive: true });
       const fileNames = files.map((f) => f.name);
-      expect(fileNames).toContain("nested.txt");
+      assert.ok(fileNames.includes("nested.txt"));
     });
 
     test("filters by extensions", async () => {
       const files = await listFiles(testDir, { extensions: [".txt"] });
       const fileNames = files.map((f) => f.name);
-      expect(fileNames).toContain("file1.txt");
-      expect(fileNames).not.toContain("file2.js");
+      assert.ok(fileNames.includes("file1.txt"));
+      assert.ok(!fileNames.includes("file2.js"));
     });
 
     test("respects maxDepth", async () => {
       const files = await listFiles(testDir, { recursive: true, maxDepth: 0 });
       const fileNames = files.map((f) => f.name);
-      expect(fileNames).not.toContain("nested.txt");
+      assert.ok(!fileNames.includes("nested.txt"));
     });
 
     test("excludes hidden files by default", async () => {
       const files = await listFiles(testDir);
       const fileNames = files.map((f) => f.name);
-      expect(fileNames).not.toContain(".hidden");
+      assert.ok(!fileNames.includes(".hidden"));
     });
 
     test("includes hidden files when includeHidden is true", async () => {
       const files = await listFiles(testDir, { includeHidden: true });
       const fileNames = files.map((f) => f.name);
-      expect(fileNames).toContain(".hidden");
+      assert.ok(fileNames.includes(".hidden"));
     });
   });
 
@@ -312,56 +312,56 @@ describe("file utilities", () => {
 
     test("finds matches in single file", async () => {
       const results = await grep("hello", join(testDir, "test.txt"));
-      expect(results.length).toBe(2);
-      expect(results[0].line).toBe(1);
-      expect(results[1].line).toBe(3);
+      assert.strictEqual(results.length, 2);
+      assert.strictEqual(results[0].line, 1);
+      assert.strictEqual(results[1].line, 3);
     });
 
     test("finds matches case-insensitively", async () => {
       const results = await grep("HELLO", join(testDir, "test.txt"), {
         ignoreCase: true,
       });
-      expect(results.length).toBe(2);
+      assert.strictEqual(results.length, 2);
     });
 
     test("respects case-sensitive search", async () => {
       const results = await grep("HELLO", join(testDir, "test.txt"), {
         ignoreCase: false,
       });
-      expect(results.length).toBe(0);
+      assert.strictEqual(results.length, 0);
     });
 
     test("searches recursively in directory", async () => {
       const results = await grep("foo", testDir, { recursive: true });
-      expect(results.length).toBeGreaterThan(0);
+      assert.ok(results.length > 0);
     });
 
     test("accepts regex pattern", async () => {
       const results = await grep(/hello/g, join(testDir, "test.txt"));
-      expect(results.length).toBe(2);
+      assert.strictEqual(results.length, 2);
     });
 
     test("accepts non-global regex pattern", async () => {
       const results = await grep(/hello/, join(testDir, "test.txt"));
-      expect(results.length).toBe(2);
+      assert.strictEqual(results.length, 2);
     });
 
     test("returns empty array for non-file/non-directory", async () => {
       const results = await grep("test", testDir, { recursive: false });
-      expect(results).toEqual([]);
+      assert.deepStrictEqual(results, []);
     });
 
     test("returns results with context when context option is set", async () => {
       const results = await grep("foo", join(testDir, "test.txt"), { context: 1 });
-      expect(results.length).toBeGreaterThan(0);
+      assert.ok(results.length > 0);
       const resultWithContext = results.find((r) => r.context !== undefined);
-      expect(resultWithContext?.context).toBeDefined();
+      assert.notStrictEqual(resultWithContext?.context, undefined);
     });
 
     test("returns no results when a file cannot be read", async () => {
       const results = await searchFileContent(join(testDir, "missing.txt"), /hello/g, {});
 
-      expect(results).toEqual([]);
+      assert.deepStrictEqual(results, []);
     });
   });
 
@@ -370,31 +370,31 @@ describe("file utilities", () => {
       const lines = ["line1", "line2", "line3", "line4", "line5"];
       const result = createGrepResult("/test/file.txt", 2, 0, "line3", lines, 1);
 
-      expect(result.file).toBe("/test/file.txt");
-      expect(result.line).toBe(3);
-      expect(result.context).toEqual(["line2", "line3", "line4"]);
+      assert.strictEqual(result.file, "/test/file.txt");
+      assert.strictEqual(result.line, 3);
+      assert.deepStrictEqual(result.context, ["line2", "line3", "line4"]);
     });
 
     test("creates grep result without context when contextSize is undefined", () => {
       const lines = ["line1", "line2", "line3"];
       const result = createGrepResult("/test/file.txt", 1, 0, "line2", lines, undefined);
 
-      expect(result.file).toBe("/test/file.txt");
-      expect(result.context).toBeUndefined();
+      assert.strictEqual(result.file, "/test/file.txt");
+      assert.strictEqual(result.context, undefined);
     });
 
     test("handles context at start of file", () => {
       const lines = ["line1", "line2", "line3"];
       const result = createGrepResult("/test/file.txt", 0, 0, "line1", lines, 2);
 
-      expect(result.context).toEqual(["line1", "line2", "line3"]);
+      assert.deepStrictEqual(result.context, ["line1", "line2", "line3"]);
     });
 
     test("handles context at end of file", () => {
       const lines = ["line1", "line2", "line3"];
       const result = createGrepResult("/test/file.txt", 2, 0, "line3", lines, 2);
 
-      expect(result.context).toEqual(["line1", "line2", "line3"]);
+      assert.deepStrictEqual(result.context, ["line1", "line2", "line3"]);
     });
   });
 
@@ -406,9 +406,9 @@ describe("file utilities", () => {
 
       logVerboseError("/test/file.txt", new Error("test error"), true);
 
-      expect(logs.length).toBe(1);
-      expect(logs[0]).toContain("Failed to search");
-      expect(logs[0]).toContain("test error");
+      assert.strictEqual(logs.length, 1);
+      assert.ok(logs[0].includes("Failed to search"));
+      assert.ok(logs[0].includes("test error"));
 
       console.error = originalError;
     });
@@ -420,7 +420,7 @@ describe("file utilities", () => {
 
       logVerboseError("/test/file.txt", new Error("test error"), false);
 
-      expect(logs.length).toBe(0);
+      assert.strictEqual(logs.length, 0);
 
       console.error = originalError;
     });
@@ -432,8 +432,8 @@ describe("file utilities", () => {
 
       logVerboseError("/test/file.txt", "string error", true);
 
-      expect(logs.length).toBe(1);
-      expect(logs[0]).toContain("string error");
+      assert.strictEqual(logs.length, 1);
+      assert.ok(logs[0].includes("string error"));
 
       console.error = originalError;
     });
@@ -446,10 +446,10 @@ describe("file utilities", () => {
       const lines = [line];
       const results = extractMatchesFromLine(line, 0, regex, "/test.txt", lines, undefined);
 
-      expect(results.length).toBe(3);
-      expect(results[0].column).toBe(1);
-      expect(results[1].column).toBe(9);
-      expect(results[2].column).toBe(17);
+      assert.strictEqual(results.length, 3);
+      assert.strictEqual(results[0].column, 1);
+      assert.strictEqual(results[1].column, 9);
+      assert.strictEqual(results[2].column, 17);
     });
 
     test("returns empty array when no matches", () => {
@@ -458,7 +458,7 @@ describe("file utilities", () => {
       const lines = [line];
       const results = extractMatchesFromLine(line, 0, regex, "/test.txt", lines, undefined);
 
-      expect(results.length).toBe(0);
+      assert.strictEqual(results.length, 0);
     });
   });
 });

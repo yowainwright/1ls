@@ -1,23 +1,23 @@
-import { mkdir, readFile as readTextFile, writeFile as writeTextFile } from "node:fs/promises";
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname } from "node:path";
-import { parseInput } from "../formats";
-import type { DataFormat } from "../formats/types";
+import { parseInputSync } from "../formats/sync.ts";
+import type { DataFormat } from "../formats/types.ts";
 
-export async function readFile(path: string): Promise<unknown>;
-export async function readFile(path: string, parseJson: true): Promise<unknown>;
-export async function readFile(path: string, parseJson: false): Promise<string>;
-export async function readFile(path: string, format: DataFormat): Promise<unknown>;
+export function readFile(path: string): unknown;
+export function readFile(path: string, parseJson: true): unknown;
+export function readFile(path: string, parseJson: false): string;
+export function readFile(path: string, format: DataFormat): unknown;
 
-export async function readFile(
+export function readFile(
   path: string,
   parseOption: boolean | DataFormat = true,
-): Promise<unknown> {
-  const content = await readTextFile(path, "utf8");
+): unknown {
+  const content = readFileSync(path, "utf8");
 
-  if (parseOption === false) return content;
+  if (!parseOption) return content;
 
   const format = typeof parseOption === "string" ? parseOption : undefined;
-  return parseInput(content, format);
+  return parseInputSync(content, format);
 }
 
 export const serializeContent = (content: unknown): string => {
@@ -27,9 +27,10 @@ export const serializeContent = (content: unknown): string => {
 
 export const writeFile = async (path: string, content: unknown): Promise<void> => {
   try {
-    await mkdir(dirname(path), { recursive: true });
+    await Promise.resolve();
+    mkdirSync(dirname(path), { recursive: true });
     const data = serializeContent(content);
-    await writeTextFile(path, data, "utf8");
+    writeFileSync(path, data, "utf8");
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     throw new Error(`Failed to write file ${path}: ${errorMessage}`);

@@ -17,6 +17,16 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11.18.0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
@@ -26,7 +36,7 @@ jobs:
           if [ -n "${{ inputs.version }}" ]; then
             VERSION="${{ inputs.version }}"
           else
-            VERSION=$(npm view 1ls version)
+            VERSION=$(pnpm view 1ls version)
           fi
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "Testing 1ls version: $VERSION"
@@ -35,7 +45,7 @@ jobs:
         run: |
           echo "Waiting for 1ls@${{ steps.version.outputs.version }} to be available on npm..."
           for i in {1..30}; do
-            if npm view 1ls@${{ steps.version.outputs.version }} version >/dev/null 2>&1; then
+            if pnpm view 1ls@${{ steps.version.outputs.version }} version >/dev/null 2>&1; then
               echo "Package 1ls@${{ steps.version.outputs.version }} is available on npm"
               break
             fi
@@ -49,12 +59,15 @@ jobs:
           FROM node:24-alpine
 
           RUN apk add --no-cache bash
+          RUN corepack enable
 
           WORKDIR /app
+          ENV PNPM_HOME=/pnpm
+          ENV PATH="${PNPM_HOME}:${PATH}"
 
           ARG ONELS_VERSION
           RUN echo "Installing 1ls@${ONELS_VERSION}" && \
-              npm install -g 1ls@${ONELS_VERSION}
+              pnpm add -g 1ls@${ONELS_VERSION}
 
           # Create test fixtures
           RUN echo '{"name": "test", "users": [{"name": "Alice", "age": 30}, {"name": "Bob", "age": 25}]}' > test.json

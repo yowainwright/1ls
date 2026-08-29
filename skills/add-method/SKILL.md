@@ -44,7 +44,7 @@ interface Suggestion {
 - **`description` ≤ 6 words** — displayed inline next to the signature in the tooltip
 - **No duplicate `name` within a suggestion array** — check before adding; duplicates show the hint twice
 - **`type: "builtin"` only if the key exists in `BUILTIN_FUNCTIONS`** — verify in `src/navigator/builtins/constants.ts`
-- No `async`, no `Intl`, no Bun APIs — suggestion entries are data objects, but inserted expressions must be QJS-safe
+- No `async`, no `Intl`, no host runtime APIs — suggestion entries are data objects, but inserted expressions must be native-core safe
 
 ## See Examples
 
@@ -62,5 +62,5 @@ interface Suggestion {
 ## Run
 
 ```bash
-bun test test/unit/ac.test.ts test/unit/tooltip-completion.test.ts
+pnpm test -- --test-name-pattern "ac|tooltip"
 ```
