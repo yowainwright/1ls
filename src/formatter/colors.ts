@@ -23,9 +23,7 @@ export const COLOR_PATTERNS = [
   { regex: /: (null)/g, replacement: `: ${COLORS.gray}$1${COLORS.reset}` },
 ];
 
-const hasColor = (): boolean => {
-  return !process.env.NO_COLOR;
-};
+const hasColor = (): boolean => true;
 
 export function colorize(json: string): string {
   if (!hasColor()) return json;

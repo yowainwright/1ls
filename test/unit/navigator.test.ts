@@ -89,6 +89,16 @@ test("Navigator: string methods", () => {
   assert.strictEqual(evaluate('.name.includes("Jane")', data), false);
 });
 
+test("Navigator: callable object methods", () => {
+  const data = {
+    user: {
+      label: (value: unknown) => `name:${value}`,
+    },
+  };
+
+  assert.strictEqual(evaluate('.user.label("Ada")', data), "name:Ada");
+});
+
 test("Navigator: arithmetic operators", () => {
   const data = [10, 20, 30];
   assert.deepStrictEqual(evaluate(".map(x => x + 5)", data), [15, 25, 35]);

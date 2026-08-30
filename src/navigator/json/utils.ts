@@ -226,6 +226,17 @@ const callStringMethod = (target: string, method: string, args: readonly unknown
   return undefined;
 };
 
+const callTargetMethod = (target: unknown, method: string, args: readonly unknown[]): unknown => {
+  const methodExists = hasMethodOnTarget(target, method);
+  if (!methodExists) {
+    throw new Error(`Method ${method} does not exist on ${typeof target}`);
+  }
+
+  const targetObject = target as Record<string, unknown>;
+  const methodFunction = targetObject[method] as EvaluatedFunction;
+  return methodFunction(args[0], args[1], args[2]);
+};
+
 export const callMethod = (target: unknown, method: string, args: readonly unknown[]): unknown => {
   try {
     if (Array.isArray(target)) {
@@ -238,12 +249,7 @@ export const callMethod = (target: unknown, method: string, args: readonly unkno
       if (result !== undefined) return result;
     }
 
-    const methodExists = hasMethodOnTarget(target, method);
-    if (!methodExists) {
-      throw new Error(`Method ${method} does not exist on ${typeof target}`);
-    }
-
-    throw new Error(`Method ${method} is not supported by the native runtime`);
+    return callTargetMethod(target, method, args);
   } catch (error: unknown) {
     const errorMessage = extractErrorMessage(error);
     throw new Error(`Error executing method ${method}: ${errorMessage}`);
