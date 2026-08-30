@@ -183,6 +183,24 @@ test("Navigator: callable object methods", () => {
   assert.strictEqual(evaluate('.user.label("Ada")', data), "name:Ada");
 });
 
+test("Navigator: callable object methods keep target binding", () => {
+  const data = {
+    user: {
+      prefix: "name",
+      label(this: { prefix: string }, value: unknown): string {
+        return `${this.prefix}:${value}`;
+      },
+    },
+  };
+
+  assert.strictEqual(evaluate('.user.label("Ada")', data), "name:Ada");
+});
+
+test("Navigator: callable array and string methods outside allowlists", () => {
+  assert.strictEqual(evaluate(".at(-1)", [1, 2, 3]), 3);
+  assert.strictEqual(evaluate(".substring(1, 4)", "hello"), "ell");
+});
+
 test("Navigator: arithmetic operators", () => {
   const data = [10, 20, 30];
   assert.deepStrictEqual(evaluate(".map(x => x + 5)", data), [15, 25, 35]);
