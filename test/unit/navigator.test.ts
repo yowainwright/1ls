@@ -3,6 +3,27 @@ import assert from "node:assert/strict";
 import { Lexer } from "../../src/lexer/index.ts";
 import { ExpressionParser } from "../../src/expression/index.ts";
 import { JsonNavigator } from "../../src/navigator/json/index.ts";
+import { OPERATORS } from "../../src/navigator/json/constants.ts";
+import {
+  callMethod,
+  createParameterContext,
+  evaluateObjectOperation,
+  executeOperator,
+  extractOperator,
+  getArrayElement,
+  getImplicitParameter,
+  getPropertyFromObject,
+  isCallableMethod,
+  isOperatorMethod,
+  sliceArray,
+} from "../../src/navigator/json/utils.ts";
+import {
+  collectAllValues,
+  collectPaths,
+  deepContains,
+  getValueAtPath,
+  setValueAtPath,
+} from "../../src/navigator/builtins/utils.ts";
 
 function evaluate(expression: string, data: unknown): unknown {
   const lexer = new Lexer(expression);
@@ -17,6 +38,69 @@ test("Navigator: simple property access", () => {
   const data = { name: "John", age: 30 };
   assert.strictEqual(evaluate(".name", data), "John");
   assert.strictEqual(evaluate(".age", data), 30);
+});
+
+test("Navigator utils: operators handle numeric, string, boolean, and missing operations", () => {
+  assert.strictEqual(OPERATORS["+"](1, 2), 3);
+  assert.strictEqual(OPERATORS["&&"](true, "ok"), "ok");
+  assert.strictEqual(OPERATORS["||"]("", "fallback"), "fallback");
+  assert.strictEqual(executeOperator("b", ">", "a"), true);
+  assert.strictEqual(executeOperator("a", "<", "b"), true);
+  assert.strictEqual(executeOperator("b", ">=", "b"), true);
+  assert.strictEqual(executeOperator("a", "<=", "a"), true);
+  assert.strictEqual(executeOperator({}, ">", {}), false);
+  assert.throws(() => executeOperator(1, "missing", 2), /Unknown operator/);
+});
+
+test("Navigator utils: parameter and property helpers cover edge cases", () => {
+  const context = createParameterContext(["item", "index"], ["Ada", 0]);
+  assert.deepStrictEqual(context, { item: "Ada", index: 0 });
+  assert.strictEqual(getImplicitParameter(context), "Ada");
+  assert.strictEqual(getPropertyFromObject(null, "name"), undefined);
+  assert.strictEqual(getPropertyFromObject({ name: "Ada" }, "name"), "Ada");
+  assert.strictEqual(getArrayElement("not array", 0), undefined);
+  assert.strictEqual(getArrayElement(["a", "b"], -1), "b");
+  assert.deepStrictEqual(sliceArray("not array", 0, 1), undefined);
+  assert.deepStrictEqual(sliceArray([1, 2, 3], -2, undefined), [2, 3]);
+});
+
+test("Navigator utils: object operations and callable methods cover fallbacks", () => {
+  assert.strictEqual(evaluateObjectOperation(null, "keys"), undefined);
+  assert.deepStrictEqual(evaluateObjectOperation(["a", "b"], "length"), 2);
+  assert.strictEqual(isOperatorMethod("__operator_+__"), true);
+  assert.strictEqual(isOperatorMethod("map"), false);
+  assert.strictEqual(extractOperator("__operator_>=__"), ">=");
+  assert.strictEqual(isCallableMethod({ run: () => "ok" }, "run"), true);
+  assert.strictEqual(isCallableMethod({ value: "no" }, "value"), false);
+  assert.strictEqual(callMethod("hello", "startsWith", ["he"]), true);
+  assert.strictEqual(callMethod("hello", "endsWith", ["lo"]), true);
+  assert.throws(() => callMethod({}, "missing", []), /Method missing does not exist/);
+});
+
+test("Navigator builtins utils: deep object helpers cover mutation-free paths", () => {
+  const data = { users: [{ name: "Ada" }], meta: { active: true } };
+  assert.strictEqual(deepContains(data, { users: [{ name: "Ada" }] }), true);
+  assert.strictEqual(deepContains(data, { users: [{ name: "Grace" }] }), false);
+  assert.strictEqual(getValueAtPath(data, ["users", 0, "name"]), "Ada");
+  assert.strictEqual(getValueAtPath(data, ["users", "bad"]), undefined);
+  assert.deepStrictEqual(setValueAtPath(data, ["meta", "active"], false), {
+    users: [{ name: "Ada" }],
+    meta: { active: false },
+  });
+  assert.deepStrictEqual(setValueAtPath(null, [1, "name"], "Ada"), [undefined, { name: "Ada" }]);
+});
+
+test("Navigator builtins utils: collection helpers return recursive values and paths", () => {
+  const data = { user: { name: "Ada" }, tags: ["math", "code"] };
+  assert.deepStrictEqual(collectAllValues(data), [data, data.user, "Ada", data.tags, "math", "code"]);
+  assert.deepStrictEqual(collectPaths(data, []), [
+    [],
+    ["user"],
+    ["user", "name"],
+    ["tags"],
+    ["tags", 0],
+    ["tags", 1],
+  ]);
 });
 
 test("Navigator: nested property access", () => {

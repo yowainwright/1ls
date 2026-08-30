@@ -23,7 +23,13 @@ export const COLOR_PATTERNS = [
   { regex: /: (null)/g, replacement: `: ${COLORS.gray}$1${COLORS.reset}` },
 ];
 
-const hasColor = (): boolean => true;
+let colorEnabled = true;
+
+export const setColorEnabled = (enabled: boolean): void => {
+  colorEnabled = enabled;
+};
+
+const hasColor = (): boolean => colorEnabled;
 
 export function colorize(json: string): string {
   if (!hasColor()) return json;

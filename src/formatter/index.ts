@@ -8,4 +8,5 @@ export {
   warning,
   info,
   dim,
+  setColorEnabled,
 } from "./colors.ts";

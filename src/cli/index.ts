@@ -1,6 +1,6 @@
 import { showHelp } from "./help.ts";
 import { readFile, listFiles, grep } from "../fs/index.ts";
-import { Formatter, warning, info } from "../formatter/index.ts";
+import { Formatter, warning, info, setColorEnabled } from "../formatter/index.ts";
 import { expandShortcuts, shortenExpression, getShortcutHelp } from "../shortcuts/index.ts";
 import { detectFormat } from "../formats/detect.ts";
 import type { CliOptions } from "../types.ts";
@@ -162,6 +162,7 @@ const handleGrep = (options: CliOptions): boolean => {
 };
 
 export async function main(args: string[]): Promise<void> {
+  setColorEnabled(!process.env.NO_COLOR);
   const options = parseArgs(args);
   if (handleHelpFlags(options)) return;
   if (await handleDaemon(options)) return;

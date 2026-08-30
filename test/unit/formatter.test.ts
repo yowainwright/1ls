@@ -7,6 +7,7 @@ import {
   dim,
   error,
   info,
+  setColorEnabled,
   success,
   warning,
 } from "../../src/formatter/index.ts";
@@ -81,21 +82,42 @@ describe("Formatter", () => {
 });
 
 describe("formatter colors", () => {
+  test("can disable colors without requiring a Node-only process global", () => {
+    setColorEnabled(false);
+
+    try {
+      assert.strictEqual(colorize('{"name": "Ada"}'), '{"name": "Ada"}');
+      assert.strictEqual(error("failed"), "failed");
+      assert.strictEqual(success("done"), "done");
+      assert.strictEqual(warning("careful"), "careful");
+      assert.strictEqual(info("details"), "details");
+      assert.strictEqual(dim("quiet"), "quiet");
+    } finally {
+      setColorEnabled(true);
+    }
+  });
+
   test("colorizes JSON tokens and status messages", () => {
-    const json = colorize('{"name": "Ada", "age": -1.5, "active": true, "none": null}');
+    setColorEnabled(true);
 
-    assert.ok(json.includes(`${COLORS.cyan}"name"${COLORS.reset}`));
-    assert.ok(json.includes(`${COLORS.green}"Ada"${COLORS.reset}`));
-    assert.ok(json.includes(`${COLORS.yellow}-1.5${COLORS.reset}`));
-    assert.ok(json.includes(`${COLORS.magenta}true${COLORS.reset}`));
-    assert.ok(json.includes(`${COLORS.gray}null${COLORS.reset}`));
-    assert.ok(json.includes(`${COLORS.gray}{${COLORS.reset}`));
-    assert.ok(json.includes(`${COLORS.gray}}${COLORS.reset}`));
+    try {
+      const json = colorize('{"name": "Ada", "age": -1.5, "active": true, "none": null}');
 
-    assert.strictEqual(error("failed"), `${COLORS.red}failed${COLORS.reset}`);
-    assert.strictEqual(success("done"), `${COLORS.green}done${COLORS.reset}`);
-    assert.strictEqual(warning("careful"), `${COLORS.yellow}careful${COLORS.reset}`);
-    assert.strictEqual(info("details"), `${COLORS.cyan}details${COLORS.reset}`);
-    assert.strictEqual(dim("quiet"), `${COLORS.dim}quiet${COLORS.reset}`);
+      assert.ok(json.includes(`${COLORS.cyan}"name"${COLORS.reset}`));
+      assert.ok(json.includes(`${COLORS.green}"Ada"${COLORS.reset}`));
+      assert.ok(json.includes(`${COLORS.yellow}-1.5${COLORS.reset}`));
+      assert.ok(json.includes(`${COLORS.magenta}true${COLORS.reset}`));
+      assert.ok(json.includes(`${COLORS.gray}null${COLORS.reset}`));
+      assert.ok(json.includes(`${COLORS.gray}{${COLORS.reset}`));
+      assert.ok(json.includes(`${COLORS.gray}}${COLORS.reset}`));
+
+      assert.strictEqual(error("failed"), `${COLORS.red}failed${COLORS.reset}`);
+      assert.strictEqual(success("done"), `${COLORS.green}done${COLORS.reset}`);
+      assert.strictEqual(warning("careful"), `${COLORS.yellow}careful${COLORS.reset}`);
+      assert.strictEqual(info("details"), `${COLORS.cyan}details${COLORS.reset}`);
+      assert.strictEqual(dim("quiet"), `${COLORS.dim}quiet${COLORS.reset}`);
+    } finally {
+      setColorEnabled(true);
+    }
   });
 });
