@@ -1,4 +1,4 @@
-import type { CliOptions } from "./types";
+import type { RuntimeOptions } from "./types";
 import { colorize } from "./dx";
 
 const isObjectRecord = (value: unknown): value is Record<string, unknown> => {
@@ -67,9 +67,9 @@ const formatYamlString = (value: string, spaces: string): string => {
 };
 
 export class Formatter {
-  private options: CliOptions;
+  private options: RuntimeOptions;
 
-  constructor(options: CliOptions) {
+  constructor(options: RuntimeOptions) {
     this.options = options;
   }
 

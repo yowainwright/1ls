@@ -4,9 +4,10 @@ import { Formatter } from "../fmt";
 import { warning, info, setColorEnabled } from "../dx";
 import { expandShortcuts, shortenExpression, getShortcutHelp } from "../shortcuts/index";
 import { detectFormat } from "../formats/detect";
-import type { CliOptions } from "../types";
+import type { CliOptions } from "./types";
 import { VERSION } from "../version";
 import { processData } from "../executor";
+import { NO_COLOR_ENV_KEY } from "./constants";
 import { parseArgs, processInput, readStdin, resolveReadFileInvocation } from "./utils";
 
 export const getDaemon = () => import("../tooltip/index");
@@ -163,7 +164,8 @@ const handleGrep = (options: CliOptions): boolean => {
 };
 
 export async function main(args: string[]): Promise<void> {
-  setColorEnabled(!process.env.NO_COLOR);
+  const shouldUseColor = !(NO_COLOR_ENV_KEY in process.env);
+  setColorEnabled(shouldUseColor);
   const options = parseArgs(args);
   if (handleHelpFlags(options)) return;
   if (await handleDaemon(options)) return;

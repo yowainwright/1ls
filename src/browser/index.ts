@@ -18,7 +18,7 @@ import {
   expandShortcuts,
   shortenExpression,
 } from "../shortcuts/index";
-import type { CliOptions } from "../types";
+import type { RuntimeOptions } from "../types";
 
 export { Lexer, ExpressionParser, JsonNavigator };
 export { parseYAML, parseCSV, parseTOML };
@@ -34,10 +34,10 @@ export {
   processData,
 };
 
-export function processInput(input: string, options: CliOptions = {}): string {
+export function processInput(input: string, options: RuntimeOptions = {}): string {
   return processContent(input, options);
 }
 
-export function evaluate(data: unknown, expression: string, options: CliOptions = {}): unknown {
+export function evaluate(data: unknown, expression: string, options: RuntimeOptions = {}): unknown {
   return evaluateExpression(expression, data, options);
 }

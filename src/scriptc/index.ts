@@ -4,7 +4,7 @@ import { showHelp } from "../cli/help";
 import { readFile } from "../fs/io";
 import { expandShortcuts, shortenExpression, getShortcutHelp } from "../shortcuts/index";
 import { detectFormat } from "../formats/detect";
-import type { CliOptions } from "../types";
+import type { CliOptions } from "../cli/types";
 import { VERSION } from "../version";
 import { processData } from "../executor";
 import { parseArgs, processInput, readStdin, resolveReadFileInvocation } from "../cli/utils";

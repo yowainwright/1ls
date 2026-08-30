@@ -2,20 +2,9 @@ import { BUILTIN_FUNCTIONS } from "../navigator/builtins/constants";
 import { BUILTIN_SHORTCUTS } from "../shortcuts/index";
 import { parseInput } from "../formats/index";
 import type { DataFormat } from "../formats/types";
-import type { CliOptions, OutputFormat } from "../types";
+import type { OutputFormat } from "../types";
 import { DEFAULT_OPTIONS, VALID_INPUT_FORMATS, VALID_OUTPUT_FORMATS } from "./constants";
-
-export interface ReadFileInvocation {
-  filePath: string;
-  expression: string;
-  hasExplicitExpression: boolean;
-}
-
-interface ParseState {
-  args: string[];
-  index: number;
-  options: CliOptions;
-}
+import type { CliOptions, ParseState, ReadFileInvocation } from "./types";
 
 const BUILTIN_NAMES = Object.values(BUILTIN_FUNCTIONS);
 const SHORTCUT_NAMES = BUILTIN_SHORTCUTS.map((shortcut) => shortcut.short);

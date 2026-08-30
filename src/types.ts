@@ -2,23 +2,6 @@ import type { DataFormat } from "./formats/types";
 
 export type OutputFormat = "json" | "yaml" | "csv" | "table";
 
-export interface FileOperationOptions {
-  find?: string;
-  grep?: string;
-  list?: string;
-  recursive?: boolean;
-  ignoreCase?: boolean;
-  showLineNumbers?: boolean;
-  extensions?: string[];
-  maxDepth?: number;
-}
-
-export interface ShorthandOptions {
-  shorten?: string;
-  expand?: string;
-  shortcuts?: boolean;
-}
-
 export interface FormattingOptions {
   raw?: boolean;
   pretty?: boolean;
@@ -29,15 +12,9 @@ export interface FormattingOptions {
   detect?: boolean;
 }
 
-export interface CliOptions extends FileOperationOptions, ShorthandOptions, FormattingOptions {
+export interface RuntimeOptions extends FormattingOptions {
   expression?: string;
-  readFile?: boolean;
-  help?: boolean;
-  version?: boolean;
   strict?: boolean;
-  slurp?: boolean;
-  nullInput?: boolean;
-  daemon?: boolean;
 }
 
 export enum TokenType {
