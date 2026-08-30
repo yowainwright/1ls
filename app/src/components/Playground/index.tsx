@@ -17,6 +17,7 @@ import type {
   FormatTabsProps,
   OutputPanelProps,
   PlaygroundHeaderProps,
+  PlaygroundEvent,
 } from "./types";
 import { FORMAT_CONFIGS, FORMATS, States, MachineEvents, PLAYGROUND_STYLES } from "./constants";
 import { runEvaluation, detectFormat, minifyExpression } from "./utils";
@@ -36,10 +37,19 @@ function usePlaygroundEvaluation(state: Pick<PlaygroundContext, "input" | "expre
         Effect.catchAll(() => Effect.void),
       ),
     );
-    return () => { Effect.runFork(Fiber.interrupt(fiber)); };
+    return () => {
+      Effect.runFork(Fiber.interrupt(fiber));
+    };
   }, [state.input, state.expression, state.format]);
 
   return evaluation;
+}
+
+function shouldDetectFormat(input: string, mode: PlaygroundMode, previousInput: string): boolean {
+  if (mode !== "sandbox") return false;
+  if (input === previousInput) return false;
+  if (input === SANDBOX_PLACEHOLDER) return false;
+  return Boolean(input.trim());
 }
 
 function useFormatDetection(
@@ -51,7 +61,7 @@ function useFormatDetection(
   const previousInputRef = useRef<string>(input);
 
   useEffect(() => {
-    if (mode !== "sandbox" || input === previousInputRef.current || input === SANDBOX_PLACEHOLDER || !input.trim()) return;
+    if (!shouldDetectFormat(input, mode, previousInputRef.current)) return;
     previousInputRef.current = input;
 
     const fiber = Effect.runFork(
@@ -67,38 +77,56 @@ function useFormatDetection(
         Effect.catchAll(() => Effect.void),
       ),
     );
-    return () => { Effect.runFork(Fiber.interrupt(fiber)); };
+    return () => {
+      Effect.runFork(Fiber.interrupt(fiber));
+    };
   }, [currentFormat, input, mode, onFormatDetected]);
 }
 
+function getHeaderContent(context: PlaygroundContext) {
+  if (context.isSandbox) {
+    return {
+      title: "Playground",
+      description: "Paste your data, write expressions, and see results in real-time",
+    };
+  }
+
+  return {
+    title: "Try It Live",
+    description: "Edit the input data and expression to see results in real-time",
+  };
+}
+
+function useShareHandler(context: PlaygroundContext, send: (event: PlaygroundEvent) => void) {
+  return useCallback(() => {
+    const url = getShareableUrl({
+      format: context.format,
+      input: context.input,
+      expression: context.expression,
+    });
+    navigator.clipboard.writeText(url).then(() => send({ type: MachineEvents.SHARE }));
+  }, [context.format, context.input, context.expression, send]);
+}
 
 export function Playground({ mode = "preset" }: PlaygroundProps) {
   const [snapshot, send] = useMachine(playgroundMachine, { input: { mode } });
   const { context } = snapshot;
   const shareStatus = snapshot.matches({ [States.READY]: States.SHARE_COPIED }) ? "copied" : "idle";
-
   const { output, error } = usePlaygroundEvaluation(context);
+  const header = getHeaderContent(context);
 
   useFormatDetection(context.input, mode, context.format, (format) =>
     send({ type: MachineEvents.FORMAT_DETECTED, format }),
   );
 
-  const handleShare = useCallback(() => {
-    const url = getShareableUrl({ format: context.format, input: context.input, expression: context.expression });
-    navigator.clipboard.writeText(url).then(() => send({ type: MachineEvents.SHARE }));
-  }, [context.format, context.input, context.expression, send]);
-
-  const title = context.isSandbox ? "Playground" : "Try It Live";
-  const description = context.isSandbox
-    ? "Paste your data, write expressions, and see results in real-time"
-    : "Edit the input data and expression to see results in real-time";
+  const handleShare = useShareHandler(context, send);
 
   return (
     <section className="px-4 py-16 md:py-24">
       <div className="container mx-auto max-w-6xl">
         <PlaygroundHeader
-          title={title}
-          description={description}
+          title={header.title}
+          description={header.description}
           showShare={context.isSandbox}
           shareStatus={shareStatus}
           onShare={handleShare}
@@ -123,65 +151,105 @@ export function Playground({ mode = "preset" }: PlaygroundProps) {
   );
 }
 
-function InputPanel({
-  mode,
-  format,
-  input,
-  expression,
-  showMinifiedExpression,
-  onFormatChange,
-  onInputChange,
-  onExpressionChange,
-  onShowMinifiedToggle,
-  onSuggestionClick,
-}: InputPanelProps) {
-  const suggestions = FORMAT_CONFIGS[format].suggestions;
-  const isSandbox = mode === "sandbox";
+function InputPanel(props: InputPanelProps) {
+  const suggestions = FORMAT_CONFIGS[props.format].suggestions;
+  const isSandbox = props.mode === "sandbox";
   const showSuggestions = !isSandbox && suggestions.length > 0;
-  const minifiedExpression = minifyExpression(expression);
+  const minifiedExpression = minifyExpression(props.expression);
 
   return (
     <div className="space-y-4">
-      <FormatTabs format={format} onFormatChange={onFormatChange} />
-      <CodeEditor
-        label="Input"
-        value={input}
-        onValueChange={onInputChange}
-        language={FORMAT_CONFIGS[format].language}
-        placeholder={isSandbox ? SANDBOX_PLACEHOLDER : undefined}
-        style={{ minHeight: "240px", maxHeight: "400px", overflow: "auto" }}
+      <FormatTabs format={props.format} onFormatChange={props.onFormatChange} />
+      <InputEditor
+        format={props.format}
+        input={props.input}
+        isSandbox={isSandbox}
+        onInputChange={props.onInputChange}
       />
-      <CodeEditor
-        label="Expression"
-        value={expression}
-        onValueChange={onExpressionChange}
-        language="javascript"
-        showCopy
-        footer={
-          <Button variant="secondary" size="sm" onClick={onShowMinifiedToggle}>
-            {showMinifiedExpression ? "Hide Minified" : "Minify"}
-          </Button>
-        }
+      <ExpressionEditor
+        expression={props.expression}
+        showMinifiedExpression={props.showMinifiedExpression}
+        onExpressionChange={props.onExpressionChange}
+        onShowMinifiedToggle={props.onShowMinifiedToggle}
       />
-      {showMinifiedExpression && (
+      {props.showMinifiedExpression && (
         <Codeblock code={minifiedExpression} language="bash" showLineNumbers={false} />
       )}
       {showSuggestions && (
-        <div className="flex flex-wrap gap-2">
-          <span className="text-xs font-medium text-muted-foreground py-1">Try:</span>
-          {suggestions.map((s) => (
-            <Button
-              key={s.expression}
-              variant={expression === s.expression ? "default" : "secondary"}
-              size="sm"
-              onClick={() => onSuggestionClick(s.expression)}
-              className="rounded-full"
-            >
-              {s.label}
-            </Button>
-          ))}
-        </div>
+        <SuggestionButtons
+          expression={props.expression}
+          onSuggestionClick={props.onSuggestionClick}
+          suggestions={suggestions}
+        />
       )}
+    </div>
+  );
+}
+
+function InputEditor({
+  format,
+  input,
+  isSandbox,
+  onInputChange,
+}: Pick<InputPanelProps, "format" | "input" | "onInputChange"> & { isSandbox: boolean }) {
+  return (
+    <CodeEditor
+      label="Input"
+      value={input}
+      onValueChange={onInputChange}
+      language={FORMAT_CONFIGS[format].language}
+      placeholder={isSandbox ? SANDBOX_PLACEHOLDER : undefined}
+      style={{ minHeight: "240px", maxHeight: "400px", overflow: "auto" }}
+    />
+  );
+}
+
+function ExpressionEditor({
+  expression,
+  showMinifiedExpression,
+  onExpressionChange,
+  onShowMinifiedToggle,
+}: Pick<
+  InputPanelProps,
+  "expression" | "showMinifiedExpression" | "onExpressionChange" | "onShowMinifiedToggle"
+>) {
+  return (
+    <CodeEditor
+      label="Expression"
+      value={expression}
+      onValueChange={onExpressionChange}
+      language="javascript"
+      showCopy
+      footer={
+        <Button variant="secondary" size="sm" onClick={onShowMinifiedToggle}>
+          {showMinifiedExpression ? "Hide Minified" : "Minify"}
+        </Button>
+      }
+    />
+  );
+}
+
+function SuggestionButtons({
+  expression,
+  onSuggestionClick,
+  suggestions,
+}: Pick<InputPanelProps, "expression" | "onSuggestionClick"> & {
+  suggestions: (typeof FORMAT_CONFIGS)[Format]["suggestions"];
+}) {
+  return (
+    <div className="flex flex-wrap gap-2">
+      <span className="text-xs font-medium text-muted-foreground py-1">Try:</span>
+      {suggestions.map((suggestion) => (
+        <Button
+          key={suggestion.expression}
+          variant={expression === suggestion.expression ? "default" : "secondary"}
+          size="sm"
+          onClick={() => onSuggestionClick(suggestion.expression)}
+          className="rounded-full"
+        >
+          {suggestion.label}
+        </Button>
+      ))}
     </div>
   );
 }
@@ -195,7 +263,10 @@ function FormatTabs({ format, onFormatChange }: FormatTabsProps) {
           variant="ghost"
           size="sm"
           onClick={() => onFormatChange(f)}
-          className={cn(PLAYGROUND_STYLES.tabBase, format === f ? PLAYGROUND_STYLES.tabActive : PLAYGROUND_STYLES.tabInactive)}
+          className={cn(
+            PLAYGROUND_STYLES.tabBase,
+            format === f ? PLAYGROUND_STYLES.tabActive : PLAYGROUND_STYLES.tabInactive,
+          )}
         >
           {FORMAT_CONFIGS[f].label}
         </Button>

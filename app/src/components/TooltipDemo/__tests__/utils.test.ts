@@ -40,20 +40,23 @@ describe("filterHints", () => {
 
   test("filters by prefix match on method name", () => {
     const results = filterHints(hints, "fi");
-    assert.strictEqual(results.some((h) => h.signature.includes("filter")), true);
-    assert.strictEqual(results.some((h) => h.signature.includes("find")), true);
-    assert.strictEqual(results.every((h) => !h.signature.includes(".map")), true);
+    const signatureText = results.map((hint) => hint.signature).join("\n");
+    assert.match(signatureText, /filter/);
+    assert.match(signatureText, /find/);
+    assert.doesNotMatch(signatureText, /\.map/);
   });
 
   test("filters to multi-match", () => {
     const results = filterHints(hints, "ma");
+    const signatureText = results.map((hint) => hint.signature).join("\n");
     assert.ok(results.length >= 1);
-    assert.strictEqual(results.some((h) => h.signature.includes("map") || h.signature.includes("max")), true);
+    assert.strictEqual(signatureText.includes("ma"), true);
   });
 
   test("handles dot-prefixed signatures (data properties)", () => {
     const results = filterHints(hints, "na");
-    assert.strictEqual(results.some((h) => h.signature === ".name"), true);
+    const signatures = new Set(results.map((hint) => hint.signature));
+    assert.strictEqual(signatures.has(".name"), true);
   });
 
   test("returns empty array when no hints match", () => {

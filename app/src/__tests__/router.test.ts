@@ -43,8 +43,6 @@ describe("Router Configuration", () => {
       trailingSlash: "never",
     });
 
-    // The trailingSlash: 'never' option ensures URLs like /playground/ become /playground
-    // This is verified by checking the router option is correctly set
     assert.strictEqual(router.options.trailingSlash, "never");
   });
 
@@ -55,7 +53,6 @@ describe("Router Configuration", () => {
       trailingSlash: "never",
     });
 
-    // Verify both settings work together for proper GitHub Pages routing
     assert.strictEqual(router.basepath, "/1ls");
     assert.strictEqual(router.options.trailingSlash, "never");
   });

@@ -282,8 +282,8 @@ describe("minifyExpression", () => {
 
   test("shortens multiple methods", () => {
     const result = minifyExpression(".filter(x => x).map(y => y)");
-    assert.ok(result.includes(".flt"));
-    assert.ok(result.includes(".mp"));
+    assert.match(result, /\.flt/);
+    assert.match(result, /\.mp/);
   });
 });
 
@@ -300,8 +300,8 @@ describe("expandExpression", () => {
 
   test("expands multiple shortcuts", () => {
     const result = expandExpression(".flt(x => x).mp(y => y)");
-    assert.ok(result.includes(".filter"));
-    assert.ok(result.includes(".map"));
+    assert.match(result, /\.filter/);
+    assert.match(result, /\.map/);
   });
 });
 
@@ -311,8 +311,8 @@ describe("runEvaluation", () => {
     const expression = ".users.map(u => u.name)";
     const result = Effect.runSync(runEvaluation(input, expression, "json"));
     assert.strictEqual(result.error, null);
-    assert.ok(result.output.includes("Alice"));
-    assert.ok(result.output.includes("Bob"));
+    assert.match(result.output, /Alice/);
+    assert.match(result.output, /Bob/);
   });
 
   test("returns empty output for empty input", () => {

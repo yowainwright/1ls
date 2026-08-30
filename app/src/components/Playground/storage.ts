@@ -16,6 +16,16 @@ export interface StoredState {
 
 class StorageError extends Data.TaggedError("StorageError")<{ cause: unknown }> {}
 
+const completeTransaction = (tx: IDBTransaction): Promise<void> =>
+  new Promise<void>((resolve, reject) => {
+    tx.oncomplete = () => {
+      resolve();
+    };
+    tx.onerror = () => {
+      reject(tx.error);
+    };
+  });
+
 const openDB: Effect.Effect<IDBDatabase, StorageError> = Effect.tryPromise({
   try: () =>
     new Promise<IDBDatabase>((resolve, reject) => {
@@ -40,11 +50,7 @@ export const saveState = (state: Omit<StoredState, "savedAt">): Effect.Effect<vo
     const storedState: StoredState = { ...state, savedAt: Date.now() };
     store.put(storedState, STATE_KEY);
     yield* Effect.tryPromise({
-      try: () =>
-        new Promise<void>((resolve, reject) => {
-          tx.oncomplete = () => resolve();
-          tx.onerror = () => reject(tx.error);
-        }),
+      try: () => completeTransaction(tx),
       catch: (cause) => new StorageError({ cause }),
     });
     db.close();
@@ -78,7 +84,10 @@ export function decodeShareableState(encoded: string): Omit<StoredState, "savedA
     const json = decodeURIComponent(atob(encoded));
     const parsed = JSON.parse(json);
     const isValidFormat = FORMATS.includes(parsed.f);
-    if (isValidFormat && typeof parsed.i === "string" && typeof parsed.e === "string") {
+    const hasInput = typeof parsed.i === "string";
+    const hasExpression = typeof parsed.e === "string";
+    const hasValidState = isValidFormat && hasInput && hasExpression;
+    if (hasValidState) {
       return { format: parsed.f, input: parsed.i, expression: parsed.e };
     }
     return null;

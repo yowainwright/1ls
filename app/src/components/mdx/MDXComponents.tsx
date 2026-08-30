@@ -57,16 +57,22 @@ function BuiltinsList() {
   return (
     <div className="space-y-12">
       {BUILTIN_CATEGORIES.map((category) => (
-        <div key={category.title}>
-          <h2 className="text-2xl font-semibold tracking-tight mt-10 mb-2">{category.title}</h2>
-          <p className="text-muted-foreground mb-6">{category.description}</p>
-          <div className="space-y-6">
-            {category.builtins.map((builtin) => (
-              <MethodCard key={builtin.name} {...builtin} />
-            ))}
-          </div>
-        </div>
+        <BuiltinCategory key={category.title} category={category} />
       ))}
+    </div>
+  );
+}
+
+function BuiltinCategory({ category }: { category: (typeof BUILTIN_CATEGORIES)[number] }) {
+  return (
+    <div>
+      <h2 className="text-2xl font-semibold tracking-tight mt-10 mb-2">{category.title}</h2>
+      <p className="text-muted-foreground mb-6">{category.description}</p>
+      <div className="space-y-6">
+        {category.builtins.map((builtin) => (
+          <MethodCard key={builtin.name} {...builtin} />
+        ))}
+      </div>
     </div>
   );
 }
@@ -152,7 +158,9 @@ export const mdxComponents: MDXComponents = {
         const m = cls.match(/language-(\w+)/);
         if (m) return m[1];
       }
-      if (!node || typeof node !== "object") return null;
+      if (node === null) return null;
+      if (node === undefined) return null;
+      if (typeof node !== "object") return null;
       const el = node as { props?: { className?: string; "data-language"?: string } };
       if (el.props?.["data-language"]) return el.props["data-language"];
       const m = (el.props?.className ?? "").match(/language-(\w+)/);
@@ -162,7 +170,10 @@ export const mdxComponents: MDXComponents = {
     const extractText = (node: ReactNode): string => {
       if (typeof node === "string") return node;
       if (Array.isArray(node)) return node.map(extractText).join("");
-      if (node && typeof node === "object" && "props" in node) {
+      if (node === null) return "";
+      if (node === undefined) return "";
+      if (typeof node !== "object") return "";
+      if ("props" in node) {
         const el = node as { props?: { children?: ReactNode } };
         return extractText(el.props?.children);
       }
@@ -170,12 +181,15 @@ export const mdxComponents: MDXComponents = {
     };
 
     const language = extractLanguage(className, children) ?? "bash";
+    const hasLanguage = Boolean(extractLanguage(className, children));
     const code = extractText(children);
 
-    return <Codeblock code={code} language={language} showLanguage={!!extractLanguage(className, children)} />;
+    return <Codeblock code={code} language={language} showLanguage={hasLanguage} />;
   },
   code: ({ className, children, ...props }) => {
-    const isInline = typeof children === "string" && !children.includes("\n");
+    const isTextChild = typeof children === "string";
+    const isMultiline = isTextChild ? children.includes("\n") : false;
+    const isInline = isTextChild && !isMultiline;
     if (isInline) {
       return (
         <code

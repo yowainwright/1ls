@@ -64,19 +64,30 @@ function SidebarSection({ section, pathname, onNavigate }: SidebarSectionProps) 
         />
       </Button>
       {isOpen && (
-        <div className="ml-2 mt-1 border-l-2 border-border/20">
-          <ul className="space-y-1">
-            {section.items.map((item) => (
-              <SidebarNavItem
-                key={item.href}
-                item={item}
-                pathname={pathname}
-                onNavigate={onNavigate}
-              />
-            ))}
-          </ul>
-        </div>
+        <SidebarSectionItems
+          items={section.items}
+          pathname={pathname}
+          onNavigate={onNavigate}
+        />
       )}
+    </div>
+  );
+}
+
+function SidebarSectionItems({
+  items,
+  pathname,
+  onNavigate,
+}: Pick<SidebarSectionProps, "pathname" | "onNavigate"> & {
+  items: SidebarSectionProps["section"]["items"];
+}) {
+  return (
+    <div className="ml-2 mt-1 border-l-2 border-border/20">
+      <ul className="space-y-1">
+        {items.map((item) => (
+          <SidebarNavItem key={item.href} item={item} pathname={pathname} onNavigate={onNavigate} />
+        ))}
+      </ul>
     </div>
   );
 }

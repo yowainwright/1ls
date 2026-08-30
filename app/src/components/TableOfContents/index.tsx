@@ -15,6 +15,26 @@ interface TableOfContentsProps {
   className?: string;
 }
 
+const getHeadingElements = (): TocHeading[] => {
+  const elements = document.querySelectorAll("h2[id], h3[id], h4[id]");
+  return Array.from(elements).map((el) => ({
+    id: el.id,
+    text: el.textContent ?? "",
+    level: parseInt(el.tagName.charAt(1), 10),
+  }));
+};
+
+const getIndentClass = (level: number): string => {
+  if (level === 2) return "";
+  if (level === 3) return "pl-4";
+  return "pl-6";
+};
+
+const getLinkColorClass = (isActive: boolean): string => {
+  if (isActive) return "text-primary font-medium";
+  return "text-muted-foreground hover:text-foreground";
+};
+
 const activeItemMachine = setup({
   types: {
     context: {} as { activeId: string | null; itemIds: string[] },
@@ -38,7 +58,9 @@ const activeItemMachine = setup({
             io.observe(el);
           }
         });
-        return () => io.disconnect();
+        return () => {
+          io.disconnect();
+        };
       },
     ),
   },
@@ -67,7 +89,9 @@ const headingsMachine = setup({
       sendBack({ type: "UPDATE" });
       const mo = new MutationObserver(() => sendBack({ type: "UPDATE" }));
       mo.observe(document.body, { childList: true, subtree: true });
-      return () => mo.disconnect();
+      return () => {
+        mo.disconnect();
+      };
     }),
   },
 }).createMachine({
@@ -80,14 +104,7 @@ const headingsMachine = setup({
       on: {
         UPDATE: {
           actions: assign({
-            headings: () => {
-              const elements = document.querySelectorAll("h2[id], h3[id], h4[id]");
-              return Array.from(elements).map((el) => ({
-                id: el.id,
-                text: el.textContent ?? "",
-                level: parseInt(el.tagName.charAt(1), 10),
-              }));
-            },
+            headings: getHeadingElements,
           }),
         },
         NAVIGATE: { target: "observing", reenter: true, actions: assign({ headings: [] }) },
@@ -104,6 +121,23 @@ function useActiveItem(itemIds: string[]) {
   return snapshot.context.activeId;
 }
 
+function TocItem({ heading, activeId }: { heading: TocHeading; activeId: string | null }) {
+  const isActive = activeId === heading.id;
+  const indentClass = getIndentClass(heading.level);
+  const linkColorClass = getLinkColorClass(isActive);
+
+  return (
+    <li>
+      <a
+        href={`#${heading.id}`}
+        className={cn("block py-1 transition-colors", indentClass, linkColorClass)}
+      >
+        {heading.text}
+      </a>
+    </li>
+  );
+}
+
 export function TableOfContents({ headings, className }: TableOfContentsProps) {
   const itemIds = useMemo(() => headings.map((h) => h.id), [headings]);
   const activeId = useActiveItem(itemIds);
@@ -116,27 +150,9 @@ export function TableOfContents({ headings, className }: TableOfContentsProps) {
     <nav aria-label="Table of contents" className={className}>
       <h2 className="mb-4 text-sm font-semibold text-foreground">On this page</h2>
       <ul className="space-y-2 text-sm">
-        {headings.map((heading) => {
-          const isActive = activeId === heading.id;
-          const indentClass = heading.level === 2 ? "" : heading.level === 3 ? "pl-4" : "pl-6";
-
-          return (
-            <li key={heading.id}>
-              <a
-                href={`#${heading.id}`}
-                className={cn(
-                  "block py-1 transition-colors",
-                  indentClass,
-                  isActive
-                    ? "text-primary font-medium"
-                    : "text-muted-foreground hover:text-foreground",
-                )}
-              >
-                {heading.text}
-              </a>
-            </li>
-          );
-        })}
+        {headings.map((heading) => (
+          <TocItem key={heading.id} heading={heading} activeId={activeId} />
+        ))}
       </ul>
     </nav>
   );

@@ -39,7 +39,7 @@
     "test:integration": "pnpm run build && node --disable-warning=ExperimentalWarning --experimental-transform-types --test \"test/integration/**/*.test.ts\"",
     "test:bench": "docker build -f test/benchmarks/Dockerfile -t 1ls-bench . && docker run --rm 1ls-bench",
     "test:bench:update": "bash test/benchmarks/update.sh",
-    "lint": "oxlint src/ --deny-warnings",
+    "lint": "oxlint src/ --deny-warnings && pnpm --filter 1ls-app lint",
     "lint:agent": "oxlint src/ --format agent --deny-warnings && lint-changed --comments=forbid",
     "lint:legibility": "lint-changed --comments=forbid",
     "lint:fix": "oxlint src/ --fix",

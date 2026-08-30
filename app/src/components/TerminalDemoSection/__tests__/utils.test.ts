@@ -12,8 +12,8 @@ describe("createCommandString", () => {
     const input = "hello world";
     const command = ".length";
     const result = createCommandString(input, command);
-    assert.ok(result.includes(input));
-    assert.ok(result.includes(command));
+    assert.match(result, /hello world/);
+    assert.match(result, /\.length/);
   });
 
   test("wraps input and command in single quotes", () => {
@@ -24,8 +24,8 @@ describe("createCommandString", () => {
 
   test("pipes echo output to 1ls", () => {
     const result = createCommandString("x", ".y");
-    assert.ok(result.includes("|"));
-    assert.ok(result.indexOf("echo") < result.indexOf("1ls"));
+    assert.match(result, /\|/);
+    assert.match(result, /echo.*1ls/);
   });
 });
 

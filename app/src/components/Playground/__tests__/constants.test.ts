@@ -37,11 +37,10 @@ describe("FORMAT_CONFIGS", () => {
   });
 
   test("each suggestion has label and expression", () => {
-    FORMATS.forEach((format) => {
-      FORMAT_CONFIGS[format].suggestions.forEach((suggestion) => {
-        assert.strictEqual(typeof suggestion.label, "string");
-        assert.strictEqual(typeof suggestion.expression, "string");
-      });
+    const suggestions = FORMATS.flatMap((format) => FORMAT_CONFIGS[format].suggestions);
+    suggestions.forEach((suggestion) => {
+      assert.strictEqual(typeof suggestion.label, "string");
+      assert.strictEqual(typeof suggestion.expression, "string");
     });
   });
 });
@@ -53,11 +52,12 @@ describe("FORMATS", () => {
   });
 
   test("contains json, yaml, csv, toml, text", () => {
-    assert.ok(FORMATS.includes("json"));
-    assert.ok(FORMATS.includes("yaml"));
-    assert.ok(FORMATS.includes("csv"));
-    assert.ok(FORMATS.includes("toml"));
-    assert.ok(FORMATS.includes("text"));
+    const formatSet = new Set(FORMATS);
+    assert.ok(formatSet.has("json"));
+    assert.ok(formatSet.has("yaml"));
+    assert.ok(formatSet.has("csv"));
+    assert.ok(formatSet.has("toml"));
+    assert.ok(formatSet.has("text"));
   });
 
   test("matches FORMAT_CONFIGS keys", () => {

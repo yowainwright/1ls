@@ -2,7 +2,9 @@ import type { MethodHint } from "./types";
 
 export function getSearchTerm(query: string, triggerAt: number): string {
   const lastDotIndex = query.lastIndexOf(".");
-  return lastDotIndex === -1 ? query.slice(triggerAt) : query.slice(lastDotIndex + 1).toLowerCase();
+  if (lastDotIndex === -1) return query.slice(triggerAt);
+  const term = query.slice(lastDotIndex + 1);
+  return term.toLowerCase();
 }
 
 export function filterHints(hints: MethodHint[], searchTerm: string): MethodHint[] {

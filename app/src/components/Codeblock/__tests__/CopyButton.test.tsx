@@ -6,9 +6,10 @@ import { CopyButton } from "../CopyButton";
 
 const mockWriteText = mock.fn(() => Promise.resolve());
 
-const originalClipboard = navigator.clipboard;
+let clipboardBeforeMock: Clipboard | undefined;
 
 beforeEach(() => {
+  clipboardBeforeMock = navigator.clipboard;
   Object.defineProperty(navigator, "clipboard", {
     value: { writeText: mockWriteText },
     writable: true,
@@ -19,7 +20,7 @@ beforeEach(() => {
 
 afterEach(() => {
   Object.defineProperty(navigator, "clipboard", {
-    value: originalClipboard,
+    value: clipboardBeforeMock,
     writable: true,
     configurable: true,
   });

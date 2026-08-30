@@ -57,45 +57,62 @@ export default function Hero() {
     <section className={styles.section}>
       <div className={styles.container}>
         <div className={styles.inner}>
-          <div className={styles.logoWrap}>
-            <Logo className={styles.logo} />
-          </div>
-          <motion.h2 className={styles.h2} {...fadeUp(0.2)} style={GRADIENT_HEADER_STYLES}>
-            {siteConfig.hero.subtitle}
-          </motion.h2>
-          <motion.p className={styles.p} {...fadeUp(0.4)}>
-            {siteConfig.hero.longDescription}
-          </motion.p>
+          <HeroLogo />
+          <HeroCopy />
           <motion.div className={styles.ctaRow} {...fadeUp(0.6)}>
-            <Button
-              asChild
-              className={styles.primaryCta}
-              style={{
-                background:
-                  "linear-gradient(90deg, rgb(var(--primary)), rgb(var(--accent)), rgb(var(--primary)))",
-                backgroundSize: "200% auto",
-              }}
-            >
-              <a
-                href={siteConfig.hero.secondaryCtaHref}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <Github className={styles.primaryCtaIcon} />
-                {siteConfig.hero.secondaryCta}
-              </a>
-            </Button>
-            <Button variant="ghost" onClick={handleCopy} className={styles.installCmd}>
-              <code className={styles.installCode}>{INSTALL_COMMAND}</code>
-              {copied ? (
-                <Check className={styles.copiedIcon} />
-              ) : (
-                <Copy className={styles.copyIcon} />
-              )}
-            </Button>
+            <GithubCta />
+            <InstallButton copied={copied} onCopy={handleCopy} />
           </motion.div>
         </div>
       </div>
     </section>
+  );
+}
+
+function HeroLogo() {
+  return (
+    <div className={styles.logoWrap}>
+      <Logo className={styles.logo} />
+    </div>
+  );
+}
+
+function HeroCopy() {
+  return (
+    <>
+      <motion.h2 className={styles.h2} {...fadeUp(0.2)} style={GRADIENT_HEADER_STYLES}>
+        {siteConfig.hero.subtitle}
+      </motion.h2>
+      <motion.p className={styles.p} {...fadeUp(0.4)}>
+        {siteConfig.hero.longDescription}
+      </motion.p>
+    </>
+  );
+}
+
+function GithubCta() {
+  const gradientBackground =
+    "linear-gradient(90deg, rgb(var(--primary)), rgb(var(--accent)), rgb(var(--primary)))";
+
+  return (
+    <Button
+      asChild
+      className={styles.primaryCta}
+      style={{ background: gradientBackground, backgroundSize: "200% auto" }}
+    >
+      <a href={siteConfig.hero.secondaryCtaHref} target="_blank" rel="noopener noreferrer">
+        <Github className={styles.primaryCtaIcon} />
+        {siteConfig.hero.secondaryCta}
+      </a>
+    </Button>
+  );
+}
+
+function InstallButton({ copied, onCopy }: { copied: boolean; onCopy: () => void }) {
+  return (
+    <Button variant="ghost" onClick={onCopy} className={styles.installCmd}>
+      <code className={styles.installCode}>{INSTALL_COMMAND}</code>
+      {copied ? <Check className={styles.copiedIcon} /> : <Copy className={styles.copyIcon} />}
+    </Button>
   );
 }

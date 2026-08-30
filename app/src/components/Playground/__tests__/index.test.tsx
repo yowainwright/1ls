@@ -12,9 +12,12 @@ async function deletePlaygroundDatabase(): Promise<void> {
   if (!dbFactory) return;
   await new Promise<void>((resolve) => {
     const request = dbFactory.deleteDatabase("1ls-playground");
-    request.onsuccess = () => resolve();
-    request.onerror = () => resolve();
-    request.onblocked = () => resolve();
+    const finishRequest = () => {
+      resolve();
+    };
+    request.onsuccess = finishRequest;
+    request.onerror = finishRequest;
+    request.onblocked = finishRequest;
   });
 }
 
@@ -50,11 +53,16 @@ function getButton(container: HTMLElement, label: string): HTMLButtonElement {
   return button as HTMLButtonElement;
 }
 
-async function clickButton(container: HTMLElement, label: string): Promise<void> {
+function clickButton(container: HTMLElement, label: string): void {
   const button = getButton(container, label);
-  await act(async () => {
+  act(() => {
     fireEvent.click(button);
   });
+}
+
+function hasText(container: HTMLElement, text: string): boolean {
+  const content = container.textContent ?? "";
+  return content.includes(text);
 }
 
 async function settleDelayedPlaygroundEffects(): Promise<void> {
@@ -74,37 +82,36 @@ afterEach(async () => {
 describe("Playground - Preset Mode", () => {
   test("renders section header with 'Try It Live'", async () => {
     const { container } = await renderSettled(<Playground />);
-    assert.ok(container.textContent.includes("Try It Live"));
+    assert.ok(hasText(container, "Try It Live"));
   });
 
   test("renders format tabs for all formats", async () => {
     const { container } = await renderSettled(<Playground />);
-    for (const format of FORMATS) {
-      assert.ok(container.textContent.includes(FORMAT_CONFIGS[format].label));
-    }
+    const labels = new Set(FORMATS.map((format) => FORMAT_CONFIGS[format].label));
+    labels.forEach((label) => assert.ok(hasText(container, label)));
   });
 
   test("renders input and expression editors", async () => {
     const { container } = await renderSettled(<Playground />);
-    assert.ok(container.textContent.includes("Input"));
-    assert.ok(container.textContent.includes("Expression"));
+    assert.ok(hasText(container, "Input"));
+    assert.ok(hasText(container, "Expression"));
   });
 
   test("renders output panel", async () => {
     const { container } = await renderSettled(<Playground />);
-    assert.ok(container.textContent.includes("Output"));
+    assert.ok(hasText(container, "Output"));
   });
 
   test("shows preset data on initial render", async () => {
     const { container } = await renderSettled(<Playground />);
-    assert.ok(container.textContent.includes("spotify"));
+    assert.ok(hasText(container, "spotify"));
   });
 
   test("evaluates expression and shows output", async () => {
     const { container } = await renderSettled(<Playground />);
     await waitFor(
       () => {
-        assert.ok(container.textContent.includes("Chill Vibes"));
+        assert.ok(hasText(container, "Chill Vibes"));
       },
       { timeout: 1000 },
     );
@@ -112,75 +119,75 @@ describe("Playground - Preset Mode", () => {
 
   test("changes format when tab is clicked", async () => {
     const { container } = await renderSettled(<Playground />);
-    await clickButton(container, "YAML");
+    clickButton(container, "YAML");
     await settleDelayedPlaygroundEffects();
     await waitFor(() => {
-      assert.ok(container.textContent.includes("pokemon"));
+      assert.ok(hasText(container, "pokemon"));
     });
   });
 
   test("shows suggestion buttons in preset mode", async () => {
     const { container } = await renderSettled(<Playground />);
-    assert.ok(container.textContent.includes("Try:"));
+    assert.ok(hasText(container, "Try:"));
   });
 });
 
 describe("Playground - Sandbox Mode", () => {
   test("renders section header with 'Playground'", async () => {
     const { container } = await renderSettled(<Playground mode="sandbox" />);
-    assert.ok(container.textContent.includes("Playground"));
+    assert.ok(hasText(container, "Playground"));
   });
 
   test("shows sandbox starter data for JSON", async () => {
     const { container } = await renderSettled(<Playground mode="sandbox" />);
-    assert.ok(container.textContent.includes("Alice"));
-    assert.ok(container.textContent.includes("Bob"));
-    assert.ok(container.textContent.includes("Charlie"));
+    assert.ok(hasText(container, "Alice"));
+    assert.ok(hasText(container, "Bob"));
+    assert.ok(hasText(container, "Charlie"));
   });
 
   test("shows sandbox starter expression", async () => {
     const { container } = await renderSettled(<Playground mode="sandbox" />);
-    assert.ok(container.textContent.includes(".users.filter"));
+    assert.ok(hasText(container, ".users.filter"));
   });
 
   test("does not show suggestion buttons in sandbox mode", async () => {
     const { container } = await renderSettled(<Playground mode="sandbox" />);
-    assert.ok(!container.textContent.includes("Try:"));
+    assert.ok(!hasText(container, "Try:"));
   });
 
   test("changes to YAML starter data when YAML tab clicked", async () => {
     const { container } = await renderSettled(<Playground mode="sandbox" />);
-    await clickButton(container, "YAML");
+    clickButton(container, "YAML");
     await settleDelayedPlaygroundEffects();
     await waitFor(() => {
-      assert.ok(container.textContent.includes("name: Alice"));
+      assert.ok(hasText(container, "name: Alice"));
     });
   });
 
   test("changes to CSV starter data when CSV tab clicked", async () => {
     const { container } = await renderSettled(<Playground mode="sandbox" />);
-    await clickButton(container, "CSV");
+    clickButton(container, "CSV");
     await settleDelayedPlaygroundEffects();
     await waitFor(() => {
-      assert.ok(container.textContent.includes("name,age,active"));
+      assert.ok(hasText(container, "name,age,active"));
     });
   });
 
   test("changes to TOML starter data when TOML tab clicked", async () => {
     const { container } = await renderSettled(<Playground mode="sandbox" />);
-    await clickButton(container, "TOML");
+    clickButton(container, "TOML");
     await settleDelayedPlaygroundEffects();
     await waitFor(() => {
-      assert.ok(container.textContent.includes("[user]"));
+      assert.ok(hasText(container, "[user]"));
     });
   });
 
   test("changes to Text starter data when Text tab clicked", async () => {
     const { container } = await renderSettled(<Playground mode="sandbox" />);
-    await clickButton(container, "Text");
+    clickButton(container, "Text");
     await settleDelayedPlaygroundEffects();
     await waitFor(() => {
-      assert.ok(container.textContent.includes("INFO:"));
+      assert.ok(hasText(container, "INFO:"));
     });
   });
 });
@@ -188,28 +195,28 @@ describe("Playground - Sandbox Mode", () => {
 describe("Playground - Minify Feature", () => {
   test("renders minify button", async () => {
     const { container } = await renderSettled(<Playground mode="sandbox" />);
-    assert.ok(container.textContent.includes("Minify"));
+    assert.ok(hasText(container, "Minify"));
   });
 
   test("shows minified expression when minify button clicked", async () => {
     const { container } = await renderSettled(<Playground mode="sandbox" />);
-    await clickButton(container, "Minify");
+    clickButton(container, "Minify");
     await waitFor(() => {
-      assert.ok(container.textContent.includes("Hide Minified"));
-      assert.ok(container.textContent.includes(".flt"));
+      assert.ok(hasText(container, "Hide Minified"));
+      assert.ok(hasText(container, ".flt"));
     });
   });
 
   test("hides minified expression when hide button clicked", async () => {
     const { container } = await renderSettled(<Playground mode="sandbox" />);
-    await clickButton(container, "Minify");
+    clickButton(container, "Minify");
     await waitFor(() => {
-      assert.ok(container.textContent.includes("Hide Minified"));
+      assert.ok(hasText(container, "Hide Minified"));
     });
-    await clickButton(container, "Hide Minified");
+    clickButton(container, "Hide Minified");
     await waitFor(() => {
-      assert.ok(container.textContent.includes("Minify"));
-      assert.ok(!container.textContent.includes("Hide Minified"));
+      assert.ok(hasText(container, "Minify"));
+      assert.ok(!hasText(container, "Hide Minified"));
     });
   });
 });
@@ -273,12 +280,12 @@ describe("Playground - Syntax Highlighting", () => {
 
   test("updates highlighting when format changes to YAML", async () => {
     const { container } = await renderSettled(<Playground />);
-    await clickButton(container, "YAML");
+    clickButton(container, "YAML");
     await settleDelayedPlaygroundEffects();
 
     await waitFor(
       () => {
-        assert.ok(container.textContent.includes("pokemon"));
+        assert.ok(hasText(container, "pokemon"));
         const highlightedEditor = Array.from(container.querySelectorAll("pre[aria-hidden='true']")).find(
           (pre) => pre.textContent?.includes("pokemon"),
         );
@@ -290,12 +297,12 @@ describe("Playground - Syntax Highlighting", () => {
 
   test("updates highlighting when format changes to TOML", async () => {
     const { container } = await renderSettled(<Playground />);
-    await clickButton(container, "TOML");
+    clickButton(container, "TOML");
     await settleDelayedPlaygroundEffects();
 
     await waitFor(
       () => {
-        assert.ok(container.textContent.includes("[game]"));
+        assert.ok(hasText(container, "[game]"));
         const highlightedEditor = Array.from(container.querySelectorAll("pre[aria-hidden='true']")).find(
           (pre) => pre.textContent?.includes("[game]"),
         );
