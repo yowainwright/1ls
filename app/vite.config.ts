@@ -15,6 +15,8 @@ import rehypeSlug from "rehype-slug";
 import remarkGfm from "remark-gfm";
 import path from "path";
 
+const appRoot = import.meta.dirname;
+
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [
@@ -55,8 +57,8 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      "@": path.resolve(__dirname, "./src"),
-      "1ls/browser": path.resolve(__dirname, "../dist/browser/index.js"),
+      "@": path.resolve(appRoot, "./src"),
+      "1ls/browser": path.resolve(appRoot, "../dist/browser/index.js"),
     },
   },
   build: {

@@ -1,65 +1,66 @@
-import { describe, test, expect } from "bun:test";
-import { escapeRegExp } from "../../src/shortcuts";
+import { describe, test } from "node:test";
+import assert from "node:assert/strict";
+import { escapeRegExp } from "../../src/shortcuts/index.ts";
 
 describe("escapeRegExp", () => {
   test("escapes dot character", () => {
-    expect(escapeRegExp("file.txt")).toBe("file\\.txt");
+    assert.strictEqual(escapeRegExp("file.txt"), "file\\.txt");
   });
 
   test("escapes asterisk character", () => {
-    expect(escapeRegExp("*.js")).toBe("\\*\\.js");
+    assert.strictEqual(escapeRegExp("*.js"), "\\*\\.js");
   });
 
   test("escapes plus character", () => {
-    expect(escapeRegExp("a+b")).toBe("a\\+b");
+    assert.strictEqual(escapeRegExp("a+b"), "a\\+b");
   });
 
   test("escapes question mark character", () => {
-    expect(escapeRegExp("a?b")).toBe("a\\?b");
+    assert.strictEqual(escapeRegExp("a?b"), "a\\?b");
   });
 
   test("escapes caret character", () => {
-    expect(escapeRegExp("^start")).toBe("\\^start");
+    assert.strictEqual(escapeRegExp("^start"), "\\^start");
   });
 
   test("escapes dollar sign character", () => {
-    expect(escapeRegExp("end$")).toBe("end\\$");
+    assert.strictEqual(escapeRegExp("end$"), "end\\$");
   });
 
   test("escapes curly braces", () => {
-    expect(escapeRegExp("{min,max}")).toBe("\\{min,max\\}");
+    assert.strictEqual(escapeRegExp("{min,max}"), "\\{min,max\\}");
   });
 
   test("escapes parentheses", () => {
-    expect(escapeRegExp("(group)")).toBe("\\(group\\)");
+    assert.strictEqual(escapeRegExp("(group)"), "\\(group\\)");
   });
 
   test("escapes pipe character", () => {
-    expect(escapeRegExp("a|b")).toBe("a\\|b");
+    assert.strictEqual(escapeRegExp("a|b"), "a\\|b");
   });
 
   test("escapes square brackets", () => {
-    expect(escapeRegExp("[abc]")).toBe("\\[abc\\]");
+    assert.strictEqual(escapeRegExp("[abc]"), "\\[abc\\]");
   });
 
   test("escapes backslash character", () => {
-    expect(escapeRegExp("\\")).toBe("\\\\");
+    assert.strictEqual(escapeRegExp("\\"), "\\\\");
   });
 
   test("escapes multiple special characters", () => {
-    expect(escapeRegExp(".*+?^${}()|[]\\")).toBe("\\.\\*\\+\\?\\^\\$\\{\\}\\(\\)\\|\\[\\]\\\\");
+    assert.strictEqual(escapeRegExp(".*+?^${}()|[]\\"), "\\.\\*\\+\\?\\^\\$\\{\\}\\(\\)\\|\\[\\]\\\\");
   });
 
   test("does not modify regular characters", () => {
-    expect(escapeRegExp("abc123")).toBe("abc123");
+    assert.strictEqual(escapeRegExp("abc123"), "abc123");
   });
 
   test("handles mixed regular and special characters", () => {
-    expect(escapeRegExp("file*.{js,ts}")).toBe("file\\*\\.\\{js,ts\\}");
+    assert.strictEqual(escapeRegExp("file*.{js,ts}"), "file\\*\\.\\{js,ts\\}");
   });
 
   test("handles empty string", () => {
-    expect(escapeRegExp("")).toBe("");
+    assert.strictEqual(escapeRegExp(""), "");
   });
 
   test("escaped string works in RegExp", () => {
@@ -67,8 +68,8 @@ describe("escapeRegExp", () => {
     const escaped = escapeRegExp(input);
     const regex = new RegExp(escaped);
 
-    expect(regex.test("test.file*.txt")).toBe(true);
-    expect(regex.test("testXfileXtxt")).toBe(false);
+    assert.strictEqual(regex.test("test.file*.txt"), true);
+    assert.strictEqual(regex.test("testXfileXtxt"), false);
   });
 
   test("prevents regex injection", () => {
@@ -76,8 +77,8 @@ describe("escapeRegExp", () => {
     const escaped = escapeRegExp(maliciousInput);
     const regex = new RegExp(escaped);
 
-    expect(regex.test(".*")).toBe(true);
-    expect(regex.test("anything")).toBe(false);
+    assert.strictEqual(regex.test(".*"), true);
+    assert.strictEqual(regex.test("anything"), false);
   });
 
   test("handles URL patterns safely", () => {
@@ -85,7 +86,7 @@ describe("escapeRegExp", () => {
     const escaped = escapeRegExp(url);
     const regex = new RegExp(escaped);
 
-    expect(regex.test("https://example.com/path?query=value")).toBe(true);
-    expect(regex.test("https://example.com/pathXqueryXvalue")).toBe(false);
+    assert.strictEqual(regex.test("https://example.com/path?query=value"), true);
+    assert.strictEqual(regex.test("https://example.com/pathXqueryXvalue"), false);
   });
 });

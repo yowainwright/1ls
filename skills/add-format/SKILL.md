@@ -25,7 +25,7 @@ function parseMyFormat(input: string): unknown
 
 ## Constraints
 
-- **QuickJS NG compatible**: the parser itself must be sync, no `async/await`
+- **Native-core compatible**: the parser itself must be sync, no `async/await`
   - The `parseInput` wrapper uses dynamic `import()` for code splitting — that's the only async part
 - **No external deps**: hand-roll the parser using only built-in JS
 - **Use existing helpers** from `src/formats/utils.ts`: `tryParseNumber`, `parseBooleanValue`, `parseNullValue`
@@ -40,9 +40,8 @@ function parseMyFormat(input: string): unknown
 
 ## Links
 
-- [QuickJS NG](https://github.com/quickjs-ng/quickjs) — runtime target
-- [MDN String.split](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/split) — safe in QJS
-- [MDN RegExp](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RegExp) — no lookbehind in QJS
+- [MDN String.split](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/split) — safe built-in parser primitive
+- [MDN RegExp](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RegExp) — keep parser regexes simple and portable
 - Source: [`src/formats/index.ts`](../../src/formats/index.ts) — format detection + routing
 - Source: [`src/formats/types.ts`](../../src/formats/types.ts) — `DataFormat` union
 - Source: [`src/formats/utils.ts`](../../src/formats/utils.ts) — parse helpers
@@ -53,5 +52,5 @@ function parseMyFormat(input: string): unknown
 ## Run
 
 ```bash
-bun test test/unit/formats.test.ts
+pnpm test -- --test-name-pattern formats
 ```

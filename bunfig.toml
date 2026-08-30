@@ -1,5 +1,0 @@
-[test]
-root = "./test"
-
-[install.security]
-scanner = "@socketsecurity/bun-security-scanner"

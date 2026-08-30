@@ -17,7 +17,7 @@ export function SpotlightCard({ example }: SpotlightCardProps) {
         input={example.input}
         output={example.output}
         command={example.command}
-        language={example.language as Language}
+        language={example.language}
       />
     </CodeCard>
   );

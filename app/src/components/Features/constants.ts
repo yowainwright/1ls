@@ -32,7 +32,7 @@ const items: Feature[] = [
   },
   {
     title: "Fast & Lightweight",
-    description: "Zero dependencies, built with Bun for maximum speed",
+    description: "Zero dependencies, built for maximum speed",
     icon: "zap",
   },
   {

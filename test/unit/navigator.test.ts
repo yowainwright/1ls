@@ -1,7 +1,8 @@
-import { test, expect } from "bun:test";
-import { Lexer } from "../../src/lexer";
-import { ExpressionParser } from "../../src/expression";
-import { JsonNavigator } from "../../src/navigator/json";
+import { test } from "node:test";
+import assert from "node:assert/strict";
+import { Lexer } from "../../src/lexer/index.ts";
+import { ExpressionParser } from "../../src/expression/index.ts";
+import { JsonNavigator } from "../../src/navigator/json/index.ts";
 
 function evaluate(expression: string, data: unknown): unknown {
   const lexer = new Lexer(expression);
@@ -14,55 +15,55 @@ function evaluate(expression: string, data: unknown): unknown {
 
 test("Navigator: simple property access", () => {
   const data = { name: "John", age: 30 };
-  expect(evaluate(".name", data)).toBe("John");
-  expect(evaluate(".age", data)).toBe(30);
+  assert.strictEqual(evaluate(".name", data), "John");
+  assert.strictEqual(evaluate(".age", data), 30);
 });
 
 test("Navigator: nested property access", () => {
   const data = { user: { name: "John", email: "john@example.com" } };
-  expect(evaluate(".user.name", data)).toBe("John");
-  expect(evaluate(".user.email", data)).toBe("john@example.com");
+  assert.strictEqual(evaluate(".user.name", data), "John");
+  assert.strictEqual(evaluate(".user.email", data), "john@example.com");
 });
 
 test("Navigator: array index access", () => {
   const data = { users: ["Alice", "Bob", "Charlie"] };
-  expect(evaluate(".users[0]", data)).toBe("Alice");
-  expect(evaluate(".users[1]", data)).toBe("Bob");
-  expect(evaluate(".users[-1]", data)).toBe("Charlie");
+  assert.strictEqual(evaluate(".users[0]", data), "Alice");
+  assert.strictEqual(evaluate(".users[1]", data), "Bob");
+  assert.strictEqual(evaluate(".users[-1]", data), "Charlie");
 });
 
 test("Navigator: array slice", () => {
   const data = [1, 2, 3, 4, 5];
-  expect(evaluate("[0:3]", data)).toEqual([1, 2, 3]);
-  expect(evaluate("[2:]", data)).toEqual([3, 4, 5]);
-  expect(evaluate("[:3]", data)).toEqual([1, 2, 3]);
+  assert.deepStrictEqual(evaluate("[0:3]", data), [1, 2, 3]);
+  assert.deepStrictEqual(evaluate("[2:]", data), [3, 4, 5]);
+  assert.deepStrictEqual(evaluate("[:3]", data), [1, 2, 3]);
 });
 
 test("Navigator: array spread", () => {
   const data = { items: [1, 2, 3] };
-  expect(evaluate(".items[]", data)).toEqual([1, 2, 3]);
+  assert.deepStrictEqual(evaluate(".items[]", data), [1, 2, 3]);
 });
 
 test("Navigator: object operations", () => {
   const data = { a: 1, b: 2, c: 3 };
-  expect(evaluate(".{keys}", data)).toEqual(["a", "b", "c"]);
-  expect(evaluate(".{values}", data)).toEqual([1, 2, 3]);
-  expect(evaluate(".{entries}", data)).toEqual([
+  assert.deepStrictEqual(evaluate(".{keys}", data), ["a", "b", "c"]);
+  assert.deepStrictEqual(evaluate(".{values}", data), [1, 2, 3]);
+  assert.deepStrictEqual(evaluate(".{entries}", data), [
     ["a", 1],
     ["b", 2],
     ["c", 3],
   ]);
-  expect(evaluate(".{length}", data)).toBe(3);
+  assert.strictEqual(evaluate(".{length}", data), 3);
 });
 
 test("Navigator: array map", () => {
   const data = [1, 2, 3];
-  expect(evaluate(".map(x => x * 2)", data)).toEqual([2, 4, 6]);
+  assert.deepStrictEqual(evaluate(".map(x => x * 2)", data), [2, 4, 6]);
 });
 
 test("Navigator: array filter", () => {
   const data = [1, 2, 3, 4, 5];
-  expect(evaluate(".filter(x => x > 2)", data)).toEqual([3, 4, 5]);
+  assert.deepStrictEqual(evaluate(".filter(x => x > 2)", data), [3, 4, 5]);
 });
 
 test("Navigator: method chaining", () => {
@@ -73,8 +74,8 @@ test("Navigator: method chaining", () => {
       { name: "Charlie", age: 35 },
     ],
   };
-  expect(evaluate(".users.map(u => u.name)", data)).toEqual(["Alice", "Bob", "Charlie"]);
-  expect(evaluate(".users.filter(u => u.age > 25)", data)).toEqual([
+  assert.deepStrictEqual(evaluate(".users.map(u => u.name)", data), ["Alice", "Bob", "Charlie"]);
+  assert.deepStrictEqual(evaluate(".users.filter(u => u.age > 25)", data), [
     { name: "Bob", age: 30 },
     { name: "Charlie", age: 35 },
   ]);
@@ -82,27 +83,29 @@ test("Navigator: method chaining", () => {
 
 test("Navigator: string methods", () => {
   const data = { name: "John Doe" };
-  expect(evaluate(".name.toLowerCase()", data)).toBe("john doe");
-  expect(evaluate(".name.toUpperCase()", data)).toBe("JOHN DOE");
-  expect(evaluate('.name.includes("John")', data)).toBe(true);
-  expect(evaluate('.name.includes("Jane")', data)).toBe(false);
+  assert.strictEqual(evaluate(".name.toLowerCase()", data), "john doe");
+  assert.strictEqual(evaluate(".name.toUpperCase()", data), "JOHN DOE");
+  assert.strictEqual(evaluate('.name.includes("John")', data), true);
+  assert.strictEqual(evaluate('.name.includes("Jane")', data), false);
 });
 
 test("Navigator: arithmetic operators", () => {
   const data = [10, 20, 30];
-  expect(evaluate(".map(x => x + 5)", data)).toEqual([15, 25, 35]);
-  expect(evaluate(".map(x => x * 2)", data)).toEqual([20, 40, 60]);
+  assert.deepStrictEqual(evaluate(".map(x => x + 5)", data), [15, 25, 35]);
+  assert.deepStrictEqual(evaluate(".map(x => x * 2)", data), [20, 40, 60]);
+  assert.deepStrictEqual(evaluate(".map(x => x + 2 * 3)", [1]), [7]);
+  assert.deepStrictEqual(evaluate(".map(x => (x + 2) * 3)", [1]), [9]);
 });
 
 test("Navigator: comparison operators", () => {
   const data = [1, 2, 3, 4, 5];
-  expect(evaluate(".filter(x => x > 2)", data)).toEqual([3, 4, 5]);
-  expect(evaluate(".filter(x => x >= 3)", data)).toEqual([3, 4, 5]);
+  assert.deepStrictEqual(evaluate(".filter(x => x > 2)", data), [3, 4, 5]);
+  assert.deepStrictEqual(evaluate(".filter(x => x >= 3)", data), [3, 4, 5]);
 });
 
 test("Navigator: object operation on arrays", () => {
   const data = [1, 2, 3, 4, 5];
-  expect(evaluate(".{length}", data)).toBe(5);
+  assert.strictEqual(evaluate(".{length}", data), 5);
 });
 
 test("Navigator: method calls inside arrow functions", () => {
@@ -112,22 +115,22 @@ test("Navigator: method calls inside arrow functions", () => {
     'CHAT: Alice: "nice shot!"',
     "KILL: Charlie eliminated by Bob",
   ];
-  expect(evaluate(".filter(l => l.includes('KILL'))", lines)).toEqual([
+  assert.deepStrictEqual(evaluate(".filter(l => l.includes('KILL'))", lines), [
     "KILL: Bob eliminated by Alice",
     "KILL: Charlie eliminated by Bob",
   ]);
-  expect(evaluate(".filter(l => l.includes('CHAT'))", lines)).toEqual([
+  assert.deepStrictEqual(evaluate(".filter(l => l.includes('CHAT'))", lines), [
     'CHAT: Alice: "nice shot!"',
   ]);
-  expect(evaluate(".filter(l => l.includes('PLAYER_JOINED'))", lines)).toEqual([
+  assert.deepStrictEqual(evaluate(".filter(l => l.includes('PLAYER_JOINED'))", lines), [
     "PLAYER_JOINED: Alice entered the game",
   ]);
 });
 
 test("Navigator: chained method calls inside arrow functions", () => {
   const data = ["  hello  ", "  WORLD  ", "  Test  "];
-  expect(evaluate(".map(s => s.trim())", data)).toEqual(["hello", "WORLD", "Test"]);
-  expect(evaluate(".map(s => s.trim().toLowerCase())", data)).toEqual(["hello", "world", "test"]);
+  assert.deepStrictEqual(evaluate(".map(s => s.trim())", data), ["hello", "WORLD", "Test"]);
+  assert.deepStrictEqual(evaluate(".map(s => s.trim().toLowerCase())", data), ["hello", "world", "test"]);
 });
 
 test("Navigator: nested method calls in filter predicates", () => {
@@ -136,7 +139,7 @@ test("Navigator: nested method calls in filter predicates", () => {
     { name: "Bob Jones", role: "user" },
     { name: "Charlie Smith", role: "user" },
   ];
-  expect(evaluate(".filter(u => u.name.includes('Smith'))", users)).toEqual([
+  assert.deepStrictEqual(evaluate(".filter(u => u.name.includes('Smith'))", users), [
     { name: "Alice Smith", role: "admin" },
     { name: "Charlie Smith", role: "user" },
   ]);
@@ -144,95 +147,95 @@ test("Navigator: nested method calls in filter predicates", () => {
 
 test("Navigator: division operator", () => {
   const data = [10, 20, 30];
-  expect(evaluate(".map(x => x / 2)", data)).toEqual([5, 10, 15]);
+  assert.deepStrictEqual(evaluate(".map(x => x / 2)", data), [5, 10, 15]);
 });
 
 test("Navigator: modulo operator", () => {
   const data = [10, 15, 20];
-  expect(evaluate(".map(x => x % 7)", data)).toEqual([3, 1, 6]);
+  assert.deepStrictEqual(evaluate(".map(x => x % 7)", data), [3, 1, 6]);
 });
 
 test("Navigator: less than operator", () => {
   const data = [1, 5, 10];
-  expect(evaluate(".filter(x => x < 6)", data)).toEqual([1, 5]);
+  assert.deepStrictEqual(evaluate(".filter(x => x < 6)", data), [1, 5]);
 });
 
 test("Navigator: less than or equal operator", () => {
   const data = [1, 5, 10];
-  expect(evaluate(".filter(x => x <= 5)", data)).toEqual([1, 5]);
+  assert.deepStrictEqual(evaluate(".filter(x => x <= 5)", data), [1, 5]);
 });
 
 test("Navigator: equality operators", () => {
   const data = [1, 2, 3];
-  expect(evaluate(".filter(x => x == 2)", data)).toEqual([2]);
-  expect(evaluate(".filter(x => x === 2)", data)).toEqual([2]);
+  assert.deepStrictEqual(evaluate(".filter(x => x == 2)", data), [2]);
+  assert.deepStrictEqual(evaluate(".filter(x => x === 2)", data), [2]);
 });
 
 test("Navigator: inequality operators", () => {
   const data = [1, 2, 3];
-  expect(evaluate(".filter(x => x != 2)", data)).toEqual([1, 3]);
-  expect(evaluate(".filter(x => x !== 2)", data)).toEqual([1, 3]);
+  assert.deepStrictEqual(evaluate(".filter(x => x != 2)", data), [1, 3]);
+  assert.deepStrictEqual(evaluate(".filter(x => x !== 2)", data), [1, 3]);
 });
 
 test("Navigator: filter with greater than", () => {
   const data = [1, 2, 3, 4, 5];
-  expect(evaluate(".filter(x => x > 3)", data)).toEqual([4, 5]);
+  assert.deepStrictEqual(evaluate(".filter(x => x > 3)", data), [4, 5]);
 });
 
 test("Navigator: filter with less than", () => {
   const data = [1, 2, 3, 4, 5];
-  expect(evaluate(".filter(x => x < 3)", data)).toEqual([1, 2]);
+  assert.deepStrictEqual(evaluate(".filter(x => x < 3)", data), [1, 2]);
 });
 
 test("Navigator: subtraction operator", () => {
   const data = [10, 20, 30];
-  expect(evaluate(".map(x => x - 5)", data)).toEqual([5, 15, 25]);
+  assert.deepStrictEqual(evaluate(".map(x => x - 5)", data), [5, 15, 25]);
 });
 
 test("Navigator: array reduce method", () => {
   const data = [1, 2, 3, 4];
-  expect(evaluate(".reduce((acc, x) => acc + x, 0)", data)).toBe(10);
+  assert.strictEqual(evaluate(".reduce((acc, x) => acc + x, 0)", data), 10);
 });
 
 test("Navigator: array find method", () => {
   const data = [1, 2, 3, 4, 5];
-  expect(evaluate(".find(x => x > 3)", data)).toBe(4);
+  assert.strictEqual(evaluate(".find(x => x > 3)", data), 4);
 });
 
 test("Navigator: array some method", () => {
   const data = [1, 2, 3];
-  expect(evaluate(".some(x => x > 2)", data)).toBe(true);
-  expect(evaluate(".some(x => x > 5)", data)).toBe(false);
+  assert.strictEqual(evaluate(".some(x => x > 2)", data), true);
+  assert.strictEqual(evaluate(".some(x => x > 5)", data), false);
 });
 
 test("Navigator: array every method", () => {
   const data = [2, 4, 6];
-  expect(evaluate(".every(x => x % 2 === 0)", data)).toBe(true);
+  assert.strictEqual(evaluate(".every(x => x % 2 === 0)", data), true);
 });
 
 test("Navigator: string split method", () => {
   const data = { text: "a,b,c" };
-  expect(evaluate('.text.split(",")', data)).toEqual(["a", "b", "c"]);
+  assert.deepStrictEqual(evaluate('.text.split(",")', data), ["a", "b", "c"]);
 });
 
 test("Navigator: string replace method", () => {
   const data = { text: "hello world" };
-  expect(evaluate('.text.replace("world", "there")', data)).toBe("hello there");
+  assert.strictEqual(evaluate('.text.replace("world", "there")', data), "hello there");
 });
 
 test("Navigator: array join method", () => {
   const data = ["a", "b", "c"];
-  expect(evaluate('.join("-")', data)).toBe("a-b-c");
+  assert.strictEqual(evaluate('.join("-")', data), "a-b-c");
 });
 
 test("Navigator: array reverse method", () => {
   const data = [1, 2, 3];
-  expect(evaluate(".reverse()", data)).toEqual([3, 2, 1]);
+  assert.deepStrictEqual(evaluate(".reverse()", data), [3, 2, 1]);
 });
 
 test("Navigator: array sort method", () => {
   const data = [3, 1, 2];
-  expect(evaluate(".sort((a, b) => a - b)", data)).toEqual([1, 2, 3]);
+  assert.deepStrictEqual(evaluate(".sort((a, b) => a - b)", data), [1, 2, 3]);
 });
 
 test("Navigator: nested array access", () => {
@@ -242,22 +245,22 @@ test("Navigator: nested array access", () => {
       [3, 4],
     ],
   };
-  expect(evaluate(".matrix[0][1]", data)).toBe(2);
+  assert.strictEqual(evaluate(".matrix[0][1]", data), 2);
 });
 
 test("Navigator: property access on null returns undefined", () => {
   const data = { value: null };
-  expect(evaluate(".value.name", data)).toBeUndefined();
+  assert.strictEqual(evaluate(".value.name", data), undefined);
 });
 
 test("Navigator: array method on non-array returns undefined", () => {
   const data = { value: "not an array" };
-  expect(evaluate(".value[0]", data)).toBeUndefined();
+  assert.strictEqual(evaluate(".value[0]", data), undefined);
 });
 
 test("Navigator: slice on non-array returns undefined", () => {
   const data = { value: "string" };
-  expect(evaluate(".value[0:2]", data)).toBeUndefined();
+  assert.strictEqual(evaluate(".value[0:2]", data), undefined);
 });
 
 function evaluateStrict(expression: string, data: unknown): unknown {
@@ -271,33 +274,33 @@ function evaluateStrict(expression: string, data: unknown): unknown {
 
 test("Navigator: strict mode throws on undefined property", () => {
   const data = { name: "John" };
-  expect(() => evaluateStrict(".nonexistent", data)).toThrow('Property "nonexistent" is undefined');
+  assert.throws(() => evaluateStrict(".nonexistent", data), /Property "nonexistent" is undefined/);
 });
 
 test("Navigator: strict mode allows valid property access", () => {
   const data = { name: "John" };
-  expect(evaluateStrict(".name", data)).toBe("John");
+  assert.strictEqual(evaluateStrict(".name", data), "John");
 });
 
 test("Navigator: strict mode throws on nested undefined property", () => {
   const data = { user: { name: "John" } };
-  expect(() => evaluateStrict(".user.email", data)).toThrow('Property "email" is undefined');
+  assert.throws(() => evaluateStrict(".user.email", data), /Property "email" is undefined/);
 });
 
 test("Navigator: non-strict mode returns undefined for missing property", () => {
   const data = { name: "John" };
-  expect(evaluate(".nonexistent", data)).toBeUndefined();
+  assert.strictEqual(evaluate(".nonexistent", data), undefined);
 });
 
 test("Navigator: pipe applies transformations left-to-right", () => {
   const data = [1, 2, 3];
-  expect(evaluate("pipe(.map(x => x * 2))", data)).toEqual([2, 4, 6]);
-  expect(evaluate("pipe(.map(x => x * 2), .map(x => x + 1))", data)).toEqual([3, 5, 7]);
+  assert.deepStrictEqual(evaluate("pipe(.map(x => x * 2))", data), [2, 4, 6]);
+  assert.deepStrictEqual(evaluate("pipe(.map(x => x * 2), .map(x => x + 1))", data), [3, 5, 7]);
 });
 
 test("Navigator: compose applies transformations right-to-left", () => {
   const data = [1, 2, 3];
-  expect(evaluate("compose(.map(x => x + 1), .map(x => x * 2))", data)).toEqual([3, 5, 7]);
+  assert.deepStrictEqual(evaluate("compose(.map(x => x + 1), .map(x => x * 2))", data), [3, 5, 7]);
 });
 
 test("Navigator: pipe with filter and map", () => {
@@ -305,61 +308,63 @@ test("Navigator: pipe with filter and map", () => {
     { name: "alice", age: 30 },
     { name: "bob", age: 20 },
   ];
-  expect(evaluate("pipe(.filter(x => x.age > 25), .map(x => x.name))", data)).toEqual(["alice"]);
+  assert.deepStrictEqual(evaluate("pipe(.filter(x => x.age > 25), .map(x => x.name))", data), ["alice"]);
 });
 
 test("Navigator: head returns first element", () => {
-  expect(evaluate("head()", [1, 2, 3])).toBe(1);
-  expect(evaluate("head()", [])).toBeUndefined();
+  assert.strictEqual(evaluate("head()", [1, 2, 3]), 1);
+  assert.strictEqual(evaluate("head()", []), undefined);
 });
 
 test("Navigator: last returns last element", () => {
-  expect(evaluate("last()", [1, 2, 3])).toBe(3);
-  expect(evaluate("last()", [])).toBeUndefined();
+  assert.strictEqual(evaluate("last()", [1, 2, 3]), 3);
+  assert.strictEqual(evaluate("last()", []), undefined);
 });
 
 test("Navigator: tail returns all but first", () => {
-  expect(evaluate("tail()", [1, 2, 3])).toEqual([2, 3]);
+  assert.deepStrictEqual(evaluate("tail()", [1, 2, 3]), [2, 3]);
 });
 
 test("Navigator: take and drop", () => {
-  expect(evaluate("take(2)", [1, 2, 3, 4])).toEqual([1, 2]);
-  expect(evaluate("drop(2)", [1, 2, 3, 4])).toEqual([3, 4]);
+  assert.deepStrictEqual(evaluate("take(2)", [1, 2, 3, 4]), [1, 2]);
+  assert.deepStrictEqual(evaluate("drop(2)", [1, 2, 3, 4]), [3, 4]);
 });
 
 test("Navigator: uniq removes duplicates", () => {
-  expect(evaluate("uniq()", [1, 2, 2, 3, 3, 3])).toEqual([1, 2, 3]);
+  assert.deepStrictEqual(evaluate("uniq()", [1, 2, 2, 3, 3, 3]), [1, 2, 3]);
 });
 
 test("Navigator: flatten nested arrays", () => {
-  expect(
+  assert.deepStrictEqual(
     evaluate("flatten()", [
       [1, 2],
       [3, [4, 5]],
     ]),
-  ).toEqual([1, 2, 3, 4, 5]);
+    [1, 2, 3, 4, 5],
+  );
 });
 
 test("Navigator: keys and vals", () => {
   const data = { a: 1, b: 2 };
-  expect(evaluate("keys()", data)).toEqual(["a", "b"]);
-  expect(evaluate("vals()", data)).toEqual([1, 2]);
+  assert.deepStrictEqual(evaluate("keys()", data), ["a", "b"]);
+  assert.deepStrictEqual(evaluate("vals()", data), [1, 2]);
 });
 
 test("Navigator: pick and omit", () => {
   const data = { a: 1, b: 2, c: 3 };
-  expect(evaluate('pick("a", "b")', data)).toEqual({ a: 1, b: 2 });
-  expect(evaluate('omit("c")', data)).toEqual({ a: 1, b: 2 });
+  assert.deepStrictEqual(evaluate('pick("a", "b")', data), { a: 1, b: 2 });
+  assert.deepStrictEqual(evaluate('omit("c")', data), { a: 1, b: 2 });
 });
 
 test("Navigator: fromPairs and toPairs", () => {
-  expect(
+  assert.deepStrictEqual(
     evaluate("fromPairs()", [
       ["a", 1],
       ["b", 2],
     ]),
-  ).toEqual({ a: 1, b: 2 });
-  expect(evaluate("toPairs()", { a: 1, b: 2 })).toEqual([
+    { a: 1, b: 2 },
+  );
+  assert.deepStrictEqual(evaluate("toPairs()", { a: 1, b: 2 }), [
     ["a", 1],
     ["b", 2],
   ]);
@@ -367,31 +372,31 @@ test("Navigator: fromPairs and toPairs", () => {
 
 test("Navigator: sum, mean, min, max", () => {
   const data = [1, 2, 3, 4, 5];
-  expect(evaluate("sum()", data)).toBe(15);
-  expect(evaluate("mean()", data)).toBe(3);
-  expect(evaluate("min()", data)).toBe(1);
-  expect(evaluate("max()", data)).toBe(5);
+  assert.strictEqual(evaluate("sum()", data), 15);
+  assert.strictEqual(evaluate("mean()", data), 3);
+  assert.strictEqual(evaluate("min()", data), 1);
+  assert.strictEqual(evaluate("max()", data), 5);
 });
 
 test("Navigator: isEmpty and isNil", () => {
-  expect(evaluate("isEmpty()", [])).toBe(true);
-  expect(evaluate("isEmpty()", [1])).toBe(false);
-  expect(evaluate("isEmpty()", {})).toBe(true);
-  expect(evaluate("isEmpty()", { a: 1 })).toBe(false);
-  expect(evaluate("isNil()", null)).toBe(true);
-  expect(evaluate("isNil()", undefined)).toBe(true);
-  expect(evaluate("isNil()", 0)).toBe(false);
+  assert.strictEqual(evaluate("isEmpty()", []), true);
+  assert.strictEqual(evaluate("isEmpty()", [1]), false);
+  assert.strictEqual(evaluate("isEmpty()", {}), true);
+  assert.strictEqual(evaluate("isEmpty()", { a: 1 }), false);
+  assert.strictEqual(evaluate("isNil()", null), true);
+  assert.strictEqual(evaluate("isNil()", undefined), true);
+  assert.strictEqual(evaluate("isNil()", 0), false);
 });
 
 test("Navigator: pluck extracts property from array of objects", () => {
   const data = [{ name: "alice" }, { name: "bob" }];
-  expect(evaluate('pluck("name")', data)).toEqual(["alice", "bob"]);
+  assert.deepStrictEqual(evaluate('pluck("name")', data), ["alice", "bob"]);
 });
 
 test("Navigator: len and count", () => {
-  expect(evaluate("len()", [1, 2, 3])).toBe(3);
-  expect(evaluate("count()", { a: 1, b: 2 })).toBe(2);
-  expect(evaluate("len()", "hello")).toBe(5);
+  assert.strictEqual(evaluate("len()", [1, 2, 3]), 3);
+  assert.strictEqual(evaluate("count()", { a: 1, b: 2 }), 2);
+  assert.strictEqual(evaluate("len()", "hello"), 5);
 });
 
 test("Navigator: sortBy sorts by key function", () => {
@@ -400,12 +405,12 @@ test("Navigator: sortBy sorts by key function", () => {
     { name: "alice", age: 25 },
     { name: "bob", age: 35 },
   ];
-  expect(evaluate("sortBy(x => x.age)", data)).toEqual([
+  assert.deepStrictEqual(evaluate("sortBy(x => x.age)", data), [
     { name: "alice", age: 25 },
     { name: "charlie", age: 30 },
     { name: "bob", age: 35 },
   ]);
-  expect(evaluate("sortBy(x => x.name)", data)).toEqual([
+  assert.deepStrictEqual(evaluate("sortBy(x => x.name)", data), [
     { name: "alice", age: 25 },
     { name: "bob", age: 35 },
     { name: "charlie", age: 30 },
@@ -413,22 +418,22 @@ test("Navigator: sortBy sorts by key function", () => {
 });
 
 test("Navigator: chunk splits array into chunks", () => {
-  expect(evaluate("chunk(2)", [1, 2, 3, 4, 5])).toEqual([[1, 2], [3, 4], [5]]);
-  expect(evaluate("chunk(3)", [1, 2, 3, 4, 5, 6])).toEqual([
+  assert.deepStrictEqual(evaluate("chunk(2)", [1, 2, 3, 4, 5]), [[1, 2], [3, 4], [5]]);
+  assert.deepStrictEqual(evaluate("chunk(3)", [1, 2, 3, 4, 5, 6]), [
     [1, 2, 3],
     [4, 5, 6],
   ]);
 });
 
 test("Navigator: compact removes falsy values", () => {
-  expect(evaluate("compact()", [0, 1, false, 2, "", 3, null, undefined])).toEqual([1, 2, 3]);
+  assert.deepStrictEqual(evaluate("compact()", [0, 1, false, 2, "", 3, null, undefined]), [1, 2, 3]);
 });
 
-test("Navigator: deepMerge recursively merges objects", () => {
-  const { executeBuiltin } = require("../../src/navigator/builtins");
+test("Navigator: deepMerge recursively merges objects", async () => {
+  const { executeBuiltin } = await import("../../src/navigator/builtins/index.ts");
   const base = { a: 1, nested: { x: 1, y: 2 } };
   const override = { b: 2, nested: { y: 3, z: 4 } };
-  expect(executeBuiltin("deepMerge", base, [override])).toEqual({
+  assert.deepStrictEqual(executeBuiltin("deepMerge", base, [override]), {
     a: 1,
     b: 2,
     nested: { x: 1, y: 3, z: 4 },
@@ -444,12 +449,12 @@ test("Navigator: recursive descent (..) collects all values", () => {
     ],
   };
   const result = evaluate("..", data) as unknown[];
-  expect(result).toContain("root");
-  expect(result).toContain("child1");
-  expect(result).toContain("child2");
-  expect(result).toContain("grandchild");
-  expect(result).toContain(1);
-  expect(result).toContain(2);
+  assert.ok(result.includes("root"));
+  assert.ok(result.includes("child1"));
+  assert.ok(result.includes("child2"));
+  assert.ok(result.includes("grandchild"));
+  assert.ok(result.includes(1));
+  assert.ok(result.includes(2));
 });
 
 test("Navigator: recursive descent on array", () => {
@@ -458,152 +463,153 @@ test("Navigator: recursive descent on array", () => {
     { id: 4, items: [{ id: 5 }] },
   ];
   const result = evaluate("..", data) as unknown[];
-  expect(result).toContain(1);
-  expect(result).toContain(2);
-  expect(result).toContain(3);
-  expect(result).toContain(4);
-  expect(result).toContain(5);
+  assert.ok(result.includes(1));
+  assert.ok(result.includes(2));
+  assert.ok(result.includes(3));
+  assert.ok(result.includes(4));
+  assert.ok(result.includes(5));
 });
 
 test("Navigator: optional access returns undefined on missing property", () => {
   const data = { name: "test" };
-  expect(evaluate(".name?", data)).toBe("test");
-  expect(evaluate(".missing?", data)).toBeUndefined();
+  assert.strictEqual(evaluate(".name?", data), "test");
+  assert.strictEqual(evaluate(".missing?", data), undefined);
 });
 
 test("Navigator: optional access on nested path", () => {
   const data = { user: { profile: { name: "John" } } };
-  expect(evaluate(".user?.profile?.name?", data)).toBe("John");
-  expect(evaluate(".user?.missing?.name?", data)).toBeUndefined();
+  assert.strictEqual(evaluate(".user?.profile?.name?", data), "John");
+  assert.strictEqual(evaluate(".user?.missing?.name?", data), undefined);
 });
 
 test("Navigator: null coalescing provides default value", () => {
   const data = { name: null, value: "exists" };
-  expect(evaluate('.name ?? "default"', data)).toBe("default");
-  expect(evaluate('.value ?? "default"', data)).toBe("exists");
+  assert.strictEqual(evaluate('.name ?? "default"', data), "default");
+  assert.strictEqual(evaluate('.value ?? "default"', data), "exists");
 });
 
 test("Navigator: null coalescing with undefined", () => {
   const data = { existing: "value" };
-  expect(evaluate('.missing ?? "fallback"', data)).toBe("fallback");
-  expect(evaluate('.existing ?? "fallback"', data)).toBe("value");
+  assert.strictEqual(evaluate('.missing ?? "fallback"', data), "fallback");
+  assert.strictEqual(evaluate('.existing ?? "fallback"', data), "value");
 });
 
 test("Navigator: null coalescing with number default", () => {
   const data = { count: null };
-  expect(evaluate(".count ?? 0", data)).toBe(0);
+  assert.strictEqual(evaluate(".count ?? 0", data), 0);
 });
 
 test("Navigator: combined optional access and null coalescing", () => {
   const data = { user: null };
-  expect(evaluate('.user ?? "anonymous"', data)).toBe("anonymous");
+  assert.strictEqual(evaluate('.user ?? "anonymous"', data), "anonymous");
 });
 
 test("Navigator: type builtin returns correct types", () => {
-  expect(evaluate("type()", "hello")).toBe("string");
-  expect(evaluate("type()", 42)).toBe("number");
-  expect(evaluate("type()", true)).toBe("boolean");
-  expect(evaluate("type()", null)).toBe("null");
-  expect(evaluate("type()", [1, 2])).toBe("array");
-  expect(evaluate("type()", { a: 1 })).toBe("object");
+  assert.strictEqual(evaluate("type()", "hello"), "string");
+  assert.strictEqual(evaluate("type()", 42), "number");
+  assert.strictEqual(evaluate("type()", true), "boolean");
+  assert.strictEqual(evaluate("type()", null), "null");
+  assert.strictEqual(evaluate("type()", [1, 2]), "array");
+  assert.strictEqual(evaluate("type()", { a: 1 }), "object");
 });
 
 test("Navigator: range generates number sequences", () => {
-  expect(evaluate("range(5)", null)).toEqual([0, 1, 2, 3, 4]);
-  expect(evaluate("range(1, 5)", null)).toEqual([1, 2, 3, 4]);
-  expect(evaluate("range(0, 10, 2)", null)).toEqual([0, 2, 4, 6, 8]);
+  assert.deepStrictEqual(evaluate("range(5)", null), [0, 1, 2, 3, 4]);
+  assert.deepStrictEqual(evaluate("range(1, 5)", null), [1, 2, 3, 4]);
+  assert.deepStrictEqual(evaluate("range(0, 10, 2)", null), [0, 2, 4, 6, 8]);
 });
 
 test("Navigator: has checks key existence", () => {
   const data = { name: "test", value: null };
-  expect(evaluate('has("name")', data)).toBe(true);
-  expect(evaluate('has("value")', data)).toBe(true);
-  expect(evaluate('has("missing")', data)).toBe(false);
+  assert.strictEqual(evaluate('has("name")', data), true);
+  assert.strictEqual(evaluate('has("value")', data), true);
+  assert.strictEqual(evaluate('has("missing")', data), false);
 });
 
 test("Navigator: nth gets element at index", () => {
   const data = ["a", "b", "c", "d"];
-  expect(evaluate("nth(0)", data)).toBe("a");
-  expect(evaluate("nth(2)", data)).toBe("c");
-  expect(evaluate("nth(-1)", data)).toBe("d");
+  assert.strictEqual(evaluate("nth(0)", data), "a");
+  assert.strictEqual(evaluate("nth(2)", data), "c");
+  assert.strictEqual(evaluate("nth(-1)", data), "d");
 });
 
-test("Navigator: contains checks for subset", () => {
-  const { executeBuiltin } = require("../../src/navigator/builtins");
-  expect(executeBuiltin("contains", [1, 2, 3], [[2]])).toBe(true);
-  expect(executeBuiltin("contains", [1, 2, 3], [[5]])).toBe(false);
-  expect(executeBuiltin("contains", { a: 1, b: 2 }, [{ a: 1 }])).toBe(true);
+test("Navigator: contains checks for subset", async () => {
+  const { executeBuiltin } = await import("../../src/navigator/builtins/index.ts");
+  assert.strictEqual(executeBuiltin("contains", [1, 2, 3], [[2]]), true);
+  assert.strictEqual(executeBuiltin("contains", [1, 2, 3], [[5]]), false);
+  assert.strictEqual(executeBuiltin("contains", { a: 1, b: 2 }, [{ a: 1 }]), true);
 });
 
 test("Navigator: add concatenates arrays or sums numbers", () => {
-  expect(
+  assert.deepStrictEqual(
     evaluate("add()", [
       [1, 2],
       [3, 4],
     ]),
-  ).toEqual([1, 2, 3, 4]);
-  expect(evaluate("add()", [1, 2, 3])).toBe(6);
+    [1, 2, 3, 4],
+  );
+  assert.strictEqual(evaluate("add()", [1, 2, 3]), 6);
 });
 
-test("Navigator: getpath retrieves nested values", () => {
-  const { executeBuiltin } = require("../../src/navigator/builtins");
+test("Navigator: getpath retrieves nested values", async () => {
+  const { executeBuiltin } = await import("../../src/navigator/builtins/index.ts");
   const data = { a: { b: { c: 1 } } };
-  expect(executeBuiltin("getpath", data, [["a", "b", "c"]])).toBe(1);
-  expect(executeBuiltin("getpath", data, [["a", "b"]])).toEqual({ c: 1 });
+  assert.strictEqual(executeBuiltin("getpath", data, [["a", "b", "c"]]), 1);
+  assert.deepStrictEqual(executeBuiltin("getpath", data, [["a", "b"]]), { c: 1 });
 });
 
 test("Navigator: split and join string operations", () => {
-  expect(evaluate('split(",")', "a,b,c")).toEqual(["a", "b", "c"]);
-  expect(evaluate('join("-")', ["a", "b", "c"])).toBe("a-b-c");
+  assert.deepStrictEqual(evaluate('split(",")', "a,b,c"), ["a", "b", "c"]);
+  assert.strictEqual(evaluate('join("-")', ["a", "b", "c"]), "a-b-c");
 });
 
 test("Navigator: startswith and endswith", () => {
-  expect(evaluate('startswith("hello")', "hello world")).toBe(true);
-  expect(evaluate('startswith("world")', "hello world")).toBe(false);
-  expect(evaluate('endswith("world")', "hello world")).toBe(true);
-  expect(evaluate('endswith("hello")', "hello world")).toBe(false);
+  assert.strictEqual(evaluate('startswith("hello")', "hello world"), true);
+  assert.strictEqual(evaluate('startswith("world")', "hello world"), false);
+  assert.strictEqual(evaluate('endswith("world")', "hello world"), true);
+  assert.strictEqual(evaluate('endswith("hello")', "hello world"), false);
 });
 
 test("Navigator: ltrimstr and rtrimstr", () => {
-  expect(evaluate('ltrimstr("hello ")', "hello world")).toBe("world");
-  expect(evaluate('rtrimstr(" world")', "hello world")).toBe("hello");
+  assert.strictEqual(evaluate('ltrimstr("hello ")', "hello world"), "world");
+  assert.strictEqual(evaluate('rtrimstr(" world")', "hello world"), "hello");
 });
 
 test("Navigator: tostring and tonumber", () => {
-  expect(evaluate("tostring()", 42)).toBe("42");
-  expect(evaluate("tostring()", true)).toBe("true");
-  expect(evaluate("tonumber()", "42")).toBe(42);
-  expect(evaluate("tonumber()", "3.14")).toBe(3.14);
+  assert.strictEqual(evaluate("tostring()", 42), "42");
+  assert.strictEqual(evaluate("tostring()", true), "true");
+  assert.strictEqual(evaluate("tonumber()", "42"), 42);
+  assert.strictEqual(evaluate("tonumber()", "3.14"), 3.14);
 });
 
 test("Navigator: floor, ceil, round", () => {
-  expect(evaluate("floor()", 3.7)).toBe(3);
-  expect(evaluate("ceil()", 3.2)).toBe(4);
-  expect(evaluate("round()", 3.5)).toBe(4);
-  expect(evaluate("round()", 3.4)).toBe(3);
+  assert.strictEqual(evaluate("floor()", 3.7), 3);
+  assert.strictEqual(evaluate("ceil()", 3.2), 4);
+  assert.strictEqual(evaluate("round()", 3.5), 4);
+  assert.strictEqual(evaluate("round()", 3.4), 3);
 });
 
 test("Navigator: abs returns absolute value", () => {
-  expect(evaluate("abs()", -5)).toBe(5);
-  expect(evaluate("abs()", 5)).toBe(5);
+  assert.strictEqual(evaluate("abs()", -5), 5);
+  assert.strictEqual(evaluate("abs()", 5), 5);
 });
 
 test("Navigator: not negates boolean", () => {
-  expect(evaluate("not()", true)).toBe(false);
-  expect(evaluate("not()", false)).toBe(true);
-  expect(evaluate("not()", 0)).toBe(true);
-  expect(evaluate("not()", 1)).toBe(false);
+  assert.strictEqual(evaluate("not()", true), false);
+  assert.strictEqual(evaluate("not()", false), true);
+  assert.strictEqual(evaluate("not()", 0), true);
+  assert.strictEqual(evaluate("not()", 1), false);
 });
 
-test("Navigator: select returns value if predicate passes", () => {
-  const { executeBuiltin, EMPTY_SYMBOL } = require("../../src/navigator/builtins");
+test("Navigator: select returns value if predicate passes", async () => {
+  const { executeBuiltin, EMPTY_SYMBOL } = await import("../../src/navigator/builtins/index.ts");
   const gt3 = (x: number) => x > 3;
   const lt3 = (x: number) => x < 3;
-  expect(executeBuiltin("select", 5, [gt3])).toBe(5);
-  expect(executeBuiltin("select", 2, [gt3])).toBe(EMPTY_SYMBOL);
-  expect(executeBuiltin("select", 2, [lt3])).toBe(2);
+  assert.strictEqual(executeBuiltin("select", 5, [gt3]), 5);
+  assert.strictEqual(executeBuiltin("select", 2, [gt3]), EMPTY_SYMBOL);
+  assert.strictEqual(executeBuiltin("select", 2, [lt3]), 2);
 });
 
 test("Navigator: error throws with message", () => {
-  expect(() => evaluate('error("test error")', null)).toThrow("test error");
+  assert.throws(() => evaluate('error("test error")', null), /test error/);
 });

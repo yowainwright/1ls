@@ -1,5 +1,40 @@
-import { CliOptions } from "../types";
-import { colorize } from "./colors";
+import type { CliOptions } from "../types.ts";
+import { colorize } from "./colors.ts";
+
+const isObjectRecord = (value: unknown): value is Record<string, unknown> => {
+  const isObjectValue = typeof value === "object" && value !== null;
+  if (!isObjectValue) return false;
+  return !Array.isArray(value);
+};
+
+const escapeCsvValue = (value: unknown): string => {
+  const isNullish = value === null || value === undefined;
+  if (isNullish) return "";
+
+  const stringValue = String(value);
+  const hasSpecialCharacters = /[,"\n]/.test(stringValue);
+  if (!hasSpecialCharacters) return stringValue;
+
+  return `"${stringValue.replace(/"/g, '""')}"`;
+};
+
+const formatCsvRecord = (keys: string[], item: Record<string, unknown>): string =>
+  keys.map((key) => escapeCsvValue(item[key])).join(",");
+
+const getColumnWidth = (data: Record<string, unknown>[], key: string): number =>
+  Math.max(key.length, ...data.map((item) => String(item[key] ?? "").length));
+
+const formatTableRow = (
+  keys: string[],
+  item: Record<string, unknown>,
+  widths: Record<string, number>,
+): string => keys.map((key) => String(item[key] ?? "").padEnd(widths[key])).join(" | ");
+
+const formatYamlString = (value: string, spaces: string): string => {
+  const hasSpecialCharacters = /[\n"']/.test(value);
+  if (!hasSpecialCharacters) return value;
+  return `|\n${spaces}  ${value.replace(/\n/g, "\n" + spaces + "  ")}`;
+};
 
 export class Formatter {
   private options: CliOptions;
@@ -17,16 +52,10 @@ export class Formatter {
       return this.formatWithType(data);
     }
 
-    switch (this.options.format) {
-      case "yaml":
-        return this.formatYaml(data);
-      case "csv":
-        return this.formatCsv(data);
-      case "table":
-        return this.formatTable(data);
-      default:
-        return this.formatJson(data);
-    }
+    if (this.options.format === "yaml") return this.formatYaml(data);
+    if (this.options.format === "csv") return this.formatCsv(data);
+    if (this.options.format === "table") return this.formatTable(data);
+    return this.formatJson(data);
   }
 
   private formatRaw(data: unknown): string {
@@ -73,42 +102,42 @@ export class Formatter {
   }
 
   private toYaml(data: unknown, indent: number): string {
-    const spaces = " ".repeat(indent);
-
-    if (data === null || data === undefined) {
-      return "null";
-    }
-
-    if (typeof data === "string") {
-      return data.includes("\n") || data.includes('"') || data.includes("'")
-        ? `|\n${spaces}  ${data.replace(/\n/g, "\n" + spaces + "  ")}`
-        : data;
-    }
-
-    if (typeof data === "number" || typeof data === "boolean") {
-      return String(data);
-    }
-
-    if (Array.isArray(data)) {
-      if (data.length === 0) return "[]";
-      return data.map((item) => `${spaces}- ${this.toYaml(item, indent + 2).trim()}`).join("\n");
-    }
-
-    if (typeof data === "object") {
-      const entries = Object.entries(data);
-      if (entries.length === 0) return "{}";
-      return entries
-        .map(([key, value]) => {
-          const formattedValue = this.toYaml(value, indent + 2);
-          if (typeof value === "object" && value !== null) {
-            return `${spaces}${key}:\n${formattedValue}`;
-          }
-          return `${spaces}${key}: ${formattedValue}`;
-        })
-        .join("\n");
-    }
+    const isNullish = data === null || data === undefined;
+    if (isNullish) return "null";
+    if (typeof data === "string") return formatYamlString(data, " ".repeat(indent));
+    if (this.isYamlPrimitive(data)) return String(data);
+    if (Array.isArray(data)) return this.formatYamlArray(data, indent);
+    if (typeof data === "object") return this.formatYamlObject(data, indent);
 
     return String(data);
+  }
+
+  private isYamlPrimitive(data: unknown): boolean {
+    const isNumber = typeof data === "number";
+    if (isNumber) return true;
+    const isBoolean = typeof data === "boolean";
+    return isBoolean;
+  }
+
+  private formatYamlArray(data: unknown[], indent: number): string {
+    if (data.length === 0) return "[]";
+    const spaces = " ".repeat(indent);
+    return data.map((item) => `${spaces}- ${this.toYaml(item, indent + 2).trim()}`).join("\n");
+  }
+
+  private formatYamlEntry(key: string, value: unknown, indent: number): string {
+    const spaces = " ".repeat(indent);
+    const formattedValue = this.toYaml(value, indent + 2);
+    const isNestedValue = typeof value === "object" && value !== null;
+    if (isNestedValue) return `${spaces}${key}:\n${formattedValue}`;
+    return `${spaces}${key}: ${formattedValue}`;
+  }
+
+  private formatYamlObject(data: object, indent: number): string {
+    const entries = Object.entries(data);
+    if (entries.length === 0) return "{}";
+    const yamlEntries = entries.map(([key, value]) => this.formatYamlEntry(key, value, indent));
+    return yamlEntries.join("\n");
   }
 
   private formatCsv(data: unknown): string {
@@ -120,33 +149,14 @@ export class Formatter {
       return "";
     }
 
-    const firstItem = data[0];
-    const isObjectArray =
-      typeof firstItem === "object" &&
-      firstItem !== null &&
-      !Array.isArray(firstItem);
-
-    if (isObjectArray) {
+    if (isObjectRecord(data[0])) {
       const records = data as Record<string, unknown>[];
-      const keys = Object.keys(firstItem as Record<string, unknown>);
+      const keys = Object.keys(data[0]);
       const headers = keys.join(",");
-      const rows = records.map((item) =>
-        keys.map((key) => this.escapeCsvValue(item[key])).join(","),
-      );
+      const rows = records.map((item) => formatCsvRecord(keys, item));
       return [headers, ...rows].join("\n");
     }
-    return data.map((item) => this.escapeCsvValue(item)).join("\n");
-  }
-
-  private escapeCsvValue(value: unknown): string {
-    if (value === null || value === undefined) {
-      return "";
-    }
-    const str = String(value);
-    if (str.includes(",") || str.includes('"') || str.includes("\n")) {
-      return `"${str.replace(/"/g, '""')}"`;
-    }
-    return str;
+    return data.map(escapeCsvValue).join("\n");
   }
 
   private formatTable(data: unknown): string {
@@ -158,13 +168,7 @@ export class Formatter {
       return "(empty array)";
     }
 
-    const firstItem = data[0];
-    const isObjectArray =
-      typeof firstItem === "object" &&
-      firstItem !== null &&
-      !Array.isArray(firstItem);
-
-    if (isObjectArray) {
+    if (isObjectRecord(data[0])) {
       return this.formatObjectTable(data as Record<string, unknown>[]);
     }
     return data
@@ -175,20 +179,10 @@ export class Formatter {
   private formatObjectTable(data: Record<string, unknown>[]): string {
     const keys = [...new Set(data.flatMap((item) => Object.keys(item)))];
 
-    // Calculate column widths
-    const widths: Record<string, number> = {};
-    keys.forEach((key) => {
-      widths[key] = Math.max(key.length, ...data.map((item) => String(item[key] ?? "").length));
-    });
-
-    // Create header
+    const widths = Object.fromEntries(keys.map((key) => [key, getColumnWidth(data, key)]));
     const header = keys.map((key) => key.padEnd(widths[key])).join(" | ");
     const separator = keys.map((key) => "-".repeat(widths[key])).join("-+-");
-
-    // Create rows
-    const rows = data.map((item) =>
-      keys.map((key) => String(item[key] ?? "").padEnd(widths[key])).join(" | "),
-    );
+    const rows = data.map((item) => formatTableRow(keys, item, widths));
 
     return [header, separator, ...rows].join("\n");
   }

@@ -14,23 +14,23 @@ export const COLORS = {
 };
 
 export const COLOR_PATTERNS = [
+  { regex: /([{[])/g, replacement: `${COLORS.gray}$1${COLORS.reset}` },
+  { regex: /([}\]])/g, replacement: `${COLORS.gray}$1${COLORS.reset}` },
   { regex: /"([^"]+)":/g, replacement: `${COLORS.cyan}"$1"${COLORS.reset}:` },
   { regex: /: "([^"]*)"/g, replacement: `: ${COLORS.green}"$1"${COLORS.reset}` },
   { regex: /: (-?\d+\.?\d*)/g, replacement: `: ${COLORS.yellow}$1${COLORS.reset}` },
   { regex: /: (true|false)/g, replacement: `: ${COLORS.magenta}$1${COLORS.reset}` },
   { regex: /: (null)/g, replacement: `: ${COLORS.gray}$1${COLORS.reset}` },
-  { regex: /([{[])/g, replacement: `${COLORS.gray}$1${COLORS.reset}` },
-  { regex: /([}\]])/g, replacement: `${COLORS.gray}$1${COLORS.reset}` },
 ];
 
-const hasNoColor = (): boolean => {
+const hasColor = (): boolean => {
   const processLike = (globalThis as { process?: { env?: Record<string, string | undefined> } })
     .process;
-  return Boolean(processLike?.env?.NO_COLOR);
+  return !processLike?.env?.NO_COLOR;
 };
 
 export function colorize(json: string): string {
-  if (hasNoColor()) return json;
+  if (!hasColor()) return json;
 
   return COLOR_PATTERNS.reduce(
     (result, { regex, replacement }) => result.replace(regex, replacement),
@@ -39,35 +39,35 @@ export function colorize(json: string): string {
 }
 
 export function error(message: string): string {
-  if (hasNoColor()) {
+  if (!hasColor()) {
     return message;
   }
   return `${COLORS.red}${message}${COLORS.reset}`;
 }
 
 export function success(message: string): string {
-  if (hasNoColor()) {
+  if (!hasColor()) {
     return message;
   }
   return `${COLORS.green}${message}${COLORS.reset}`;
 }
 
 export function warning(message: string): string {
-  if (hasNoColor()) {
+  if (!hasColor()) {
     return message;
   }
   return `${COLORS.yellow}${message}${COLORS.reset}`;
 }
 
 export function info(message: string): string {
-  if (hasNoColor()) {
+  if (!hasColor()) {
     return message;
   }
   return `${COLORS.cyan}${message}${COLORS.reset}`;
 }
 
 export function dim(message: string): string {
-  if (hasNoColor()) {
+  if (!hasColor()) {
     return message;
   }
   return `${COLORS.dim}${message}${COLORS.reset}`;

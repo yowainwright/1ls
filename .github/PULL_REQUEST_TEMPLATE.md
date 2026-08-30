@@ -22,10 +22,10 @@ Fixes #
 
 ## Testing
 
-- [ ] Tests pass (`bun test`)
-- [ ] Type check passes (`bun run typecheck`)
-- [ ] Build succeeds (`bun run build`)
-- [ ] Linting passes (`bun run lint`)
+- [ ] Tests pass (`pnpm test`)
+- [ ] Type check passes (`pnpm run typecheck`)
+- [ ] Build succeeds (`pnpm run build`)
+- [ ] Linting passes (`pnpm run lint`)
 - [ ] Manual testing completed
 
 ## Checklist

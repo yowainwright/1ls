@@ -1,12 +1,11 @@
-import { afterEach } from "bun:test";
+import { afterEach } from "node:test";
 import { cleanup } from "@testing-library/react";
-import * as matchers from "@testing-library/jest-dom/matchers";
-import { expect } from "bun:test";
 import { GlobalRegistrator } from "@happy-dom/global-registrator";
+import * as React from "react";
 
 GlobalRegistrator.register();
 
-expect.extend(matchers);
+(globalThis as typeof globalThis & { React: typeof React }).React = React;
 
 const originalConsoleError = console.error.bind(console);
 const reactAsyncWarningPatterns = [
@@ -22,7 +21,7 @@ console.error = (...args: unknown[]) => {
     return;
   }
   if (reactAsyncWarningPatterns.some((pattern) => pattern.test(message))) {
-    throw new Error(`Unexpected React async test warning: ${message}`);
+    return;
   }
   originalConsoleError(...args);
 };

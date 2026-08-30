@@ -1,50 +1,51 @@
-import { describe, test, expect } from "bun:test";
-import { parseJSON5, stripJSON5Comments, normalizeJSON5 } from "../../src/formats/json5";
+import { describe, test } from "node:test";
+import assert from "node:assert/strict";
+import { parseJSON5, stripJSON5Comments, normalizeJSON5 } from "../../src/formats/json5.ts";
 
 describe("JSON5 Comment Stripper", () => {
   test("strips single-line comments", () => {
     const input = '{\n  // This is a comment\n  "name": "Alice"\n}';
     const result = stripJSON5Comments(input);
-    expect(result).not.toContain("//");
-    expect(result).toContain('"name"');
+    assert.ok(!result.includes("//"));
+    assert.ok(result.includes('"name"'));
   });
 
   test("strips multi-line comments", () => {
     const input = '{\n  /* This is a\n     multi-line comment */\n  "name": "Alice"\n}';
     const result = stripJSON5Comments(input);
-    expect(result).not.toContain("/*");
-    expect(result).not.toContain("*/");
-    expect(result).toContain('"name"');
+    assert.ok(!result.includes("/*"));
+    assert.ok(!result.includes("*/"));
+    assert.ok(result.includes('"name"'));
   });
 
   test("preserves comments in strings", () => {
     const input = '{"url": "https://example.com//path"}';
     const result = stripJSON5Comments(input);
-    expect(result).toContain("//path");
+    assert.ok(result.includes("//path"));
   });
 
   test("preserves multi-line comment syntax in strings", () => {
     const input = '{"comment": "This /* is not */ a comment"}';
     const result = stripJSON5Comments(input);
-    expect(result).toContain("/* is not */");
+    assert.ok(result.includes("/* is not */"));
   });
 
   test("handles escaped quotes in strings", () => {
     const input = '{"quote": "She said \\"hello\\""}';
     const result = stripJSON5Comments(input);
-    expect(result).toContain('\\"hello\\"');
+    assert.ok(result.includes('\\"hello\\"'));
   });
 
   test("handles single-quoted strings", () => {
     const input = "{'name': 'Alice'}";
     const result = stripJSON5Comments(input);
-    expect(result).toBe("{'name': 'Alice'}");
+    assert.strictEqual(result, "{'name': 'Alice'}");
   });
 
   test("handles backticks in values", () => {
     const input = '{"template": "value with backtick"}';
     const result = stripJSON5Comments(input);
-    expect(result).toContain("value with backtick");
+    assert.ok(result.includes("value with backtick"));
   });
 
   test("handles mixed comment types", () => {
@@ -56,10 +57,10 @@ describe("JSON5 Comment Stripper", () => {
   "age": 30
 }`;
     const result = stripJSON5Comments(input);
-    expect(result).not.toContain("//");
-    expect(result).not.toContain("/*");
-    expect(result).toContain('"name"');
-    expect(result).toContain('"age"');
+    assert.ok(!result.includes("//"));
+    assert.ok(!result.includes("/*"));
+    assert.ok(result.includes('"name"'));
+    assert.ok(result.includes('"age"'));
   });
 });
 
@@ -67,37 +68,37 @@ describe("JSON5 Normalizer", () => {
   test("removes trailing commas in objects", () => {
     const input = '{"name": "Alice", "age": 30,}';
     const result = normalizeJSON5(input);
-    expect(result).toBe('{"name": "Alice", "age": 30}');
+    assert.strictEqual(result, '{"name": "Alice", "age": 30}');
   });
 
   test("removes trailing commas in arrays", () => {
     const input = "[1, 2, 3,]";
     const result = normalizeJSON5(input);
-    expect(result).toBe("[1, 2, 3]");
+    assert.strictEqual(result, "[1, 2, 3]");
   });
 
   test("quotes unquoted keys", () => {
     const input = '{name: "Alice", age: 30}';
     const result = normalizeJSON5(input);
-    expect(result).toBe('{"name": "Alice", "age": 30}');
+    assert.strictEqual(result, '{"name": "Alice", "age": 30}');
   });
 
   test("preserves already quoted keys", () => {
     const input = '{"name": "Alice"}';
     const result = normalizeJSON5(input);
-    expect(result).toBe('{"name": "Alice"}');
+    assert.strictEqual(result, '{"name": "Alice"}');
   });
 
   test("handles keys with underscores", () => {
     const input = '{first_name: "Alice", last_name: "Smith"}';
     const result = normalizeJSON5(input);
-    expect(result).toBe('{"first_name": "Alice", "last_name": "Smith"}');
+    assert.strictEqual(result, '{"first_name": "Alice", "last_name": "Smith"}');
   });
 
   test("handles keys starting with dollar sign", () => {
     const input = "{$id: 123}";
     const result = normalizeJSON5(input);
-    expect(result).toBe('{"$id": 123}');
+    assert.strictEqual(result, '{"$id": 123}');
   });
 
   test("handles complex JSON5", () => {
@@ -106,9 +107,9 @@ describe("JSON5 Normalizer", () => {
   trailing: "comma",
 }`;
     const result = normalizeJSON5(input);
-    expect(result).toContain('"unquoted"');
-    expect(result).toContain('"trailing"');
-    expect(result).not.toContain(",}");
+    assert.ok(result.includes('"unquoted"'));
+    assert.ok(result.includes('"trailing"'));
+    assert.ok(!result.includes(",}"));
   });
 });
 
@@ -119,7 +120,7 @@ describe("JSON5 Parser", () => {
   "name": "Alice",
   "age": 30 // Age in years
 }`;
-    expect(parseJSON5(input)).toEqual({
+    assert.deepStrictEqual(parseJSON5(input), {
       name: "Alice",
       age: 30,
     });
@@ -130,7 +131,7 @@ describe("JSON5 Parser", () => {
   "name": "Alice",
   "age": 30,
 }`;
-    expect(parseJSON5(input)).toEqual({
+    assert.deepStrictEqual(parseJSON5(input), {
       name: "Alice",
       age: 30,
     });
@@ -141,7 +142,7 @@ describe("JSON5 Parser", () => {
   name: "Alice",
   age: 30
 }`;
-    expect(parseJSON5(input)).toEqual({
+    assert.deepStrictEqual(parseJSON5(input), {
       name: "Alice",
       age: 30,
     });
@@ -153,7 +154,7 @@ describe("JSON5 Parser", () => {
   "banana",
   "orange",
 ]`;
-    expect(parseJSON5(input)).toEqual(["apple", "banana", "orange"]);
+    assert.deepStrictEqual(parseJSON5(input), ["apple", "banana", "orange"]);
   });
 
   test("parses nested JSON5 objects", () => {
@@ -164,7 +165,7 @@ describe("JSON5 Parser", () => {
   },
   active: true,
 }`;
-    expect(parseJSON5(input)).toEqual({
+    assert.deepStrictEqual(parseJSON5(input), {
       user: {
         name: "Alice",
         age: 30,
@@ -181,7 +182,7 @@ describe("JSON5 Parser", () => {
   "name": "Alice",
   "age": 30
 }`;
-    expect(parseJSON5(input)).toEqual({
+    assert.deepStrictEqual(parseJSON5(input), {
       name: "Alice",
       age: 30,
     });
@@ -192,7 +193,7 @@ describe("JSON5 Parser", () => {
   'name': 'Alice',
   'city': 'NYC'
 }`;
-    expect(parseJSON5(input)).toEqual({
+    assert.deepStrictEqual(parseJSON5(input), {
       name: "Alice",
       city: "NYC",
     });
@@ -217,7 +218,7 @@ describe("JSON5 Parser", () => {
     "logging",
   ],
 }`;
-    expect(parseJSON5(input)).toEqual({
+    assert.deepStrictEqual(parseJSON5(input), {
       name: "MyApp",
       version: "1.0.0",
       server: {
@@ -235,7 +236,7 @@ describe("JSON5 Parser", () => {
   active: true,
   disabled: false,
 }`;
-    expect(parseJSON5(input)).toEqual({
+    assert.deepStrictEqual(parseJSON5(input), {
       count: 42,
       price: 19.99,
       active: true,
@@ -248,7 +249,7 @@ describe("JSON5 Parser", () => {
   name: "Alice",
   email: null,
 }`;
-    expect(parseJSON5(input)).toEqual({
+    assert.deepStrictEqual(parseJSON5(input), {
       name: "Alice",
       email: null,
     });

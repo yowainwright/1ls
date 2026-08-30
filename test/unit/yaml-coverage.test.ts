@@ -1,49 +1,50 @@
-import { test, expect } from "bun:test";
-import { parseYAML, findPreviousKey } from "../../src/formats/yaml";
+import { test } from "node:test";
+import assert from "node:assert/strict";
+import { parseYAML, findPreviousKey } from "../../src/formats/yaml/index.ts";
 
 test("findPreviousKey finds key with empty value", () => {
   const lines = ["parent:", "  - child1"];
-  expect(findPreviousKey(lines, 1)).toBe("parent");
+  assert.strictEqual(findPreviousKey(lines, 1), "parent");
 });
 
 test("findPreviousKey finds key with | indicator", () => {
   const lines = ["text: |", "  multiline content"];
-  expect(findPreviousKey(lines, 1)).toBe("text");
+  assert.strictEqual(findPreviousKey(lines, 1), "text");
 });
 
 test("findPreviousKey finds key with > indicator", () => {
   const lines = ["text: >", "  folded content"];
-  expect(findPreviousKey(lines, 1)).toBe("text");
+  assert.strictEqual(findPreviousKey(lines, 1), "text");
 });
 
 test("findPreviousKey finds key with |+ indicator", () => {
   const lines = ["text: |+", "  content"];
-  expect(findPreviousKey(lines, 1)).toBe("text");
+  assert.strictEqual(findPreviousKey(lines, 1), "text");
 });
 
 test("findPreviousKey finds key with >- indicator", () => {
   const lines = ["text: >-", "  content"];
-  expect(findPreviousKey(lines, 1)).toBe("text");
+  assert.strictEqual(findPreviousKey(lines, 1), "text");
 });
 
 test("findPreviousKey skips list items", () => {
   const lines = ["items:", "  - item1", "  - item2"];
-  expect(findPreviousKey(lines, 2)).toBe("items");
+  assert.strictEqual(findPreviousKey(lines, 2), "items");
 });
 
 test("findPreviousKey handles comments outside quotes", () => {
   const lines = ["key: value # comment", "next:"];
-  expect(findPreviousKey(lines, 1)).toBe(null);
+  assert.strictEqual(findPreviousKey(lines, 1), null);
 });
 
 test("findPreviousKey returns null at start", () => {
   const lines = ["first: value"];
-  expect(findPreviousKey(lines, 0)).toBe(null);
+  assert.strictEqual(findPreviousKey(lines, 0), null);
 });
 
 test("findPreviousKey skips empty lines", () => {
   const lines = ["parent:", "", "  - child"];
-  expect(findPreviousKey(lines, 2)).toBe("parent");
+  assert.strictEqual(findPreviousKey(lines, 2), "parent");
 });
 
 test("parseYAML handles anchor with nested list", () => {
@@ -52,7 +53,7 @@ test("parseYAML handles anchor with nested list", () => {
   - item2
 copy: *ref`;
   const result = parseYAML(input);
-  expect(result.data).toEqual(["item1", "item2"]);
+  assert.deepStrictEqual(result.data, ["item1", "item2"]);
 });
 
 test("parseYAML handles multiline with trailing empty lines removed", () => {
@@ -62,7 +63,7 @@ test("parseYAML handles multiline with trailing empty lines removed", () => {
 
 `;
   const result = parseYAML(input);
-  expect(result.text).toBe("line1\nline2");
+  assert.strictEqual(result.text, "line1\nline2");
 });
 
 test("parseYAML handles deeply nested list with findPreviousKey", () => {
@@ -72,7 +73,7 @@ test("parseYAML handles deeply nested list with findPreviousKey", () => {
       - one
       - two`;
   const result = parseYAML(input);
-  expect(result.root.parent.items).toEqual(["one", "two"]);
+  assert.deepStrictEqual(result.root.parent.items, ["one", "two"]);
 });
 
 test("parseYAML handles list after nested key requiring findPreviousKey", () => {
@@ -81,7 +82,7 @@ test("parseYAML handles list after nested key requiring findPreviousKey", () => 
     - option1
     - option2`;
   const result = parseYAML(input);
-  expect(result.config.settings).toEqual(["option1", "option2"]);
+  assert.deepStrictEqual(result.config.settings, ["option1", "option2"]);
 });
 
 test("parseYAML handles simple anchor and alias", () => {
@@ -91,8 +92,8 @@ development:
   <<: *defaults
   database: dev`;
   const result = parseYAML(input);
-  expect(result.development.adapter).toBe("postgres");
-  expect(result.development.database).toBe("dev");
+  assert.strictEqual(result.development.adapter, "postgres");
+  assert.strictEqual(result.development.database, "dev");
 });
 
 test("parseYAML handles list item with inline object", () => {
@@ -102,17 +103,17 @@ test("parseYAML handles list item with inline object", () => {
   - name: second
     value: 2`;
   const result = parseYAML(input);
-  expect(result.items[0].name).toBe("first");
-  expect(result.items[1].value).toBe(2);
+  assert.strictEqual(result.items[0].name, "first");
+  assert.strictEqual(result.items[1].value, 2);
 });
 
 test("findPreviousKey handles comment with quotes", () => {
   const lines = ['key: "value" # comment', "  - item"];
   const result = findPreviousKey(lines, 1);
-  expect(result).toBe(null);
+  assert.strictEqual(result, null);
 });
 
 test("findPreviousKey with multiple empty values", () => {
   const lines = ["first:", "second:", "  - item"];
-  expect(findPreviousKey(lines, 2)).toBe("second");
+  assert.strictEqual(findPreviousKey(lines, 2), "second");
 });

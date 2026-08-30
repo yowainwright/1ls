@@ -9,6 +9,27 @@ import {
   type InitialState,
 } from "./utils";
 
+type ActorDoneEvent = { output: InitialState };
+type FormatEvent = Extract<PlaygroundEvent, { format: unknown }>;
+type InputChangeEvent = Extract<PlaygroundEvent, { type: "INPUT_CHANGE" }>;
+type ExpressionChangeEvent = Extract<PlaygroundEvent, { type: "EXPRESSION_CHANGE" }>;
+
+function loadedState(event: unknown): Partial<PlaygroundContext> {
+  return (event as ActorDoneEvent).output ?? {};
+}
+
+function formatFrom(event: PlaygroundEvent) {
+  return (event as FormatEvent).format;
+}
+
+function inputFrom(event: PlaygroundEvent) {
+  return (event as InputChangeEvent).input;
+}
+
+function expressionFrom(event: PlaygroundEvent) {
+  return (event as ExpressionChangeEvent).expression;
+}
+
 export const playgroundMachine = setup({
   types: {
     context: {} as PlaygroundContext,
@@ -21,13 +42,10 @@ export const playgroundMachine = setup({
     ),
   },
   actions: {
-    [Actions.APPLY_INITIAL_STATE]: assign(({ event }) => {
-      const loaded = (event as { output: InitialState }).output;
-      return loaded ?? {};
-    }),
+    [Actions.APPLY_INITIAL_STATE]: assign(({ event }) => loadedState(event)),
     [Actions.PERSIST_STATE]: persistPlaygroundState,
     [Actions.UPDATE_FORMAT]: assign(({ context, event }) =>
-      computeFormatChange(context, event.format),
+      computeFormatChange(context, formatFrom(event)),
     ),
   },
   guards: {
@@ -51,17 +69,17 @@ export const playgroundMachine = setup({
       actions: [Actions.UPDATE_FORMAT, Actions.PERSIST_STATE],
     },
     [MachineEvents.INPUT_CHANGE]: {
-      actions: [assign({ input: ({ event }) => event.input }), Actions.PERSIST_STATE],
+      actions: [assign({ input: ({ event }) => inputFrom(event) }), Actions.PERSIST_STATE],
     },
     [MachineEvents.EXPRESSION_CHANGE]: {
-      actions: [assign({ expression: ({ event }) => event.expression }), Actions.PERSIST_STATE],
+      actions: [assign({ expression: ({ event }) => expressionFrom(event) }), Actions.PERSIST_STATE],
     },
     [MachineEvents.TOGGLE_MINIFIED]: {
       actions: assign({ showMinifiedExpression: ({ context }) => !context.showMinifiedExpression }),
     },
     [MachineEvents.FORMAT_DETECTED]: {
       guard: Guards.IS_SANDBOX,
-      actions: assign({ format: ({ event }) => event.format }),
+      actions: assign({ format: ({ event }) => formatFrom(event) }),
     },
   },
   states: {

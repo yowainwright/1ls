@@ -4,7 +4,7 @@
  * Each builtin is a pure function: (data: unknown, args: unknown[]) => unknown
  * - Type guard at the top
  * - Immutable transforms (spread, reduce, Object.fromEntries)
- * - QuickJS NG safe (no async, no Intl, no Node/Bun APIs)
+ * - Native-core safe (no async, no Intl, no host runtime APIs)
  *
  * Reference: src/navigator/builtins/index.ts
  */

@@ -1,17 +1,19 @@
-FROM oven/bun:1.1.38-alpine
+FROM node:24-bookworm-slim
 
 WORKDIR /app
 
-COPY package.json bun.lock* ./
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY app/package.json ./app/package.json
 
-RUN bun install --frozen-lockfile
+RUN apt-get update && apt-get install -y clang && rm -rf /var/lib/apt/lists/*
+RUN corepack enable && pnpm install --frozen-lockfile
 
 COPY src ./src
 COPY tsconfig.json ./
 
-RUN bun run build
+RUN pnpm run build
 
 COPY test/integration ./test/integration
 COPY test/fixtures ./test/fixtures
 
-CMD ["bun", "test", "test/integration/"]
+CMD ["pnpm", "run", "test:integration"]

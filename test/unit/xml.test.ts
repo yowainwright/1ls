@@ -1,38 +1,39 @@
-import { describe, test, expect } from "bun:test";
+import { describe, test } from "node:test";
+import assert from "node:assert/strict";
 import {
   parseXML,
   parseXMLValue,
   parseXMLAttributes,
   parseXMLElement,
-} from "../../src/formats/xml";
+} from "../../src/formats/xml.ts";
 
 describe("XML Value Parser", () => {
   test("parses string values", () => {
-    expect(parseXMLValue("hello")).toBe("hello");
-    expect(parseXMLValue("  world  ")).toBe("world");
+    assert.strictEqual(parseXMLValue("hello"), "hello");
+    assert.strictEqual(parseXMLValue("  world  "), "world");
   });
 
   test("parses boolean values", () => {
-    expect(parseXMLValue("true")).toBe(true);
-    expect(parseXMLValue("false")).toBe(false);
+    assert.strictEqual(parseXMLValue("true"), true);
+    assert.strictEqual(parseXMLValue("false"), false);
   });
 
   test("parses numeric values", () => {
-    expect(parseXMLValue("42")).toBe(42);
-    expect(parseXMLValue("-10")).toBe(-10);
-    expect(parseXMLValue("3.14")).toBe(3.14);
+    assert.strictEqual(parseXMLValue("42"), 42);
+    assert.strictEqual(parseXMLValue("-10"), -10);
+    assert.strictEqual(parseXMLValue("3.14"), 3.14);
   });
 });
 
 describe("XML Attributes Parser", () => {
   test("parses single attribute", () => {
     const input = 'id="123"';
-    expect(parseXMLAttributes(input)).toEqual({ id: 123 });
+    assert.deepStrictEqual(parseXMLAttributes(input), { id: 123 });
   });
 
   test("parses multiple attributes", () => {
     const input = 'id="123" name="test" active="true"';
-    expect(parseXMLAttributes(input)).toEqual({
+    assert.deepStrictEqual(parseXMLAttributes(input), {
       id: 123,
       name: "test",
       active: true,
@@ -41,26 +42,26 @@ describe("XML Attributes Parser", () => {
 
   test("parses attributes with numeric values", () => {
     const input = 'count="42" price="19.99"';
-    expect(parseXMLAttributes(input)).toEqual({
+    assert.deepStrictEqual(parseXMLAttributes(input), {
       count: 42,
       price: 19.99,
     });
   });
 
   test("handles empty attribute string", () => {
-    expect(parseXMLAttributes("")).toEqual({});
+    assert.deepStrictEqual(parseXMLAttributes(""), {});
   });
 });
 
 describe("XML Element Parser", () => {
   test("parses self-closing tag without attributes", () => {
     const input = "<br/>";
-    expect(parseXMLElement(input)).toEqual({ br: null });
+    assert.deepStrictEqual(parseXMLElement(input), { br: null });
   });
 
   test("parses self-closing tag with attributes", () => {
     const input = '<img src="photo.jpg" width="100"/>';
-    expect(parseXMLElement(input)).toEqual({
+    assert.deepStrictEqual(parseXMLElement(input), {
       img: {
         _attributes: { src: "photo.jpg", width: 100 },
       },
@@ -69,12 +70,12 @@ describe("XML Element Parser", () => {
 
   test("parses simple tag with text content", () => {
     const input = "<name>Alice</name>";
-    expect(parseXMLElement(input)).toEqual({ name: "Alice" });
+    assert.deepStrictEqual(parseXMLElement(input), { name: "Alice" });
   });
 
   test("parses tag with attributes and text", () => {
     const input = '<title lang="en">Hello World</title>';
-    expect(parseXMLElement(input)).toEqual({
+    assert.deepStrictEqual(parseXMLElement(input), {
       title: {
         _attributes: { lang: "en" },
         _text: "Hello World",
@@ -84,7 +85,7 @@ describe("XML Element Parser", () => {
 
   test("parses nested elements", () => {
     const input = "<user><name>Alice</name><age>30</age></user>";
-    expect(parseXMLElement(input)).toEqual({
+    assert.deepStrictEqual(parseXMLElement(input), {
       user: {
         name: "Alice",
         age: 30,
@@ -94,7 +95,7 @@ describe("XML Element Parser", () => {
 
   test("parses nested elements with attributes", () => {
     const input = '<user id="1"><name>Alice</name><age>30</age></user>';
-    expect(parseXMLElement(input)).toEqual({
+    assert.deepStrictEqual(parseXMLElement(input), {
       user: {
         _attributes: { id: 1 },
         name: "Alice",
@@ -105,7 +106,7 @@ describe("XML Element Parser", () => {
 
   test("handles repeated elements as arrays", () => {
     const input = "<items><item>apple</item><item>banana</item><item>orange</item></items>";
-    expect(parseXMLElement(input)).toEqual({
+    assert.deepStrictEqual(parseXMLElement(input), {
       items: {
         item: ["apple", "banana", "orange"],
       },
@@ -114,19 +115,19 @@ describe("XML Element Parser", () => {
 
   test("parses numeric content", () => {
     const input = "<count>42</count>";
-    expect(parseXMLElement(input)).toEqual({ count: 42 });
+    assert.deepStrictEqual(parseXMLElement(input), { count: 42 });
   });
 
   test("parses boolean content", () => {
     const input = "<active>true</active>";
-    expect(parseXMLElement(input)).toEqual({ active: true });
+    assert.deepStrictEqual(parseXMLElement(input), { active: true });
   });
 });
 
 describe("XML Parser", () => {
   test("parses simple XML document", () => {
     const input = "<root><name>Alice</name><age>30</age></root>";
-    expect(parseXML(input)).toEqual({
+    assert.deepStrictEqual(parseXML(input), {
       root: {
         name: "Alice",
         age: 30,
@@ -136,7 +137,7 @@ describe("XML Parser", () => {
 
   test("handles XML declaration", () => {
     const input = '<?xml version="1.0" encoding="UTF-8"?><root><value>test</value></root>';
-    expect(parseXML(input)).toEqual({
+    assert.deepStrictEqual(parseXML(input), {
       root: { value: "test" },
     });
   });
@@ -156,7 +157,7 @@ describe("XML Parser", () => {
         </book>
       </catalog>
     `;
-    expect(parseXML(input)).toEqual({
+    assert.deepStrictEqual(parseXML(input), {
       catalog: {
         book: [
           {
@@ -178,7 +179,7 @@ describe("XML Parser", () => {
 
   test("handles empty elements", () => {
     const input = "<root><empty/></root>";
-    expect(parseXML(input)).toEqual({
+    assert.deepStrictEqual(parseXML(input), {
       root: { empty: null },
     });
   });
@@ -190,7 +191,7 @@ describe("XML Parser", () => {
         <age>30</age>
       </user>
     `;
-    expect(parseXML(input)).toEqual({
+    assert.deepStrictEqual(parseXML(input), {
       user: {
         name: "Alice",
         age: 30,

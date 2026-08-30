@@ -1,5 +1,5 @@
-import { ENVParseState } from "./types";
-import { parseBooleanValue, parseNullValue, tryParseNumber } from "./utils";
+import type { ENVParseState } from "./types.ts";
+import { parseBooleanValue, parseNullValue, tryParseNumber } from "./utils.ts";
 
 export function parseENVValue(value: string): unknown {
   const trimmed = value.trim();

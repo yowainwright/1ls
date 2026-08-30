@@ -1,8 +1,8 @@
-import { afterEach, describe, expect, test } from "bun:test";
-import { existsSync, mkdtempSync, readFileSync, rmSync } from "fs";
-import { tmpdir } from "os";
+import { afterEach, describe, test } from "node:test";
+import assert from "node:assert/strict";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync } from "fs";
 import { join } from "path";
-import { BORDER } from "../../../src/tooltip/constants";
+import { BORDER } from "../../../src/tooltip/constants.ts";
 import {
   closeTty,
   getSelectedIndex,
@@ -11,21 +11,28 @@ import {
   resetSelection,
   selectNext,
   selectPrev,
-} from "../../../src/tooltip/renderer";
+} from "../../../src/tooltip/renderer.ts";
 
 afterEach(() => {
   closeTty();
 });
+
+const TEST_ROOT = join(process.cwd(), ".cache", "tests");
+
+const createTestDir = (): string => {
+  mkdirSync(TEST_ROOT, { recursive: true });
+  return mkdtempSync(join(TEST_ROOT, "1ls-tooltip-renderer-"));
+};
 
 describe("tooltip/renderer selection", () => {
   test("selectNext wraps using the suggestion count", () => {
     resetSelection();
 
     selectNext(2);
-    expect(getSelectedIndex()).toBe(1);
+    assert.strictEqual(getSelectedIndex(), 1);
 
     selectNext(2);
-    expect(getSelectedIndex()).toBe(0);
+    assert.strictEqual(getSelectedIndex(), 0);
   });
 
   test("selectPrev wraps using the suggestion count", () => {
@@ -33,7 +40,7 @@ describe("tooltip/renderer selection", () => {
 
     selectPrev(2);
 
-    expect(getSelectedIndex()).toBe(1);
+    assert.strictEqual(getSelectedIndex(), 1);
   });
 
   test("selection ignores empty suggestion counts", () => {
@@ -42,15 +49,15 @@ describe("tooltip/renderer selection", () => {
     selectNext(0);
     selectPrev(0);
 
-    expect(getSelectedIndex()).toBe(0);
+    assert.strictEqual(getSelectedIndex(), 0);
   });
 
   test("render sizes borders from visible text length", () => {
-    const dir = mkdtempSync(join(tmpdir(), "1ls-tooltip-renderer-"));
+    const dir = createTestDir();
     const ttyPath = join(dir, "tty");
 
     try {
-      expect(openTty(ttyPath)).toBe(true);
+      assert.strictEqual(openTty(ttyPath), true);
 
       render([
         {
@@ -64,24 +71,20 @@ describe("tooltip/renderer selection", () => {
       const output = readFileSync(ttyPath, "utf8");
       const expectedInnerWidth = 20;
 
-      expect(output).toContain(
-        `${BORDER.TL}${BORDER.H.repeat(expectedInnerWidth)}${BORDER.TR}`
-      );
-      expect(output).not.toContain(
-        `${BORDER.TL}${BORDER.H.repeat(expectedInnerWidth + 10)}`
-      );
+      assert.ok(output.includes(`${BORDER.TL}${BORDER.H.repeat(expectedInnerWidth)}${BORDER.TR}`));
+      assert.ok(!output.includes(`${BORDER.TL}${BORDER.H.repeat(expectedInnerWidth + 10)}`));
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }
   });
 
   test("openTty reuses an active descriptor", () => {
-    const dir = mkdtempSync(join(tmpdir(), "1ls-tooltip-renderer-"));
+    const dir = createTestDir();
     const firstTtyPath = join(dir, "first-tty");
     const secondTtyPath = join(dir, "second-tty");
 
     try {
-      expect(openTty(firstTtyPath)).toBe(true);
+      assert.strictEqual(openTty(firstTtyPath), true);
       render([
         {
           signature: "first",
@@ -90,7 +93,7 @@ describe("tooltip/renderer selection", () => {
         },
       ]);
 
-      expect(openTty(secondTtyPath)).toBe(true);
+      assert.strictEqual(openTty(secondTtyPath), true);
       render([
         {
           signature: "second",
@@ -102,9 +105,9 @@ describe("tooltip/renderer selection", () => {
 
       const output = readFileSync(firstTtyPath, "utf8");
 
-      expect(output).toContain("first");
-      expect(output).toContain("second");
-      expect(existsSync(secondTtyPath)).toBe(false);
+      assert.ok(output.includes("first"));
+      assert.ok(output.includes("second"));
+      assert.strictEqual(existsSync(secondTtyPath), false);
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }

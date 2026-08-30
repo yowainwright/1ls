@@ -1,4 +1,4 @@
-import type { OperatorFunction } from "../types";
+import type { OperatorFunction } from "../types.ts";
 
 export const OPERATORS: Readonly<Record<string, OperatorFunction>> = {
   "+": (left: unknown, right: unknown) => (left as number) + (right as number),

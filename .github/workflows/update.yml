@@ -17,36 +17,25 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
       - name: Use Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
+          cache: pnpm
 
-      - uses: oven-sh/setup-bun@v2
-        name: Install Bun
-
-      - name: Get Bun cache directory
-        id: bun-cache
-        run: echo "bun_cache_dir=$(bun pm cache dir)" >> $GITHUB_OUTPUT
-
-      - uses: actions/cache@v4
-        name: Setup Bun cache
-        with:
-          path: ${{ steps.bun-cache.outputs.bun_cache_dir }}
-          key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-bun-
-
-      - run: bun install
+      - run: pnpm install --frozen-lockfile
 
       - name: Socket Security Check
         if: ${{ env.SOCKET_SECURITY_API_KEY != '' }}
-        run: npx --yes @socketsecurity/cli ci
+        run: pnpm dlx @socketsecurity/cli ci
 
-      - run: bun run build
-      - run: bun run test
-      - run: bun run update
-      - run: bun install
+      - run: pnpm update
+      - run: pnpm install
+      - run: pnpm run build
+      - run: pnpm test
 
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v7

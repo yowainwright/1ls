@@ -7,9 +7,9 @@ import type {
   ObjectOperationNode,
   ArrowFunctionNode,
   RootNode,
-} from "../types";
-import { TokenType as TT } from "../types";
-import { VALID_OBJECT_OPERATIONS } from "./constants";
+} from "../types.ts";
+import { TokenType as TT } from "../types.ts";
+import { VALID_OBJECT_OPERATIONS } from "./constants.ts";
 import {
   createLiteralNode,
   tryParseLiteralIdentifier,
@@ -26,7 +26,7 @@ import {
   createOptionalAccessNode,
   createNullCoalescingNode,
   isValidObjectOperation,
-} from "./utils";
+} from "./utils.ts";
 
 export {
   createErrorMessage,
@@ -42,9 +42,27 @@ export {
   createOptionalAccessNode,
   createNullCoalescingNode,
   isValidObjectOperation,
-} from "./utils";
+} from "./utils.ts";
 
-export { VALID_OBJECT_OPERATIONS } from "./constants";
+export { VALID_OBJECT_OPERATIONS } from "./constants.ts";
+
+const OPERATOR_PRECEDENCE: Readonly<Record<string, number>> = {
+  "||": 1,
+  "&&": 2,
+  "==": 3,
+  "!=": 3,
+  "===": 3,
+  "!==": 3,
+  ">": 4,
+  "<": 4,
+  ">=": 4,
+  "<=": 4,
+  "+": 5,
+  "-": 5,
+  "*": 6,
+  "/": 6,
+  "%": 6,
+};
 
 export class ExpressionParser {
   private tokens: readonly Token[];
@@ -62,12 +80,12 @@ export class ExpressionParser {
       return createRootNode();
     }
 
-    const expression = this.parseExpression();
-    return createRootNode(expression);
-  }
+    const expression = this.parsePrimary();
+    if (this.current.type !== TT.EOF) {
+      throw new Error(createErrorMessage(this.current, "Unexpected token after expression"));
+    }
 
-  private parseExpression(): ASTNode {
-    return this.parsePrimary();
+    return createRootNode(expression);
   }
 
   private parsePrimary(): ASTNode {
@@ -80,56 +98,72 @@ export class ExpressionParser {
 
     const isDoubleDot = currentType === TT.DOUBLE_DOT;
     if (isDoubleDot) {
-      this.advance();
-      return createRecursiveDescentNode();
+      return this.parseRecursiveDescentRoot();
     }
 
     const isDot = currentType === TT.DOT;
     if (isDot) {
-      this.advance();
-      const isEndOfExpression = this.current.type === TT.EOF;
-      if (isEndOfExpression) {
-        return createRootNode();
-      }
-      return this.parseAccessChain();
+      return this.parseRootAccess();
     }
 
     const isLeftBracket = currentType === TT.LEFT_BRACKET;
     if (isLeftBracket) {
-      return this.parseArrayAccess();
+      return this.parseBracketAccess();
     }
 
-    if (currentType === TT.IDENTIFIER) {
-      return this.parseIdentifierOrFunction();
-    }
-
-    if (currentType === TT.STRING) {
-      const value = this.current.value;
-      this.advance();
-      return createLiteralNode(value);
-    }
-
-    if (currentType === TT.NUMBER) {
-      const value = Number(this.current.value);
-      this.advance();
-      return createLiteralNode(value);
-    }
-
-    if (currentType === TT.LEFT_PAREN) {
-      const params = this.parseFunctionParams();
-      return this.parseArrowFunction(params);
-    }
+    if (currentType === TT.IDENTIFIER) return this.parseIdentifierOrFunction();
+    if (this.isLiteralToken(currentType)) return this.parseLiteralToken(currentType);
+    if (currentType === TT.LEFT_PAREN) return this.parseFunctionExpression();
 
     throw new Error(createErrorMessage(this.current, "Unexpected token"));
+  }
+
+  private isLiteralToken(type: TokenType): boolean {
+    if (type === TT.STRING) return true;
+    return type === TT.NUMBER;
+  }
+
+  private parseLiteralToken(type: TokenType): ASTNode {
+    if (type === TT.STRING) return this.parseStringLiteral();
+    return this.parseNumberLiteral();
+  }
+
+  private parseFunctionExpression(): ASTNode {
+    const params = this.parseFunctionParams();
+    return this.parseArrowFunction(params);
+  }
+
+  private parseRecursiveDescentRoot(): ASTNode {
+    this.advance();
+    return createRecursiveDescentNode();
+  }
+
+  private parseRootAccess(): ASTNode {
+    this.advance();
+    const isEndOfExpression = this.current.type === TT.EOF;
+    if (isEndOfExpression) return createRootNode();
+    return this.parseAccessChain();
+  }
+
+  private parseStringLiteral(): ASTNode {
+    const literalNode = createLiteralNode(this.current.value);
+    this.advance();
+    return literalNode;
+  }
+
+  private parseNumberLiteral(): ASTNode {
+    const literalValue = Number(this.current.value);
+    this.advance();
+    return createLiteralNode(literalValue);
   }
 
   private parseAccessChain(object?: ASTNode): ASTNode {
     const currentType = this.current.type;
 
     if (currentType === TT.IDENTIFIER) {
-      const property = this.current.value;
+      const propertyNode = createPropertyAccessNode(this.current.value, object);
       this.advance();
-      return createPropertyAccessNode(property, object);
+      return propertyNode;
     }
 
     if (currentType === TT.LEFT_BRACKET) {
@@ -154,10 +188,7 @@ export class ExpressionParser {
 
     const isStringProperty = this.current.type === TT.STRING;
     if (isStringProperty) {
-      const property = this.current.value;
-      this.advance();
-      this.expect(TT.RIGHT_BRACKET);
-      return createPropertyAccessNode(property, object);
+      return this.parseStringBracketAccess(object);
     }
 
     const isNumber = this.current.type === TT.NUMBER;
@@ -170,6 +201,13 @@ export class ExpressionParser {
     }
 
     throw new Error(createErrorMessage(this.current, "Unexpected token in bracket access"));
+  }
+
+  private parseStringBracketAccess(object?: ASTNode): ASTNode {
+    const propertyNode = createPropertyAccessNode(this.current.value, object);
+    this.advance();
+    this.expect(TT.RIGHT_BRACKET);
+    return propertyNode;
   }
 
   private parseNumericIndexOrSlice(object?: ASTNode): ASTNode {
@@ -205,10 +243,6 @@ export class ExpressionParser {
 
     this.expect(TT.RIGHT_BRACKET);
     return createSliceAccessNode(start, end, object);
-  }
-
-  private parseArrayAccess(): ASTNode {
-    return this.parseBracketAccess();
   }
 
   private parseObjectOperation(object?: ASTNode): ObjectOperationNode {
@@ -271,13 +305,21 @@ export class ExpressionParser {
     return this.parseBinaryExpression();
   }
 
-  private parseBinaryExpression(): ASTNode {
+  private parseBinaryExpression(minPrecedence = 0): ASTNode {
     let left = this.parseFunctionTerm();
 
     while (this.current.type === TT.OPERATOR) {
       const operator = this.current.value;
+      const precedence = OPERATOR_PRECEDENCE[operator];
+      const hasKnownPrecedence = precedence !== undefined;
+      const hasLowerPrecedence = precedence < minPrecedence;
+      const shouldStop = !hasKnownPrecedence || hasLowerPrecedence;
+      if (shouldStop) {
+        break;
+      }
+
       this.advance();
-      const right = this.parseFunctionTerm();
+      const right = this.parseBinaryExpression(precedence + 1);
 
       left = createMethodCallNode(`__operator_${operator}__`, [right], left);
     }
@@ -293,25 +335,25 @@ export class ExpressionParser {
     }
 
     if (currentType === TT.NUMBER) {
-      const value = Number(this.current.value);
-      this.advance();
-      return createLiteralNode(value);
+      return this.parseNumberLiteral();
     }
 
     if (currentType === TT.STRING) {
-      const value = this.current.value;
-      this.advance();
-      return createLiteralNode(value);
+      return this.parseStringLiteral();
     }
 
     if (currentType === TT.LEFT_PAREN) {
-      this.advance();
-      const expr = this.parseBinaryExpression();
-      this.expect(TT.RIGHT_PAREN);
-      return expr;
+      return this.parseGroupedFunctionTerm();
     }
 
     throw new Error(createErrorMessage(this.current, "Unexpected token in function body"));
+  }
+
+  private parseGroupedFunctionTerm(): ASTNode {
+    this.advance();
+    const expression = this.parseBinaryExpression();
+    this.expect(TT.RIGHT_PAREN);
+    return expression;
   }
 
   private parseIdentifierChain(): ASTNode {
@@ -323,29 +365,37 @@ export class ExpressionParser {
 
     let node: ASTNode = createPropertyAccessNode(identifier);
 
-    const isDot = () => this.current.type === TT.DOT;
-    const isIdentifier = () => this.current.type === TT.IDENTIFIER;
-    const isMethodCall = () => this.current.type === TT.LEFT_PAREN;
-
-    while (isDot() || isMethodCall()) {
-      if (isMethodCall()) {
-        const propertyNode = node as PropertyAccessNode;
-        const method = propertyNode.property;
-        const object = propertyNode.object;
-        node = this.parseMethodCall(object ? object : createRootNode(), method);
-        continue;
-      }
-
-      this.advance();
-
-      if (!isIdentifier()) break;
-
-      const prop = this.current.value;
-      this.advance();
-      node = createPropertyAccessNode(prop, node);
+    while (this.isIdentifierChainToken()) {
+      const nextNode = this.parseIdentifierChainStep(node);
+      if (!nextNode) break;
+      node = nextNode;
     }
 
     return node;
+  }
+
+  private isIdentifierChainToken(): boolean {
+    if (this.current.type === TT.DOT) return true;
+    return this.current.type === TT.LEFT_PAREN;
+  }
+
+  private parseIdentifierChainStep(node: ASTNode): ASTNode | undefined {
+    if (this.current.type === TT.LEFT_PAREN) return this.parseIdentifierMethodCall(node);
+    this.advance();
+    if (this.current.type !== TT.IDENTIFIER) return undefined;
+    return this.parseChainedProperty(node);
+  }
+
+  private parseIdentifierMethodCall(node: ASTNode): ASTNode {
+    const propertyNode = node as PropertyAccessNode;
+    const callObject = propertyNode.object ? propertyNode.object : createRootNode();
+    return this.parseMethodCall(callObject, propertyNode.property);
+  }
+
+  private parseChainedProperty(node: ASTNode): ASTNode {
+    const propertyNode = createPropertyAccessNode(this.current.value, node);
+    this.advance();
+    return propertyNode;
   }
 
   private parseMethodCall(object: ASTNode, method: string): ASTNode {
@@ -356,11 +406,11 @@ export class ExpressionParser {
   }
 
   private parseMethodArguments(): ASTNode[] {
-    const args: ASTNode[] = [];
+    let args: ASTNode[] = [];
 
     while (this.current.type !== TT.RIGHT_PAREN && this.current.type !== TT.EOF) {
       const arg = this.parseMethodArgument();
-      args.push(arg);
+      args = [...args, arg];
 
       const hasComma = this.current.type === TT.COMMA;
       if (hasComma) {
@@ -380,40 +430,38 @@ export class ExpressionParser {
     }
 
     if (currentType === TT.IDENTIFIER) {
-      const identifier = this.current.value;
-      this.advance();
-
-      const isArrowFunction = this.current.type === TT.ARROW;
-      if (isArrowFunction) {
-        return this.parseArrowFunction([identifier]);
-      }
-
-      return createPropertyAccessNode(identifier);
+      return this.parseIdentifierMethodArgument();
     }
 
     if (currentType === TT.NUMBER) {
-      const value = Number(this.current.value);
-      this.advance();
-      return createLiteralNode(value);
+      return this.parseNumberLiteral();
     }
 
     if (currentType === TT.STRING) {
-      const value = this.current.value;
-      this.advance();
-      return createLiteralNode(value);
+      return this.parseStringLiteral();
     }
 
-    return this.parseExpression();
+    return this.parsePrimary();
+  }
+
+  private parseIdentifierMethodArgument(): ASTNode {
+    const identifier = this.current.value;
+    this.advance();
+
+    const isArrowFunction = this.current.type === TT.ARROW;
+    if (isArrowFunction) return this.parseArrowFunction([identifier]);
+
+    return createPropertyAccessNode(identifier);
   }
 
   private parseFunctionParams(): string[] {
     this.expect(TT.LEFT_PAREN);
-    const params: string[] = [];
+    let params: string[] = [];
 
     while (this.current.type !== TT.RIGHT_PAREN && this.current.type !== TT.EOF) {
       const isIdentifier = this.current.type === TT.IDENTIFIER;
       if (isIdentifier) {
-        params.push(this.current.value);
+        params = [...params, this.current.value];
         this.advance();
       }
 
@@ -431,57 +479,47 @@ export class ExpressionParser {
     let current = node;
 
     while (true) {
-      const tokenType = this.current.type;
-
-      const isDoubleDot = tokenType === TT.DOUBLE_DOT;
-      if (isDoubleDot) {
-        this.advance();
-        current = createRecursiveDescentNode(current);
-        continue;
-      }
-
-      const isDot = tokenType === TT.DOT;
-      if (isDot) {
-        current = this.parsePostfixDot(current);
-        continue;
-      }
-
-      const isLeftBracket = tokenType === TT.LEFT_BRACKET;
-      if (isLeftBracket) {
-        current = this.parseBracketAccess(current);
-        continue;
-      }
-
-      const isQuestion = tokenType === TT.QUESTION;
-      if (isQuestion) {
-        this.advance();
-        current = createOptionalAccessNode(current);
-        continue;
-      }
-
-      const isDoubleQuestion = tokenType === TT.DOUBLE_QUESTION;
-      if (isDoubleQuestion) {
-        this.advance();
-        const right = this.parsePrimary();
-        current = createNullCoalescingNode(current, right);
-        continue;
-      }
-
-      const isLeftParen = tokenType === TT.LEFT_PAREN;
-      if (isLeftParen) {
-        const isPropertyAccess = current.type === "PropertyAccess";
-        const hasNoObject = isPropertyAccess && !(current as PropertyAccessNode).object;
-        if (hasNoObject) {
-          const method = (current as PropertyAccessNode).property;
-          current = this.parseMethodCall(createRootNode(), method);
-          continue;
-        }
-      }
-
-      break;
+      const next = this.parsePostfixStep(current);
+      if (!next) break;
+      current = next;
     }
 
     return current;
+  }
+
+  private parsePostfixStep(node: ASTNode): ASTNode | undefined {
+    const tokenType = this.current.type;
+    if (tokenType === TT.DOUBLE_DOT) return this.parsePostfixRecursiveDescent(node);
+    if (tokenType === TT.DOT) return this.parsePostfixDot(node);
+    if (tokenType === TT.LEFT_BRACKET) return this.parseBracketAccess(node);
+    if (tokenType === TT.QUESTION) return this.parsePostfixOptionalAccess(node);
+    if (tokenType === TT.DOUBLE_QUESTION) return this.parsePostfixNullCoalescing(node);
+    if (tokenType === TT.LEFT_PAREN) return this.parseRootMethodPostfix(node);
+    return undefined;
+  }
+
+  private parsePostfixRecursiveDescent(node: ASTNode): ASTNode {
+    this.advance();
+    return createRecursiveDescentNode(node);
+  }
+
+  private parsePostfixOptionalAccess(node: ASTNode): ASTNode {
+    this.advance();
+    return createOptionalAccessNode(node);
+  }
+
+  private parsePostfixNullCoalescing(node: ASTNode): ASTNode {
+    this.advance();
+    const right = this.parsePrimary();
+    return createNullCoalescingNode(node, right);
+  }
+
+  private parseRootMethodPostfix(node: ASTNode): ASTNode | undefined {
+    const isPropertyAccess = node.type === "PropertyAccess";
+    if (!isPropertyAccess) return undefined;
+    const propertyNode = node as PropertyAccessNode;
+    if (propertyNode.object) return undefined;
+    return this.parseMethodCall(createRootNode(), propertyNode.property);
   }
 
   private parsePostfixDot(node: ASTNode): ASTNode {
@@ -524,7 +562,8 @@ export class ExpressionParser {
     }
 
     const value = Number(this.current.value);
-    return isNegative ? -value : value;
+    if (isNegative) return -value;
+    return value;
   }
 
   private advance(): void {

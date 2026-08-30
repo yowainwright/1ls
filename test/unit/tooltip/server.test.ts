@@ -1,7 +1,11 @@
-import { afterEach, beforeEach, describe, expect, test } from "bun:test";
-import { existsSync, readFileSync, unlinkSync } from "fs";
-import { RESPONSE_PATH } from "../../../src/tooltip/constants";
-import { handleMessage, parseMessage } from "../../../src/tooltip/server";
+import { afterEach, beforeEach, describe, test } from "node:test";
+import assert from "node:assert/strict";
+import { existsSync, mkdirSync, readFileSync, unlinkSync } from "fs";
+import { join } from "path";
+import { handleMessage, parseMessage, configureDaemon } from "../../../src/tooltip/server.ts";
+
+const TEST_ROOT = join(process.cwd(), ".cache", "tests");
+const RESPONSE_PATH = join(TEST_ROOT, "1ls-response");
 
 const removeResponseFile = (): void => {
   if (existsSync(RESPONSE_PATH)) {
@@ -10,52 +14,56 @@ const removeResponseFile = (): void => {
 };
 
 describe("tooltip/server", () => {
-  beforeEach(removeResponseFile);
+  beforeEach(() => {
+    mkdirSync(TEST_ROOT, { recursive: true });
+    configureDaemon({ responsePath: RESPONSE_PATH });
+    removeResponseFile();
+  });
   afterEach(removeResponseFile);
 
   describe("parseMessage", () => {
     test("returns null for empty string", () => {
       const result = parseMessage("");
-      expect(result).toBeNull();
+      assert.strictEqual(result, null);
     });
 
     test("returns null for whitespace only", () => {
       const result = parseMessage("   ");
-      expect(result).toBeNull();
+      assert.strictEqual(result, null);
     });
 
     test("parses plain text as input", () => {
       const result = parseMessage(".map");
-      expect(result).not.toBeNull();
-      expect(result?.input).toBe(".map");
+      assert.notStrictEqual(result, null);
+      assert.strictEqual(result?.input, ".map");
     });
 
     test("parses JSON message with input", () => {
       const result = parseMessage('{"input":".filter"}');
-      expect(result).not.toBeNull();
-      expect(result?.input).toBe(".filter");
+      assert.notStrictEqual(result, null);
+      assert.strictEqual(result?.input, ".filter");
     });
 
     test("parses JSON message with tty", () => {
       const result = parseMessage('{"input":".map","tty":"/dev/ttys001"}');
-      expect(result).not.toBeNull();
-      expect(result?.input).toBe(".map");
-      expect(result?.tty).toBe("/dev/ttys001");
+      assert.notStrictEqual(result, null);
+      assert.strictEqual(result?.input, ".map");
+      assert.strictEqual(result?.tty, "/dev/ttys001");
     });
 
     test("parses JSON message with action", () => {
       const result = parseMessage('{"input":"","action":"hide"}');
-      expect(result).not.toBeNull();
-      expect(result?.action).toBe("hide");
+      assert.notStrictEqual(result, null);
+      assert.strictEqual(result?.action, "hide");
     });
 
     test("parses full JSON message", () => {
       const msg = '{"input":".re","tty":"/dev/ttys002","action":"complete"}';
       const result = parseMessage(msg);
-      expect(result).not.toBeNull();
-      expect(result?.input).toBe(".re");
-      expect(result?.tty).toBe("/dev/ttys002");
-      expect(result?.action).toBe("complete");
+      assert.notStrictEqual(result, null);
+      assert.strictEqual(result?.input, ".re");
+      assert.strictEqual(result?.tty, "/dev/ttys002");
+      assert.strictEqual(result?.action, "complete");
     });
 
     test("parses escaped JSON payloads", () => {
@@ -63,21 +71,21 @@ describe("tooltip/server", () => {
         '{"input":"1ls rf file.json \\".user.na\\"","tty":"/dev/ttys002","action":"complete","file":"file.json","expr":".user.na"}';
       const result = parseMessage(msg);
 
-      expect(result).not.toBeNull();
-      expect(result?.file).toBe("file.json");
-      expect(result?.expr).toBe(".user.na");
-      expect(result?.input).toContain('.user.na');
+      assert.notStrictEqual(result, null);
+      assert.strictEqual(result?.file, "file.json");
+      assert.strictEqual(result?.expr, ".user.na");
+      assert.ok(result?.input.includes(".user.na"));
     });
 
     test("handles invalid JSON gracefully", () => {
       const result = parseMessage("{invalid json}");
-      expect(result).not.toBeNull();
-      expect(result?.input).toBe("{invalid json}");
+      assert.notStrictEqual(result, null);
+      assert.strictEqual(result?.input, "{invalid json}");
     });
 
     test("trims whitespace from input", () => {
       const result = parseMessage("  .map  ");
-      expect(result?.input).toBe(".map");
+      assert.strictEqual(result?.input, ".map");
     });
   });
 
@@ -86,18 +94,18 @@ describe("tooltip/server", () => {
       await handleMessage({ input: "data." });
 
       const initial = readFileSync(RESPONSE_PATH, "utf8");
-      expect(initial.length).toBeGreaterThan(0);
+      assert.ok(initial.length > 0);
 
       await handleMessage({ input: "", action: "next" });
       const next = readFileSync(RESPONSE_PATH, "utf8");
-      expect(next.length).toBeGreaterThan(0);
-      expect(next).not.toBe(initial);
+      assert.ok(next.length > 0);
+      assert.notStrictEqual(next, initial);
 
       await handleMessage({ input: "", action: "prev" });
-      expect(readFileSync(RESPONSE_PATH, "utf8")).toBe(initial);
+      assert.strictEqual(readFileSync(RESPONSE_PATH, "utf8"), initial);
 
       await handleMessage({ input: "", action: "hide" });
-      expect(readFileSync(RESPONSE_PATH, "utf8")).toBe("");
+      assert.strictEqual(readFileSync(RESPONSE_PATH, "utf8"), "");
     });
   });
 });

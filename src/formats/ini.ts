@@ -1,5 +1,5 @@
-import { INI } from "./constants";
-import { INIParseState } from "./types";
+import { INI } from "./constants.ts";
+import type { INIParseState } from "./types.ts";
 
 export function parseINIValue(value: string): unknown {
   const trimmed = value.trim();
@@ -22,61 +22,46 @@ export function parseINIValue(value: string): unknown {
 }
 
 export function stripINIComments(line: string): string {
-  const commentIdx = line.indexOf(";");
-  const hashCommentIdx = line.indexOf("#");
-
-  const hasComment = commentIdx >= 0 || hashCommentIdx >= 0;
-  if (!hasComment) return line;
-
-  const firstCommentIdx =
-    commentIdx >= 0 && hashCommentIdx >= 0
-      ? Math.min(commentIdx, hashCommentIdx)
-      : Math.max(commentIdx, hashCommentIdx);
-
-  return line.substring(0, firstCommentIdx);
+  const commentMatch = /[;#]/.exec(line);
+  if (!commentMatch) return line;
+  return line.substring(0, commentMatch.index);
 }
 
-export function processINILine(state: INIParseState, line: string): INIParseState {
-  const withoutComments = stripINIComments(line);
-  const trimmed = withoutComments.trim();
-  const isEmpty = !trimmed;
+const processINISection = (state: INIParseState, trimmed: string): INIParseState => {
+  const sectionName = trimmed.slice(1, -1).trim();
+  const result = state.result[sectionName] ? state.result : { ...state.result, [sectionName]: {} };
+  return {
+    result,
+    currentSection: sectionName,
+  };
+};
 
-  if (isEmpty) {
-    return state;
-  }
+const setINIValue = (state: INIParseState, key: string, value: string): INIParseState => {
+  const parsedValue = parseINIValue(value);
+  const hasSection = state.currentSection.length > 0;
+  if (!hasSection) return { ...state, result: { ...state.result, [key]: parsedValue } };
 
-  const isSection = trimmed.startsWith("[") && trimmed.endsWith("]");
-  if (isSection) {
-    const sectionName = trimmed.slice(1, -1).trim();
-    const hasSection = !state.result[sectionName];
+  const section = state.result[state.currentSection] as Record<string, unknown>;
+  return {
+    ...state,
+    result: { ...state.result, [state.currentSection]: { ...section, [key]: parsedValue } },
+  };
+};
 
-    if (hasSection) {
-      state.result[sectionName] = {};
-    }
-
-    return {
-      result: state.result,
-      currentSection: sectionName,
-    };
-  }
-
+const processINIKeyValue = (state: INIParseState, trimmed: string): INIParseState => {
   const equalsIdx = trimmed.indexOf("=");
-  const hasKeyValue = equalsIdx > 0;
+  if (equalsIdx <= 0) return state;
+  const key = trimmed.substring(0, equalsIdx).trim();
+  const value = trimmed.substring(equalsIdx + 1).trim();
+  return setINIValue(state, key, value);
+};
 
-  if (hasKeyValue) {
-    const key = trimmed.substring(0, equalsIdx).trim();
-    const value = trimmed.substring(equalsIdx + 1).trim();
-    const hasSection = state.currentSection.length > 0;
-
-    if (hasSection) {
-      const section = state.result[state.currentSection] as Record<string, unknown>;
-      section[key] = parseINIValue(value);
-    } else {
-      state.result[key] = parseINIValue(value);
-    }
-  }
-
-  return state;
+export function processINILine(state: INIParseState, line: string): INIParseState {
+  const trimmed = stripINIComments(line).trim();
+  if (!trimmed) return state;
+  const isSection = trimmed.startsWith("[") && trimmed.endsWith("]");
+  if (isSection) return processINISection(state, trimmed);
+  return processINIKeyValue(state, trimmed);
 }
 
 export function parseINI(input: string): Record<string, unknown> {

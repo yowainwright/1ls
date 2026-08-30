@@ -21,8 +21,8 @@ JavaScript syntax with shortcuts. JSON, YAML, TOML, XML, CSV, INI, ENV, NDJSON. 
 ## Why 1ls?
 
 - **JavaScript Syntax**: Use familiar JavaScript array methods and syntax instead of learning jq's DSL
-- **Multi-format**: Works with JSON, JSON5, YAML, TOML, XML, INI, CSV, TSV, ENV, NDJSON, JavaScript, TypeScript, and more
-- **Fast**: Built for speed; no deps, compiled by Bun
+- **Multi-format**: Works with JSON, JSON5, YAML, TOML, XML, INI, CSV, TSV, ENV, NDJSON, plain text, and lines
+- **Fast**: Built for speed; no deps, native release binaries via scriptc
 - **Intuitive**: Property access with dot notation, just like JavaScript
 - **Powerful**: Full support for array methods, arrow functions, and object operations
 - **Shortcuts**: Built-in shortcuts for common operations (e.g., `.mp` for `.map`)
@@ -93,11 +93,11 @@ echo 'name: Ada' | 1ls '.name'
 ## Installation
 
 ```bash
-# Using bun (or npm, pnpm, etc)
+# Using pnpm
 # works in the commandline or the web
-bun add -g 1ls
+pnpm add -g 1ls
 
-# Or via binaries. here you get a QuickJs build
+# Or via native binaries
 # Using Homebrew (macOS/Linux)
 brew install yowainwright/tap/1ls
 # Using curl
@@ -131,19 +131,14 @@ echo '[1, 2, 3]' | 1ls '.map(x => x * 2)'
 echo '[{"name": "Alice", "age": 30}, {"name": "Bob", "age": 25}]' | 1ls '.filter(x => x.age > 26).map(x => x.name)'
 # Output: ["Alice"]
 
-# Interactive mode - explore JSON with fuzzy search
-1ls readFile data.json
-# Opens interactive explorer with fuzzy search, arrow key navigation, and live preview
 ```
 
 ## Examples
 
-### Interactive Mode
-
-Explore JSON interactively with fuzzy search and build expressions with method discovery:
+### File Input
 
 ```bash
-# Open interactive explorer from a file (automatic when no expression)
+# Read a full file
 1ls readFile data.json
 
 # Works with all supported formats
@@ -154,69 +149,9 @@ Explore JSON interactively with fuzzy search and build expressions with method d
 curl https://api.github.com/users/github > /tmp/user.json
 1ls readFile /tmp/user.json
 
-# Or use an expression directly (non-interactive)
+# Use an expression directly
 1ls readFile data.json '.users.filter(x => x.active)'
 ```
-
-#### Mode 1: Path Explorer
-
-Navigate and search JSON paths:
-
-- **Fuzzy search**: Type to filter paths (e.g., "user.name" matches `.users[0].name`, `.user.username`, etc.)
-- **Live preview**: See values as you navigate
-- **Type information**: Shows String, Number, Array, Object, Boolean, or null
-- **↑/↓**: Navigate, **Enter**: Select, **Tab**: Build expression, **Esc/q**: Quit
-
-#### Mode 2: Expression Builder
-
-Build complex expressions with guided method selection:
-
-**Workflow:**
-1. Navigate to a path in Explorer mode → Press **Tab**
-2. Type to fuzzy search methods → **→** to accept
-3. Type to fuzzy search properties → **→** to complete
-4. Repeat to chain methods
-5. Press **Enter** to execute
-
-**Example Session:**
-```
-1. Navigate to .users (Array) → Tab
-2. Type "fil" → → (accepts .filter(x => ...))
-3. Type "act" → → (completes with x.active, back to method selection)
-4. Type "map" → → (accepts .map(x => ...))
-5. Type "name" → → (completes with x.name)
-6. Enter → executes: .users.filter(x => x.active).map(x => x.name)
-```
-
-**Undo mistakes:**
-- Press **←** at any time to undo the last segment
-- Example: `.users.filter(x => x.active).map(x => x.name)` → **←** → `.users.filter(x => x.active)`
-
-**Available Methods by Type:**
-
-**Array**: map, filter, reduce, find, findIndex, some, every, sort, reverse, slice, concat, join, flat, flatMap, length
-
-**String**: toUpperCase, toLowerCase, trim, trimStart, trimEnd, split, replace, replaceAll, substring, slice, startsWith, endsWith, includes, match, length
-
-**Object**: {keys}, {values}, {entries}, {length}
-
-**Number**: toFixed, toString
-
-**Keyboard Shortcuts:**
-- **↑/↓**: Navigate methods/properties
-- **→ or Tab**: Accept/complete method or property (autocomplete-style)
-- **←**: Undo last segment (remove to previous dot)
-- **Enter**: Execute expression
-- **Type**: Fuzzy search methods/properties
-- **Esc**: Go back to Explorer / Quit
-- **q**: Quit (from Explorer)
-
-**Use cases:**
-- Exploring unfamiliar API responses
-- Building filter/map chains interactively
-- Discovering available methods for each type
-- Learning JavaScript array/string methods
-- Prototyping complex data transformations
 
 ### Working with JSON
 
@@ -307,7 +242,6 @@ cat logs.ndjson | 1ls --input-format ndjson '.filter(x => x.level === "error")'
 - CSV, TSV
 - ENV files (.env)
 - NDJSON (Newline-Delimited JSON for logs)
-- JavaScript, TypeScript (with `export default`)
 - Plain text, line-by-line
 
 ### File Operations
@@ -352,7 +286,6 @@ echo '["a", "b"]' | 1ls '.jn(",")'           # Short for .join()
 |--------|-------|-------------|
 | `--help` | `-h` | Show help |
 | `--version` | `-v` | Show version |
-| `--interactive` | | Interactive fuzzy search explorer |
 | `--raw` | `-r` | Output raw strings, not JSON |
 | `--pretty` | `-p` | Pretty print output (default) |
 | `--compact` | `-c` | Compact single-line output |
@@ -365,13 +298,13 @@ echo '["a", "b"]' | 1ls '.jn(",")'           # Short for .join()
 | Option | Description | Values |
 |--------|-------------|--------|
 | `--format` | Output format | `json`, `yaml`, `csv`, `table` |
-| `--input-format`, `-if` | Input format | `json`, `yaml`, `toml`, `csv`, `tsv`, `lines`, `text` |
+| `--input-format`, `-if` | Input format | `json`, `json5`, `yaml`, `toml`, `xml`, `ini`, `csv`, `tsv`, `env`, `ndjson`, `lines`, `text` |
 
 ### File Operations
 
 | Option | Short | Description |
 |--------|-------|-------------|
-| `readFile` | | Read JSON from file |
+| `readFile` | | Read data from file |
 | `--list` | `-l` | List files in directory |
 | `--find` | `-f` | Find files matching pattern |
 | `--grep` | `-g` | Search for pattern in files |
@@ -596,7 +529,7 @@ done
 
 ## Performance
 
-1ls is built with Bun and optimized for speed:
+1ls uses Node for development builds and scriptc for native release binaries:
 - Fast JSON parsing and stringification
 - Minimal overhead for expression evaluation
 - Efficient streaming for large files
@@ -610,16 +543,16 @@ git clone https://github.com/yowainwright/1ls.git
 cd 1ls
 
 # Install dependencies
-bun install
+pnpm install
 
 # Run tests
-bun test
+pnpm test
 
 # Build
-bun run build
+pnpm run build
 
-# Build binaries
-bun run build:binary:all
+# Build native binary
+pnpm run build:binary
 ```
 
 ## Contributing
@@ -635,11 +568,10 @@ MIT © Jeff Wainwright
 | Feature | 1ls | jq | fx |
 |---------|-----|----|----|
 | Syntax | JavaScript | DSL | JavaScript |
-| Implementation | Bun/TS | C | Go |
+| Implementation | Node/TS + scriptc | C | Go |
 | Learning Curve | Easy | Steep | Easy |
-| Multi-format | ✓ (12+) | x | ✓ (JSON/YAML/TOML) |
+| Multi-format | ✓ (12) | x | ✓ (JSON/YAML/TOML) |
 | Auto-detect Format | ✓ | x | x |
-| Interactive Mode | ✓ | x | ✓ |
 | Shortcuts | ✓ | x | x |
 | Arrow Functions | ✓ | x | ✓ |
 | File Operations | ✓ | x | x |
@@ -731,7 +663,7 @@ Lower is better. Times in milliseconds (ms).
 | uniq() | 100000 | 355.20 | 576.73 | 0.53 |
 | flatten() | 100000 | 370.08 | 760.43 | 0.51 |
 
-Run `bun run test:bench` to regenerate benchmarks.
+Run `pnpm run test:bench` to regenerate benchmarks.
 
 <!-- BENCHMARKS:END -->
 

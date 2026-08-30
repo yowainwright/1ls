@@ -1,16 +1,5 @@
-import { describe, test, expect, mock } from "bun:test";
-
-mock.module("1ls/browser", () => ({
-  evaluate: (data: unknown, expr: string) => {
-    const fn = new Function("data", `with(data) { return data${expr} }`);
-    return fn(data);
-  },
-  parseYAML: (s: string) => ({ raw: s }),
-  parseCSV: (s: string) => s.split("\n").map((line) => line.split(",")),
-  parseTOML: (s: string) => ({ raw: s }),
-  expandShortcuts: (s: string) => s,
-  shortenExpression: (s: string) => s,
-}));
+import { describe, test } from "node:test";
+import assert from "node:assert/strict";
 
 import { createActor, waitFor } from "xstate";
 import { playgroundMachine } from "../machine";
@@ -21,11 +10,11 @@ describe("playgroundMachine — preset mode", () => {
     const actor = createActor(playgroundMachine, { input: { mode: "preset" } });
     actor.start();
     const ctx = actor.getSnapshot().context;
-    expect(ctx.isSandbox).toBe(false);
-    expect(ctx.format).toBe("json");
-    expect(ctx.input).toBe(FORMAT_CONFIGS.json.placeholder);
-    expect(ctx.expression).toBe(DEFAULT_EXPRESSION);
-    expect(ctx.showMinifiedExpression).toBe(false);
+    assert.strictEqual(ctx.isSandbox, false);
+    assert.strictEqual(ctx.format, "json");
+    assert.strictEqual(ctx.input, FORMAT_CONFIGS.json.placeholder);
+    assert.strictEqual(ctx.expression, DEFAULT_EXPRESSION);
+    assert.strictEqual(ctx.showMinifiedExpression, false);
     actor.stop();
   });
 
@@ -33,14 +22,14 @@ describe("playgroundMachine — preset mode", () => {
     const actor = createActor(playgroundMachine, { input: { mode: "preset" } });
     actor.start();
     const snapshot = actor.getSnapshot();
-    expect(snapshot.matches("ready")).toBe(true);
+    assert.strictEqual(snapshot.matches("ready"), true);
     actor.stop();
   });
 
   test("starts in shareIdle nested state", () => {
     const actor = createActor(playgroundMachine, { input: { mode: "preset" } });
     actor.start();
-    expect(actor.getSnapshot().matches({ ready: States.SHARE_IDLE })).toBe(true);
+    assert.strictEqual(actor.getSnapshot().matches({ ready: States.SHARE_IDLE }), true);
     actor.stop();
   });
 
@@ -49,8 +38,8 @@ describe("playgroundMachine — preset mode", () => {
     actor.start();
     actor.send({ type: MachineEvents.FORMAT_CHANGE, format: "yaml" });
     const ctx = actor.getSnapshot().context;
-    expect(ctx.format).toBe("yaml");
-    expect(ctx.input).toBe(FORMAT_CONFIGS.yaml.placeholder);
+    assert.strictEqual(ctx.format, "yaml");
+    assert.strictEqual(ctx.input, FORMAT_CONFIGS.yaml.placeholder);
     actor.stop();
   });
 
@@ -58,7 +47,7 @@ describe("playgroundMachine — preset mode", () => {
     const actor = createActor(playgroundMachine, { input: { mode: "preset" } });
     actor.start();
     actor.send({ type: MachineEvents.INPUT_CHANGE, input: "new input" });
-    expect(actor.getSnapshot().context.input).toBe("new input");
+    assert.strictEqual(actor.getSnapshot().context.input, "new input");
     actor.stop();
   });
 
@@ -66,18 +55,18 @@ describe("playgroundMachine — preset mode", () => {
     const actor = createActor(playgroundMachine, { input: { mode: "preset" } });
     actor.start();
     actor.send({ type: MachineEvents.EXPRESSION_CHANGE, expression: ".newExpr" });
-    expect(actor.getSnapshot().context.expression).toBe(".newExpr");
+    assert.strictEqual(actor.getSnapshot().context.expression, ".newExpr");
     actor.stop();
   });
 
   test("TOGGLE_MINIFIED toggles showMinifiedExpression", () => {
     const actor = createActor(playgroundMachine, { input: { mode: "preset" } });
     actor.start();
-    expect(actor.getSnapshot().context.showMinifiedExpression).toBe(false);
+    assert.strictEqual(actor.getSnapshot().context.showMinifiedExpression, false);
     actor.send({ type: MachineEvents.TOGGLE_MINIFIED });
-    expect(actor.getSnapshot().context.showMinifiedExpression).toBe(true);
+    assert.strictEqual(actor.getSnapshot().context.showMinifiedExpression, true);
     actor.send({ type: MachineEvents.TOGGLE_MINIFIED });
-    expect(actor.getSnapshot().context.showMinifiedExpression).toBe(false);
+    assert.strictEqual(actor.getSnapshot().context.showMinifiedExpression, false);
     actor.stop();
   });
 
@@ -86,7 +75,7 @@ describe("playgroundMachine — preset mode", () => {
     actor.start();
     const originalFormat = actor.getSnapshot().context.format;
     actor.send({ type: MachineEvents.FORMAT_DETECTED, format: "yaml" });
-    expect(actor.getSnapshot().context.format).toBe(originalFormat);
+    assert.strictEqual(actor.getSnapshot().context.format, originalFormat);
     actor.stop();
   });
 
@@ -94,7 +83,7 @@ describe("playgroundMachine — preset mode", () => {
     const actor = createActor(playgroundMachine, { input: { mode: "preset" } });
     actor.start();
     actor.send({ type: MachineEvents.SHARE });
-    expect(actor.getSnapshot().matches({ ready: States.SHARE_COPIED })).toBe(true);
+    assert.strictEqual(actor.getSnapshot().matches({ ready: States.SHARE_COPIED }), true);
     actor.stop();
   });
 });
@@ -103,7 +92,7 @@ describe("playgroundMachine — sandbox mode", () => {
   test("initializes with sandbox context (isSandbox=true)", () => {
     const actor = createActor(playgroundMachine, { input: { mode: "sandbox" } });
     actor.start();
-    expect(actor.getSnapshot().context.isSandbox).toBe(true);
+    assert.strictEqual(actor.getSnapshot().context.isSandbox, true);
     actor.stop();
   });
 
@@ -111,8 +100,8 @@ describe("playgroundMachine — sandbox mode", () => {
     const actor = createActor(playgroundMachine, { input: { mode: "sandbox" } });
     actor.start();
     const ctx = actor.getSnapshot().context;
-    expect(ctx.input).toBe(SANDBOX_STARTER.json.data);
-    expect(ctx.expression).toBe(SANDBOX_STARTER.json.expression);
+    assert.strictEqual(ctx.input, SANDBOX_STARTER.json.data);
+    assert.strictEqual(ctx.expression, SANDBOX_STARTER.json.expression);
     actor.stop();
   });
 
@@ -120,7 +109,7 @@ describe("playgroundMachine — sandbox mode", () => {
     const actor = createActor(playgroundMachine, { input: { mode: "sandbox" } });
     actor.start();
     const snapshot = await waitFor(actor, (s) => s.matches("ready"), { timeout: 3000 });
-    expect(snapshot.matches("ready")).toBe(true);
+    assert.strictEqual(snapshot.matches("ready"), true);
     actor.stop();
   });
 
@@ -129,7 +118,7 @@ describe("playgroundMachine — sandbox mode", () => {
     actor.start();
     await waitFor(actor, (s) => s.matches("ready"), { timeout: 3000 });
     actor.send({ type: MachineEvents.FORMAT_DETECTED, format: "csv" });
-    expect(actor.getSnapshot().context.format).toBe("csv");
+    assert.strictEqual(actor.getSnapshot().context.format, "csv");
     actor.stop();
   });
 });

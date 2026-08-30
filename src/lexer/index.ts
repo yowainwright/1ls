@@ -1,11 +1,13 @@
-import { Token, TokenType } from "../types";
-import { SINGLE_CHAR_TOKENS, OPERATOR_CHARS, WHITESPACE_CHARS } from "./constants";
+import type { Token } from "../types.ts";
+import { TokenType } from "../types.ts";
+import { SINGLE_CHAR_TOKENS, OPERATOR_CHARS, WHITESPACE_CHARS } from "./constants.ts";
 
 export function getContextSnippet(input: string, position: number, length = 20): string {
   const start = Math.max(0, position - length);
   const end = Math.min(input.length, position + length);
   const snippet = input.slice(start, end);
-  const marker = " ".repeat(Math.min(position - start, length)) + "^";
+  const markerOffset = Math.min(position - start, length);
+  const marker = " ".repeat(markerOffset) + "^";
   return `${snippet}\n${marker}`;
 }
 
@@ -24,114 +26,130 @@ export class Lexer {
   }
 
   tokenize(): Token[] {
-    const tokens: Token[] = [];
+    let tokens: Token[] = [];
 
     while (this.position < this.input.length) {
       this.skipWhitespace();
       if (this.position >= this.input.length) break;
 
       const token = this.nextToken();
-      if (token) {
-        tokens.push(token);
-      }
+      tokens = token ? [...tokens, token] : tokens;
     }
 
-    tokens.push(createToken(TokenType.EOF, "", this.position));
-    return tokens;
+    return [...tokens, createToken(TokenType.EOF, "", this.position)];
   }
 
   private nextToken(): Token | null {
-    const startPos = this.position;
+    const pairedToken = this.readPairedToken();
+    if (pairedToken) return pairedToken;
+
+    const singleToken = this.readSingleToken();
+    if (singleToken) return singleToken;
+
+    return this.readComplexToken();
+  }
+
+  private readPairedToken(): Token | null {
+    const tokenStartPosition = this.position;
 
     const isDoubleDot = this.current === "." && this.peek() === ".";
     if (isDoubleDot) {
       this.advance();
       this.advance();
-      return createToken(TokenType.DOUBLE_DOT, "..", startPos);
+      return createToken(TokenType.DOUBLE_DOT, "..", tokenStartPosition);
     }
 
     const isDoubleQuestion = this.current === "?" && this.peek() === "?";
     if (isDoubleQuestion) {
       this.advance();
       this.advance();
-      return createToken(TokenType.DOUBLE_QUESTION, "??", startPos);
+      return createToken(TokenType.DOUBLE_QUESTION, "??", tokenStartPosition);
     }
 
-    const isSingleQuestion = this.current === "?";
-    if (isSingleQuestion) {
+    return null;
+  }
+
+  private readSingleToken(): Token | null {
+    const tokenStartPosition = this.position;
+
+    if (this.current === "?") {
       this.advance();
-      return createToken(TokenType.QUESTION, "?", startPos);
+      return createToken(TokenType.QUESTION, "?", tokenStartPosition);
     }
 
     const tokenType = SINGLE_CHAR_TOKENS[this.current];
     if (tokenType) {
-      const char = this.current;
+      const token = createToken(tokenType, this.current, tokenStartPosition);
       this.advance();
-      return createToken(tokenType, char, startPos);
+      return token;
     }
 
     const isArrow = this.current === "=" && this.peek() === ">";
     if (isArrow) {
       this.advance();
       this.advance();
-      return createToken(TokenType.ARROW, "=>", startPos);
+      return createToken(TokenType.ARROW, "=>", tokenStartPosition);
     }
 
+    return null;
+  }
+
+  private readComplexToken(): Token | null {
     const isStringStart = this.current === '"' || this.current === "'";
     if (isStringStart) {
-      return this.readString();
+      return this.readString(this.current, this.position);
     }
 
     const isDigit = this.isDigit(this.current);
     const isNegativeNumber = this.current === "-" && this.isDigit(this.peek());
     const isNumberStart = isDigit || isNegativeNumber;
     if (isNumberStart) {
-      return this.readNumber();
+      return this.readNumber(this.position);
     }
 
     const isIdentifierStart = this.isIdentifierStart(this.current);
-    if (isIdentifierStart) {
-      return this.readIdentifier();
-    }
+    if (isIdentifierStart) return this.readIdentifier(this.position);
 
-    const isOperator = this.isOperator(this.current);
-    if (isOperator) {
-      return this.readOperator();
-    }
+    const isOperator = OPERATOR_CHARS.includes(this.current);
+    if (isOperator) return this.readOperator(this.position);
 
+    return this.skipUnknownToken();
+  }
+
+  private skipUnknownToken(): null {
     this.advance();
     return null;
   }
 
-  private readString(): Token {
-    const startPos = this.position;
-    const quote = this.current;
-    const chars: string[] = [];
+  private readString(quote: string, tokenStartPosition: number): Token {
+    let value = "";
     this.advance();
 
     while (this.current !== quote && this.position < this.input.length) {
       if (this.current === "\\") {
-        this.advance();
-        if (this.position < this.input.length) {
-          chars.push(this.current);
-          this.advance();
-        }
+        value += this.readEscapedChar();
         continue;
       }
 
-      chars.push(this.current);
+      value += this.current;
       this.advance();
     }
 
-    if (this.current === quote) {
-      this.advance();
-    }
+    if (this.current === quote) this.advance();
 
-    return createToken(TokenType.STRING, chars.join(""), startPos);
+    return createToken(TokenType.STRING, value, tokenStartPosition);
   }
 
-  private readNumber(): Token {
-    const startPos = this.position;
+  private readEscapedChar(): string {
+    this.advance();
+    if (this.position >= this.input.length) return "";
+
+    const [escapedChar] = [this.current];
+    this.advance();
+    return escapedChar;
+  }
+
+  private readNumber(tokenStartPosition: number): Token {
     let value = "";
 
     if (this.current === "-") {
@@ -144,22 +162,27 @@ export class Lexer {
       this.advance();
     }
 
-    const hasDecimal = this.current === "." && this.isDigit(this.peek());
-    if (hasDecimal) {
-      value += this.current;
-      this.advance();
+    value += this.readDecimalPart();
 
-      while (this.isDigit(this.current)) {
-        value += this.current;
-        this.advance();
-      }
-    }
-
-    return createToken(TokenType.NUMBER, value, startPos);
+    return createToken(TokenType.NUMBER, value, tokenStartPosition);
   }
 
-  private readIdentifier(): Token {
-    const startPos = this.position;
+  private readDecimalPart(): string {
+    const hasDecimal = this.current === "." && this.isDigit(this.peek());
+    if (!hasDecimal) return "";
+
+    let value = this.current;
+    this.advance();
+
+    while (this.isDigit(this.current)) {
+      value += this.current;
+      this.advance();
+    }
+
+    return value;
+  }
+
+  private readIdentifier(tokenStartPosition: number): Token {
     let value = "";
 
     while (this.isIdentifierChar(this.current)) {
@@ -167,23 +190,22 @@ export class Lexer {
       this.advance();
     }
 
-    return createToken(TokenType.IDENTIFIER, value, startPos);
+    return createToken(TokenType.IDENTIFIER, value, tokenStartPosition);
   }
 
-  private readOperator(): Token {
-    const startPos = this.position;
+  private readOperator(tokenStartPosition: number): Token {
     let value = "";
 
-    while (this.isOperator(this.current)) {
+    while (OPERATOR_CHARS.includes(this.current)) {
       value += this.current;
       this.advance();
     }
 
-    return createToken(TokenType.OPERATOR, value, startPos);
+    return createToken(TokenType.OPERATOR, value, tokenStartPosition);
   }
 
   private skipWhitespace(): void {
-    while (this.isWhitespace(this.current)) {
+    while ((WHITESPACE_CHARS as readonly string[]).includes(this.current)) {
       this.advance();
     }
   }
@@ -194,15 +216,15 @@ export class Lexer {
   }
 
   private peek(): string {
-    return this.input[this.position + 1] || "";
-  }
-
-  private isWhitespace(char: string): boolean {
-    return (WHITESPACE_CHARS as readonly string[]).includes(char);
+    const nextPosition = this.position + 1;
+    return this.input[nextPosition] || "";
   }
 
   private isDigit(char: string): boolean {
-    return char >= "0" && char <= "9";
+    const isAtLeastZero = char >= "0";
+    if (!isAtLeastZero) return false;
+
+    return char <= "9";
   }
 
   private isIdentifierStart(char: string): boolean {
@@ -210,14 +232,18 @@ export class Lexer {
     const isUppercase = char >= "A" && char <= "Z";
     const isUnderscore = char === "_";
     const isDollar = char === "$";
-    return isLowercase || isUppercase || isUnderscore || isDollar;
+    if (isLowercase) return true;
+    if (isUppercase) return true;
+
+    if (isUnderscore) return true;
+
+    return isDollar;
   }
 
   private isIdentifierChar(char: string): boolean {
-    return this.isIdentifierStart(char) || this.isDigit(char);
-  }
+    const isValidStart = this.isIdentifierStart(char);
+    if (isValidStart) return true;
 
-  private isOperator(char: string): boolean {
-    return OPERATOR_CHARS.includes(char);
+    return this.isDigit(char);
   }
 }

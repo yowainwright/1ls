@@ -1,4 +1,5 @@
-import { describe, test, expect } from "bun:test";
+import { describe, test } from "node:test";
+import assert from "node:assert/strict";
 import { createRouter, createRootRoute, createRoute } from "@tanstack/react-router";
 
 // Create a minimal route tree for testing router configuration
@@ -22,7 +23,7 @@ describe("Router Configuration", () => {
       trailingSlash: "never",
     });
 
-    expect(router.basepath).toBe("/1ls");
+    assert.strictEqual(router.basepath, "/1ls");
   });
 
   test("router is configured with trailingSlash: never", () => {
@@ -32,7 +33,7 @@ describe("Router Configuration", () => {
       trailingSlash: "never",
     });
 
-    expect(router.options.trailingSlash).toBe("never");
+    assert.strictEqual(router.options.trailingSlash, "never");
   });
 
   test("router normalizes URLs by removing trailing slashes", () => {
@@ -44,7 +45,7 @@ describe("Router Configuration", () => {
 
     // The trailingSlash: 'never' option ensures URLs like /playground/ become /playground
     // This is verified by checking the router option is correctly set
-    expect(router.options.trailingSlash).toBe("never");
+    assert.strictEqual(router.options.trailingSlash, "never");
   });
 
   test("router has correct configuration for GitHub Pages deployment", () => {
@@ -55,7 +56,7 @@ describe("Router Configuration", () => {
     });
 
     // Verify both settings work together for proper GitHub Pages routing
-    expect(router.basepath).toBe("/1ls");
-    expect(router.options.trailingSlash).toBe("never");
+    assert.strictEqual(router.basepath, "/1ls");
+    assert.strictEqual(router.options.trailingSlash, "never");
   });
 });

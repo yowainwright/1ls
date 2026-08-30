@@ -1,23 +1,21 @@
-#!/usr/bin/env bun
+#!/usr/bin/env node
 
-import { parseArgs } from "./parser";
-import { showHelp } from "./help";
-import { processInput } from "./stream";
-import { readFile, listFiles, grep } from "../file";
-import { Formatter } from "../formatter/output";
-import { warning, info } from "../formatter/colors";
-import { expandShortcuts, shortenExpression, getShortcutHelp } from "../shortcuts";
-import { detectFormat } from "../formats";
-import { CliOptions } from "../types";
-import { VERSION } from "../version";
-import { evaluateAndFormatExpression, formatResult } from "../executor";
-import { resolveReadFileInvocation } from "./read-file";
+import { parseArgs } from "./parser.ts";
+import { showHelp } from "./help.ts";
+import { processInput, readStdin } from "./stream.ts";
+import { readFile, listFiles, grep } from "../fs/index.ts";
+import { Formatter, warning, info } from "../formatter/index.ts";
+import { expandShortcuts, shortenExpression, getShortcutHelp } from "../shortcuts/index.ts";
+import { detectFormat } from "../formats/index.ts";
+import type { CliOptions } from "../types.ts";
+import { VERSION } from "../version.ts";
+import { processData } from "../executor.ts";
+import { resolveReadFileInvocation } from "./read-file.ts";
 
-export const getInteractive = () => import("../tui/app");
-export const getDaemon = () => import("../tooltip/index");
+export const getDaemon = () => import("../tooltip/index.ts");
 
-export async function handleGrepOperation(options: CliOptions): Promise<void> {
-  const results = await grep(options.grep!, options.find!, {
+export function handleGrepOperation(options: CliOptions): void {
+  const results = grep(options.grep!, options.find!, {
     recursive: options.recursive,
     ignoreCase: options.ignoreCase,
     showLineNumbers: options.showLineNumbers,
@@ -37,38 +35,41 @@ export async function handleGrepOperation(options: CliOptions): Promise<void> {
   }
 }
 
-export async function loadData(options: CliOptions, args: string[]): Promise<unknown> {
+const readDataFile = (filePath: string, options: CliOptions): unknown => {
+  if (options.inputFormat) {
+    return readFile(filePath, options.inputFormat);
+  }
+
+  return readFile(filePath);
+};
+
+export function loadData(options: CliOptions, args: string[]): Promise<unknown> | unknown {
   if (options.readFile) {
     const { filePath, expression } = resolveReadFileInvocation(args);
-    const data = await readFile(filePath);
+    const data = readDataFile(filePath, options);
     options.expression = expression;
     return data;
   }
 
   const isStdinAvailable = !process.stdin.isTTY;
   const hasFileOperations = options.list || options.grep;
-  const hasNoInput = !isStdinAvailable && !hasFileOperations;
+  const isInputMissing = !isStdinAvailable && !hasFileOperations;
 
-  if (hasNoInput) {
+  if (isInputMissing) {
     showHelp();
     process.exit(1);
   }
 
   if (isStdinAvailable) {
-    return await processInput(options.inputFormat);
+    return processInput(options.inputFormat);
   }
 
   return null;
 }
 
-export async function processExpression(options: CliOptions, jsonData: unknown): Promise<void> {
-  if (!options.expression) {
-    console.log(formatResult(jsonData, options));
-    return;
-  }
-
+export function processExpression(options: CliOptions, jsonData: unknown): void {
   try {
-    console.log(evaluateAndFormatExpression(options.expression, jsonData, options));
+    console.log(processData(jsonData, options));
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : String(error);
     console.error("Error:", message);
@@ -76,9 +77,7 @@ export async function processExpression(options: CliOptions, jsonData: unknown):
   }
 }
 
-export async function main(args: string[]): Promise<void> {
-  const options = parseArgs(args);
-
+const handleHelpFlags = (options: CliOptions): boolean => {
   if (options.help) {
     showHelp();
     process.exit(0);
@@ -94,12 +93,20 @@ export async function main(args: string[]): Promise<void> {
     process.exit(0);
   }
 
+  return false;
+};
+
+const handleDaemon = async (options: CliOptions): Promise<boolean> => {
   if (options.daemon) {
     const { startDaemon } = await getDaemon();
     await startDaemon();
-    return;
+    return true;
   }
 
+  return false;
+};
+
+const handleExpressionTools = (options: CliOptions): boolean => {
   if (options.shorten) {
     console.log(shortenExpression(options.shorten));
     process.exit(0);
@@ -110,57 +117,68 @@ export async function main(args: string[]): Promise<void> {
     process.exit(0);
   }
 
-  if (options.detect) {
-    const isStdinAvailable = !process.stdin.isTTY;
-    if (!isStdinAvailable) {
-      console.error("Error: --detect requires input from stdin");
-      process.exit(1);
-    }
-    const input = await Bun.stdin.text();
-    const format = detectFormat(input);
-    console.log(format);
-    process.exit(0);
-  }
+  return false;
+};
 
-  if (options.list) {
-    const files = await listFiles(options.list, {
-      recursive: options.recursive,
-      extensions: options.extensions,
-      maxDepth: options.maxDepth,
-    });
-    console.log(new Formatter(options).format(files));
-    return;
-  }
+const handleDetect = async (options: CliOptions): Promise<boolean> => {
+  if (!options.detect) return false;
 
-  if (options.grep && options.find) {
-    await handleGrepOperation(options);
-    return;
-  }
-
-  if (options.readFile) {
-    const { filePath, expression, hasExplicitExpression } = resolveReadFileInvocation(args);
-    const data = await readFile(filePath);
-
-    const shouldUseInteractive = options.interactive || !hasExplicitExpression;
-
-    if (shouldUseInteractive) {
-      const { runInteractive } = await getInteractive();
-      await runInteractive(data, options);
-      return;
-    }
-
-    options.expression = expression;
-    await processExpression(options, data);
-    return;
-  }
-
-  if (options.interactive) {
-    console.error("Error: Interactive mode requires a file path. Use: 1ls readFile <path>");
+  const isStdinAvailable = !process.stdin.isTTY;
+  if (!isStdinAvailable) {
+    console.error("Error: --detect requires input from stdin");
     process.exit(1);
   }
 
+  const input = await readStdin();
+  const format = detectFormat(input);
+  console.log(format);
+  process.exit(0);
+};
+
+const handleList = (options: CliOptions): boolean => {
+  if (!options.list) return false;
+
+  const files = listFiles(options.list, {
+    recursive: options.recursive,
+    extensions: options.extensions,
+    maxDepth: options.maxDepth,
+  });
+  console.log(new Formatter(options).format(files));
+  return true;
+};
+
+const handleReadFile = (options: CliOptions, args: string[]): boolean => {
+  if (!options.readFile) return false;
+
+  const { filePath, expression } = resolveReadFileInvocation(args);
+  const data = readDataFile(filePath, options);
+  options.expression = expression;
+  processExpression(options, data);
+  return true;
+};
+
+const handleGrep = (options: CliOptions): boolean => {
+  const hasGrepQuery = options.grep !== undefined;
+  const hasFindPattern = options.find !== undefined;
+  const hasGrepOperation = hasGrepQuery && hasFindPattern;
+  if (!hasGrepOperation) return false;
+
+  handleGrepOperation(options);
+  return true;
+};
+
+export async function main(args: string[]): Promise<void> {
+  const options = parseArgs(args);
+  if (handleHelpFlags(options)) return;
+  if (await handleDaemon(options)) return;
+  if (handleExpressionTools(options)) return;
+  if (await handleDetect(options)) return;
+  if (handleList(options)) return;
+  if (handleGrep(options)) return;
+  if (handleReadFile(options, args)) return;
+
   const jsonData = await loadData(options, args);
-  await processExpression(options, jsonData);
+  processExpression(options, jsonData);
 }
 
 if (import.meta.main) {

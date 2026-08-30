@@ -1,39 +1,40 @@
-import { describe, test, expect } from "bun:test";
-import { parseINI, parseINIValue } from "../../src/formats/ini";
+import { describe, test } from "node:test";
+import assert from "node:assert/strict";
+import { parseINI, parseINIValue } from "../../src/formats/ini.ts";
 
 describe("INI Value Parser", () => {
   test("parses string values", () => {
-    expect(parseINIValue("hello")).toBe("hello");
-    expect(parseINIValue("  world  ")).toBe("world");
+    assert.strictEqual(parseINIValue("hello"), "hello");
+    assert.strictEqual(parseINIValue("  world  "), "world");
   });
 
   test("parses quoted strings", () => {
-    expect(parseINIValue('"hello world"')).toBe("hello world");
-    expect(parseINIValue("'hello world'")).toBe("hello world");
+    assert.strictEqual(parseINIValue('"hello world"'), "hello world");
+    assert.strictEqual(parseINIValue("'hello world'"), "hello world");
   });
 
   test("parses boolean values", () => {
-    expect(parseINIValue("true")).toBe(true);
-    expect(parseINIValue("false")).toBe(false);
+    assert.strictEqual(parseINIValue("true"), true);
+    assert.strictEqual(parseINIValue("false"), false);
   });
 
   test("parses numeric values", () => {
-    expect(parseINIValue("42")).toBe(42);
-    expect(parseINIValue("-10")).toBe(-10);
-    expect(parseINIValue("3.14")).toBe(3.14);
-    expect(parseINIValue("-2.5")).toBe(-2.5);
+    assert.strictEqual(parseINIValue("42"), 42);
+    assert.strictEqual(parseINIValue("-10"), -10);
+    assert.strictEqual(parseINIValue("3.14"), 3.14);
+    assert.strictEqual(parseINIValue("-2.5"), -2.5);
   });
 
   test("preserves non-numeric strings", () => {
-    expect(parseINIValue("test123")).toBe("test123");
-    expect(parseINIValue("value-with-dash")).toBe("value-with-dash");
+    assert.strictEqual(parseINIValue("test123"), "test123");
+    assert.strictEqual(parseINIValue("value-with-dash"), "value-with-dash");
   });
 });
 
 describe("INI Parser", () => {
   test("parses simple key-value pairs", () => {
     const input = "name=Alice\nage=30\nactive=true";
-    expect(parseINI(input)).toEqual({
+    assert.deepStrictEqual(parseINI(input), {
       name: "Alice",
       age: 30,
       active: true,
@@ -42,7 +43,7 @@ describe("INI Parser", () => {
 
   test("parses key-value pairs with spaces", () => {
     const input = "name = Alice\nage = 30\ncity = New York";
-    expect(parseINI(input)).toEqual({
+    assert.deepStrictEqual(parseINI(input), {
       name: "Alice",
       age: 30,
       city: "New York",
@@ -59,7 +60,7 @@ age=30
 host=localhost
 port=5432
     `;
-    expect(parseINI(input)).toEqual({
+    assert.deepStrictEqual(parseINI(input), {
       user: {
         name: "Alice",
         age: 30,
@@ -77,7 +78,7 @@ name="Alice Smith"
 city='New York'
 description="A \"quoted\" value"
     `;
-    expect(parseINI(input)).toEqual({
+    assert.deepStrictEqual(parseINI(input), {
       name: "Alice Smith",
       city: "New York",
       description: 'A "quoted" value',
@@ -90,7 +91,7 @@ description="A \"quoted\" value"
 name=Alice ; inline comment
 age=30
     `;
-    expect(parseINI(input)).toEqual({
+    assert.deepStrictEqual(parseINI(input), {
       name: "Alice",
       age: 30,
     });
@@ -102,7 +103,7 @@ age=30
 name=Alice # inline comment
 age=30
     `;
-    expect(parseINI(input)).toEqual({
+    assert.deepStrictEqual(parseINI(input), {
       name: "Alice",
       age: 30,
     });
@@ -117,7 +118,7 @@ age=30
 city=NYC ; inline semicolon
 country=USA # inline hash
     `;
-    expect(parseINI(input)).toEqual({
+    assert.deepStrictEqual(parseINI(input), {
       name: "Alice",
       age: 30,
       city: "NYC",
@@ -134,7 +135,7 @@ age=30
 
 city=NYC
     `;
-    expect(parseINI(input)).toEqual({
+    assert.deepStrictEqual(parseINI(input), {
       name: "Alice",
       age: 30,
       city: "NYC",
@@ -152,7 +153,7 @@ key2=value2
 [section3]
 key3=value3
     `;
-    expect(parseINI(input)).toEqual({
+    assert.deepStrictEqual(parseINI(input), {
       section1: { key1: "value1" },
       section2: { key2: "value2" },
       section3: { key3: "value3" },
@@ -164,21 +165,21 @@ key3=value3
 [My Section]
 key=value
     `;
-    expect(parseINI(input)).toEqual({
+    assert.deepStrictEqual(parseINI(input), {
       "My Section": { key: "value" },
     });
   });
 
   test("handles values with equals signs", () => {
     const input = "url=https://example.com?param=value";
-    expect(parseINI(input)).toEqual({
+    assert.deepStrictEqual(parseINI(input), {
       url: "https://example.com?param=value",
     });
   });
 
   test("parses boolean false", () => {
     const input = "enabled=false\ndisabled=false";
-    expect(parseINI(input)).toEqual({
+    assert.deepStrictEqual(parseINI(input), {
       enabled: false,
       disabled: false,
     });
@@ -191,7 +192,7 @@ global_key=global_value
 [section]
 local_key=local_value
     `;
-    expect(parseINI(input)).toEqual({
+    assert.deepStrictEqual(parseINI(input), {
       global_key: "global_value",
       section: {
         local_key: "local_value",

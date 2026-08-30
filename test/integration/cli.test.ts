@@ -1,22 +1,24 @@
-import { describe, expect, test } from "bun:test";
-import { spawn } from "bun";
-import { join } from "path";
+import { describe, test } from "node:test";
+import assert from "node:assert/strict";
+import { spawn } from "node:child_process";
+import { join } from "node:path";
+import { text } from "node:stream/consumers";
 
-const CLI_PATH = join(import.meta.dir, "../../dist/index.js");
-const FIXTURES_PATH = join(import.meta.dir, "../fixtures");
+const CLI_PATH = join(import.meta.dirname, "../../dist/index.js");
+const FIXTURES_PATH = join(import.meta.dirname, "../fixtures");
 
 async function runCLI(
   args: string[],
 ): Promise<{ stdout: string; stderr: string; exitCode: number }> {
-  const proc = spawn(["bun", CLI_PATH, ...args], {
-    stdout: "pipe",
-    stderr: "pipe",
+  const proc = spawn(process.execPath, [CLI_PATH, ...args], {
+    stdio: ["ignore", "pipe", "pipe"],
   });
 
-  const stdout = await new Response(proc.stdout).text();
-  const stderr = await new Response(proc.stderr).text();
-  await proc.exited;
-  const exitCode = proc.exitCode || 0;
+  const stdout = await text(proc.stdout);
+  const stderr = await text(proc.stderr);
+  const exitCode = await new Promise<number>((resolve) => {
+    proc.on("close", (code) => resolve(code ?? 0));
+  });
 
   return { stdout, stderr, exitCode };
 }
@@ -29,8 +31,8 @@ describe("1ls Integration - File Reading", () => {
       join(FIXTURES_PATH, "data.json"),
       ".name",
     ]);
-    expect(result.exitCode).toBe(0);
-    expect(result.stdout.trim()).toBe('"Test Project"');
+    assert.strictEqual(result.exitCode, 0);
+    assert.strictEqual(result.stdout.trim(), '"Test Project"');
   });
 
   test("reads YAML files", async () => {
@@ -40,8 +42,8 @@ describe("1ls Integration - File Reading", () => {
       join(FIXTURES_PATH, "config.yaml"),
       ".name",
     ]);
-    expect(result.exitCode).toBe(0);
-    expect(result.stdout.trim()).toBe('"MyApp"');
+    assert.strictEqual(result.exitCode, 0);
+    assert.strictEqual(result.stdout.trim(), '"MyApp"');
   });
 
   test("reads CSV files", async () => {
@@ -51,8 +53,21 @@ describe("1ls Integration - File Reading", () => {
       join(FIXTURES_PATH, "data.csv"),
       ".[0].name",
     ]);
-    expect(result.exitCode).toBe(0);
-    expect(result.stdout.trim()).toBe('"Alice"');
+    assert.strictEqual(result.exitCode, 0);
+    assert.strictEqual(result.stdout.trim(), '"Alice"');
+  });
+
+  test("honors explicit input format for readFile", async () => {
+    const result = await runCLI([
+      "--compact",
+      "readFile",
+      join(FIXTURES_PATH, "data.csv"),
+      "--input-format",
+      "lines",
+      ".[0]",
+    ]);
+    assert.strictEqual(result.exitCode, 0);
+    assert.strictEqual(result.stdout.trim(), '"id,name,age,city,active"');
   });
 
   test("reads ENV files", async () => {
@@ -62,8 +77,8 @@ describe("1ls Integration - File Reading", () => {
       join(FIXTURES_PATH, ".env_test"),
       ".PORT",
     ]);
-    expect(result.exitCode).toBe(0);
-    expect(result.stdout.trim()).toBe("8080");
+    assert.strictEqual(result.exitCode, 0);
+    assert.strictEqual(result.stdout.trim(), "8080");
   });
 
   test("reads TOML files", async () => {
@@ -73,8 +88,8 @@ describe("1ls Integration - File Reading", () => {
       join(FIXTURES_PATH, "config.toml"),
       ".server.host",
     ]);
-    expect(result.exitCode).toBe(0);
-    expect(result.stdout.trim()).toBe('"0.0.0.0"');
+    assert.strictEqual(result.exitCode, 0);
+    assert.strictEqual(result.stdout.trim(), '"0.0.0.0"');
   });
 
   test("reads INI files", async () => {
@@ -84,8 +99,8 @@ describe("1ls Integration - File Reading", () => {
       join(FIXTURES_PATH, "config.ini"),
       ".app.name",
     ]);
-    expect(result.exitCode).toBe(0);
-    expect(result.stdout.trim()).toBe('"MyApplication"');
+    assert.strictEqual(result.exitCode, 0);
+    assert.strictEqual(result.stdout.trim(), '"MyApplication"');
   });
 
   test("reads XML files", async () => {
@@ -95,8 +110,8 @@ describe("1ls Integration - File Reading", () => {
       join(FIXTURES_PATH, "data.xml"),
       ".catalog.book[0].title",
     ]);
-    expect(result.exitCode).toBe(0);
-    expect(result.stdout.trim()).toBe('"The Great Gatsby"');
+    assert.strictEqual(result.exitCode, 0);
+    assert.strictEqual(result.stdout.trim(), '"The Great Gatsby"');
   });
 
   test("reads NDJSON files", async () => {
@@ -106,31 +121,10 @@ describe("1ls Integration - File Reading", () => {
       join(FIXTURES_PATH, "logs.ndjson"),
       ".[0].level",
     ]);
-    expect(result.exitCode).toBe(0);
-    expect(result.stdout.trim()).toBe('"info"');
+    assert.strictEqual(result.exitCode, 0);
+    assert.strictEqual(result.stdout.trim(), '"info"');
   });
 
-  test("reads TypeScript files", async () => {
-    const result = await runCLI([
-      "--compact",
-      "readFile",
-      join(FIXTURES_PATH, "export.ts"),
-      ".name",
-    ]);
-    expect(result.exitCode).toBe(0);
-    expect(result.stdout.trim()).toBe('"TypeScript Config"');
-  });
-
-  test("reads JavaScript files", async () => {
-    const result = await runCLI([
-      "--compact",
-      "readFile",
-      join(FIXTURES_PATH, "export.js"),
-      ".name",
-    ]);
-    expect(result.exitCode).toBe(0);
-    expect(result.stdout.trim()).toBe('"JavaScript Config"');
-  });
 });
 
 describe("1ls Integration - Expression Processing", () => {
@@ -141,8 +135,8 @@ describe("1ls Integration - Expression Processing", () => {
       join(FIXTURES_PATH, "data.json"),
       ".users.filter(u => u.active).map(u => u.name)",
     ]);
-    expect(result.exitCode).toBe(0);
-    expect(result.stdout.trim()).toBe('["Alice","Charlie"]');
+    assert.strictEqual(result.exitCode, 0);
+    assert.strictEqual(result.stdout.trim(), '["Alice","Charlie"]');
   });
 
   test("processes CSV with expressions", async () => {
@@ -152,8 +146,8 @@ describe("1ls Integration - Expression Processing", () => {
       join(FIXTURES_PATH, "data.csv"),
       ".filter(r => r.active === true).map(r => r.name)",
     ]);
-    expect(result.exitCode).toBe(0);
-    expect(result.stdout.trim()).toBe('["Alice","Charlie","Diana"]');
+    assert.strictEqual(result.exitCode, 0);
+    assert.strictEqual(result.stdout.trim(), '["Alice","Charlie","Diana"]');
   });
 
   test("uses shortcuts", async () => {
@@ -163,10 +157,10 @@ describe("1ls Integration - Expression Processing", () => {
       join(FIXTURES_PATH, "data.json"),
       ".users.mp(u => u.name)",
     ]);
-    expect(result.exitCode).toBe(0);
+    assert.strictEqual(result.exitCode, 0);
     const names = JSON.parse(result.stdout.trim());
-    expect(names).toContain("Alice");
-    expect(names).toContain("Bob");
-    expect(names).toContain("Charlie");
+    assert.ok(names.includes("Alice"));
+    assert.ok(names.includes("Bob"));
+    assert.ok(names.includes("Charlie"));
   });
 });

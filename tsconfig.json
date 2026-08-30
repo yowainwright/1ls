@@ -4,6 +4,7 @@
     "outDir": "./dist",
     "rootDir": "src",
     "allowJs": false,
+    "allowImportingTsExtensions": true,
     "allowSyntheticDefaultImports": true,
     "declaration": true,
     "esModuleInterop": true,
@@ -22,7 +23,7 @@
     "sourceMap": false,
     "strict": true,
     "target": "esnext",
-    "types": ["bun"]
+    "types": ["node"]
   },
   "include": ["src"],
   "exclude": ["dist", "tests", "node_modules"]

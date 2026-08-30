@@ -1,0 +1,13 @@
+packages:
+  - app
+
+onlyBuiltDependencies:
+  - esbuild
+  - scriptc
+
+ignoredBuiltDependencies:
+  - es5-ext
+allowBuilds:
+  es5-ext: false
+  esbuild: true
+  scriptc: true

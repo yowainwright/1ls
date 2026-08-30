@@ -32,11 +32,6 @@ get_platform() {
       ;;
   esac
 
-  if [ "$os" = "linux" ] && [ "$arch" = "arm64" ]; then
-    echo "Linux arm64 not available, falling back to x64" >&2
-    arch="x64"
-  fi
-
   echo "${os}-${arch}"
 }
 
@@ -55,7 +50,7 @@ main() {
   platform=$(get_platform)
   echo "Platform: $platform"
 
-  download_url="https://github.com/$REPO/releases/download/$version/$BINARY_NAME-qjs-$platform"
+  download_url="https://github.com/$REPO/releases/download/$version/$BINARY_NAME-$platform"
   echo "Downloading from: $download_url"
 
   tmp_file=$(mktemp)

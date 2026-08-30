@@ -19,7 +19,7 @@ import type {
   PlaygroundHeaderProps,
 } from "./types";
 import { FORMAT_CONFIGS, FORMATS, States, MachineEvents, PLAYGROUND_STYLES } from "./constants";
-import { runEvaluation, detectFormat, minifyExpression, expandExpression } from "./utils";
+import { runEvaluation, detectFormat, minifyExpression } from "./utils";
 import { getShareableUrl } from "./storage";
 import { playgroundMachine } from "./machine";
 

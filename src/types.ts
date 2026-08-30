@@ -1,4 +1,4 @@
-import { DataFormat } from "./formats/types";
+import type { DataFormat } from "./formats/types.ts";
 
 export type OutputFormat = "json" | "yaml" | "csv" | "table";
 
@@ -34,7 +34,6 @@ export interface CliOptions extends FileOperationOptions, ShorthandOptions, Form
   readFile?: boolean;
   help?: boolean;
   version?: boolean;
-  interactive?: boolean;
   strict?: boolean;
   slurp?: boolean;
   nullInput?: boolean;

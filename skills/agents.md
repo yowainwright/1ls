@@ -10,9 +10,8 @@ Each skill is a directory with `SKILL.md` (instructions), `good-example.ts` (cor
 |---|---|---|
 | Add a builtin function | [`add-builtin/`](./add-builtin/SKILL.md) | Adding `sum`, `median`, `groupBy`-style functions to the expression engine |
 | Add a format parser | [`add-format/`](./add-format/SKILL.md) | Adding support for a new input format (like CSV, TOML, etc.) |
-| Add an autocomplete method | [`add-method/`](./add-method/SKILL.md) | Adding method hints to the interactive tooltip registry |
+| Add an autocomplete method | [`add-method/`](./add-method/SKILL.md) | Adding method hints to the autocomplete registry |
 | Write tests | [`add-test/`](./add-test/SKILL.md) | Writing unit or integration tests for any module |
-| Check QJS compatibility | [`qjs-compat/`](./qjs-compat/SKILL.md) | Writing or auditing code that enters the browser bundle |
 
 ### Workflow
 
@@ -22,27 +21,37 @@ Each skill is a directory with `SKILL.md` (instructions), `good-example.ts` (cor
 4. **Skim `bad-example.ts`** — know what to avoid
 5. **Write code** following the skill's patterns
 6. **Run the skill's test command** — verify it works
-7. **Check QJS compat** — if you touched bundled code, also consult `qjs-compat/`
+7. **Check native-core boundaries** — keep core code portable and shell/runtime-free
 
 ### Multiple skills apply
 
 Most tasks combine skills:
 
-- **Adding a builtin** → `add-builtin/` + `add-test/` + `qjs-compat/`
-- **Adding a format** → `add-format/` + `add-test/` + `qjs-compat/`
+- **Adding a builtin** → `add-builtin/` + `add-test/`
+- **Adding a format** → `add-format/` + `add-test/`
 - **Adding autocomplete** → `add-method/` + `add-test/`
-- **Fixing a bug in navigator** → `add-test/` + `qjs-compat/`
-- **Improving the TUI/tooltip** → see [Interactive Mode](#interactive-mode) below
+- **Fixing a bug in navigator** → `add-test/`
+- **Improving autocomplete/tooltip** → extend `src/ac` and `src/tooltip`
 
-Always check `qjs-compat/` when modifying anything under `src/` that isn't in `src/cli/`, `src/interactive/`, or `src/file/` (those are Bun-only).
+Keep parser, evaluator, formatter, and autocomplete code portable. Put shell, filesystem, and runtime-specific behavior behind entrypoint boundaries.
 
 ### Eval
 
-Run `bun skills/eval.ts` to validate skill structure, example compilation, and link integrity.
+Run `node skills/eval.ts` to validate skill structure, example compilation, and link integrity.
 
 ## Project Intent
 
 **Goal: the fastest terminal data parser with the most readable syntax.**
+
+### Product Direction
+
+Do not introduce a new architecture. Extend the existing parser, detector, daemon, cache, and tooltip flow.
+
+- **Compiler:** `scriptc` is the production compiler target for the smallest and fastest native tool. Node builds are the development baseline, not the product runtime target.
+- **Terminal UX:** Extend the tooltip flow popularized by Warp and Fig into ordinary terminal sessions. The inline hint/autocomplete experience is the feature.
+- **Shell integration:** Build Zsh/ZLE first. Keep the daemon protocol shell-neutral so Bash, Fish, and other integrations can follow only after the Zsh experience proves valuable.
+- **Language:** Keep JavaScript-like expression syntax and experiences, similar to fx, while retaining 1ls's format support and readable data manipulation.
+- **Known unknowns:** Do not solve arbitrary JavaScript execution for constants files unless real usage proves it necessary. Static, safe source handling is sufficient until then.
 
 ### Why 1ls exists
 
@@ -50,13 +59,13 @@ Run `bun skills/eval.ts` to validate skill structure, example compilation, and l
 |---|---|---|
 | **jq** | Very fast (native C binary) | Cryptic DSL — high learning curve for JS devs |
 | **fx** | Readable JS syntax, reasonably fast | Not natively compiled — slower on large data |
-| **1ls** | JS syntax + native binary via QuickJS NG | Combines readability with compiled performance |
+| **1ls** | JS syntax + native binary via `scriptc` | Combines readability with compiled performance |
 
 jq is fast but the syntax is opaque to anyone who knows JavaScript. fx is readable but interpreted. 1ls targets both: `.filter(x => x > 5)` instead of `[.[] | select(. > 5)]`, compiled to a native binary.
 
-### Why QuickJS NG
+### Why scriptc
 
-TypeScript source → `tsup` (ESM bundle) → `qjsc` (QuickJS compiler) → native binary (`bin/1ls-qjs`). QuickJS NG compiles a JS subset to C bytecode. The constraint: the browser bundle must be **sync, ES2023-only, no runtime APIs** — this is what makes QJS compilation possible. See [`qjs-compat/`](./qjs-compat/SKILL.md).
+TypeScript source compiles to the native `1ls` binary through `scriptc`. pnpm and Node are the development baseline; the production target is the smallest native tool that can run the real CLI and inline autocomplete path.
 
 ### Design principles
 
@@ -77,31 +86,27 @@ Input (stdin/file)
   → formatOutput()        src/formatter/output.ts     — result → string
 ```
 
-### Interactive mode pipeline
+### Terminal autocomplete pipeline
 
 ```
-stdin (raw mode)
-  → handleInput()         src/interactive/input.ts    — key dispatch
-  → updateQuery()         src/interactive/state.ts    — immutable state update
-  → updateTooltipFromQuery() src/interactive/tooltip/ — method hint lookup
-  → render(state)         src/interactive/renderer.ts — diff-based ANSI repaint
-       ↓ on expression complete
-  → evaluate()            src/browser/index.ts        — browser bundle (QJS-safe core)
+ZLE buffer/cursor
+  → complete()            src/ac/index.ts             — contextual candidates
+  → handleMessage()       src/tooltip/server.ts       — daemon request handling
+  → render()              src/tooltip/renderer.ts     — bounded ANSI overlay
 ```
 
-### Bundle boundary
+### Runtime boundary
 
 ```
-src/interactive/    ← Bun-only. Uses process.stdin, raw mode, stdout.write, async/await
-        ↓ imports
-src/browser/        ← QJS-safe. Sync only. Compiled to dist/qjs/core.js for the QJS binary
+src/scriptc/        ← native binary entrypoint and runtime adapter
+src/browser/        ← app/browser-compatible API while the app still imports it
 ```
 
-Code that enters the browser/QJS bundle (must be QJS-safe):
-- `src/lexer/`, `src/expression/`, `src/navigator/`, `src/formats/`, `src/shortcuts/`, `src/browser/`
+Core code that must stay portable:
+- `src/lexer/`, `src/expression/`, `src/navigator/`, `src/formats/`, `src/shortcuts/`, `src/ac/`, `src/browser/`
 
-Code that does NOT enter the bundle (Bun-only):
-- `src/cli/`, `src/interactive/`, `src/file/`, `src/completions/`
+Runtime-specific code:
+- `src/cli/`, `src/fs/`, `src/completions/`, `src/tooltip/`, `src/scriptc/`
 
 ## Code Style
 
@@ -144,9 +149,9 @@ if (isPlainObject) { ... }
 
 ### Output and logging
 
-- **No `console.log`** anywhere in library, bundle, or interactive code
-- `console.error` for debug output only (maps to stderr; does not conflict with QJS stdout)
-- In the interactive app, only `renderer.ts` writes to `stdout` — nothing else calls `stdout.write`
+- **No `console.log`** anywhere in library, bundle, autocomplete, or tooltip code
+- `console.error` for debug output only
+- In the tooltip daemon, rendering belongs in `src/tooltip/renderer.ts`
 - Batch output flows through `formatOutput()` only
 
 ### TypeScript
@@ -169,75 +174,40 @@ isString(x)  // x is string
 isNumber(x)  // x is number
 ```
 
-### QuickJS NG Compatibility
+### Native-Core Compatibility
 
-All browser bundle code must be sync, ES2023-only. See [`qjs-compat/`](./qjs-compat/SKILL.md) for the full list. Quick rules:
-- No `async/await`, `Promise`, dynamic `import()`
-- No `Intl`, `fetch`, `URL`, `TextEncoder`, `structuredClone`, `WeakRef`
-- No regex lookbehind (`(?<=...)`), no Bun/Node APIs
+Parser, evaluator, formatter, and autocomplete code must stay portable:
+- no filesystem, shell, network, or process access;
+- no host runtime APIs outside runtime adapters;
+- no arbitrary JavaScript execution for source discovery.
 
-## Interactive Mode
+## Terminal Tooltip
 
-The interactive app (`1ls -i`) is a Bun-only TUI — raw terminal control, ANSI escape sequences, diff-based rendering. It never enters the QJS bundle but calls into the browser bundle for live expression evaluation.
-
-### Mode state machine
-
-```
-explore ──(Enter)──► build ──(arrow fn prompt)──► build-arrow-fn
-   ▲                   │                                │
-   └───────(Esc)───────┴────────────(Esc)───────────────┘
-```
-
-- **explore** — fuzzy-search all JSON paths, ↑/↓ to select, Enter to enter build mode
-- **build** — compose expression on selected path; typing `.method` triggers the tooltip
-- **build-arrow-fn** — prompt for arrow function body, returns to build with template filled
+The inline tooltip is the product path. It is a daemon plus shell adapter.
 
 ### Key files
 
 | File | Responsibility |
 |---|---|
-| `src/interactive/app.ts` | Entry point, raw mode setup, event loop |
-| `src/interactive/state.ts` | Immutable state transitions (`updateQuery`, `updateSelection`) |
-| `src/interactive/input.ts` | Key dispatch → state transitions |
-| `src/interactive/tooltip/index.ts` | Autocomplete logic — extract partial, fuzzy-match, rank hints |
-| `src/interactive/methods/constants.ts` | Method registry — all completions by type |
-| `src/interactive/methods/index.ts` | `getMethodsForType(dataType)` dispatch |
-| `src/interactive/fuzzy.ts` | Fuzzy search with consecutive-match scoring |
-| `src/interactive/renderer.ts` | Diff-based ANSI rendering (explore + tooltip) |
-| `src/interactive/renderer-builder.ts` | Build mode and arrow-fn mode rendering |
-| `src/interactive/terminal.ts` | ANSI escape helpers, raw mode, color constants |
-| `src/interactive/preview/` | Live expression evaluation + preview formatting |
+| `src/ac/index.ts` | Autocomplete composition and contextual suggestions |
+| `src/ac/constants.ts` | Method, builtin, shortcut, and scoring constants |
+| `src/ac/types.ts` | Suggestion and completion contracts |
+| `src/ac/utils.ts` | Fuzzy search, partial extraction, and type filtering |
+| `src/tooltip/server.ts` | Daemon request handling and response state |
+| `src/tooltip/renderer.ts` | ANSI overlay rendering |
+| `src/tooltip/shell/1ls-tooltip.zsh` | ZLE adapter and key routing |
 
 ### Tooltip / autocomplete flow
 
-Triggered when the query ends with `.partialName` (no `(` yet):
+Triggered when the active expression ends with `.partialName`:
 
-1. `extractPartialMethod(query)` — returns text after the last `.` if incomplete
-2. `getMethodsForType(dataType)` — returns all `Method[]` for the current data type
-3. `fuzzySearch(methods, partial, m => m.name)` — scores and ranks matches
-4. First `MAX_TOOLTIP_HINTS` (5) displayed; Tab/Shift-Tab cycles the selected hint
-5. Enter or Tab inserts `method.template` at the cursor
+1. `extractPartialMethod(query)` returns the active prefix and replacement start.
+2. `complete(input, { data, expression })` builds contextual property and method suggestions.
+3. `fuzzySearch(suggestions, partial, suggestion => suggestion.name)` ranks matches.
+4. The daemon stores the selected suggestion and renderer draws the overlay.
+5. ZLE applies the selected insert text.
 
-Each `Method` has: `name` (fuzzy-matched), `signature` (displayed), `description` (inline), `template` (inserted), `category`, `isBuiltin`. See [`add-method/SKILL.md`](./add-method/SKILL.md) to add new entries.
-
-### Rendering: diff-based
-
-`renderer.ts` compares `newLines[]` to `lastRenderedLines[]` and repaints only changed lines via ANSI cursor movement. This prevents flicker and keeps rendering fast on every keystroke.
-
-**Rules:**
-- Never call `clearScreen()` mid-session — causes visible flicker
-- Use `moveCursor(row)` + `clearLine()` + `stdout.write(line)` for changed lines only
-- Use `clearToEnd()` only when the total line count shrinks
-- Render functions build string arrays and return them — only the top-level `render()` writes to stdout
-- `render(state)` must be idempotent: same state → same output, no side effects
-
-### Performance rules (TUI)
-
-- **Fuzzy search runs on every keystroke** — stay O(n·m), no allocations inside the scoring loop
-- **State transitions use `Object.assign({}, state, { field })` ** — shallow copy, no deep clone
-- **`getMethodsForType` returns pre-built arrays** — do not construct them inside the function
-- **ANSI color strings are concatenated at render time** — do not cache colored strings in state
-- **No `setTimeout`/`setInterval`** — the interactive app has no event loop beyond stdin data events
+Keep parser/provider decisions out of the renderer. The renderer draws a model; it does not infer command structure or replacement ranges.
 
 ## Communication Style
 
@@ -261,28 +231,28 @@ Each `Method` has: `name` (fuzzy-matched), `signature` (displayed), `description
 ## Linting & Formatting
 
 ```bash
-bun run lint          # oxlint src/
-bun run lint:fix      # oxlint src/ --fix
-bun run format        # oxfmt src/
-bun run format:fix    # oxfmt src/ --write
-bun run typecheck     # tsc --noEmit
+pnpm run lint          # oxlint src/
+pnpm run lint:fix      # oxlint src/ --fix
+pnpm run format        # oxfmt src/
+pnpm run format:fix    # oxfmt src/ --write
+pnpm run typecheck     # tsc --noEmit
 ```
 
-- **oxlint** `1.51.0` — linter, scoped to `src/`
+- **oxlint** `1.65.0` — linter, scoped to `src/`
 - **oxfmt** `0.36.0` — formatter, scoped to `src/`
 
 ## Testing
 
 ### Framework
 
-[Bun Test](https://bun.sh/docs/cli/test) — Jest-like API, runs with `bun test`. See [`add-test/SKILL.md`](./add-test/SKILL.md) for patterns and examples.
+[Node Test](https://nodejs.org/api/test.html) — native Node test runner. See [`add-test/SKILL.md`](./add-test/SKILL.md) for patterns and examples.
 
 ### Structure
 
 ```
 test/
   unit/           # 28+ unit test files
-  integration/    # QJS binary, CLI end-to-end
+  integration/    # CLI and app-facing end-to-end behavior
   benchmarks/     # Docker-based perf comparison
   fixtures/       # Test data files
 ```
@@ -309,10 +279,10 @@ test/
 ### Running
 
 ```bash
-bun test                              # all tests
-bun test test/unit/builtins.test.ts   # specific file
-bun test --coverage                   # with LCOV coverage
-bun test test/integration/            # integration only
+pnpm test                                                   # all tests
+pnpm test -- --test-name-pattern builtins                    # specific test subset
+pnpm run test:coverage                                      # with LCOV coverage
+pnpm run test:integration                                   # integration only
 ```
 
 ## Benchmarking
@@ -320,8 +290,8 @@ bun test test/integration/            # integration only
 ### Running benchmarks
 
 ```bash
-bun run test:bench          # build Docker image + run benchmarks
-bun run test:bench:update   # update benchmark results in repo
+pnpm run test:bench          # build Docker image + run benchmarks
+pnpm run test:bench:update   # update benchmark results in repo
 ```
 
 ### How it works
@@ -352,9 +322,7 @@ When writing new builtins or format parsers:
 
 ## Links
 
-- [QuickJS NG](https://github.com/quickjs-ng/quickjs) — secondary runtime
-- [QuickJS NG Docs](https://quickjs-ng.github.io/quickjs/) — ES feature support
-- [Bun Test](https://bun.sh/docs/cli/test) — test runner
+- [Node Test](https://nodejs.org/api/test.html) — test runner
 - [MDN Array](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array)
 - [MDN Object](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object)
 - [MDN String](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String)

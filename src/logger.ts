@@ -30,12 +30,10 @@ export class Logger {
   }
 
   error(message: string, error?: Error): void {
-    if (this.level >= LogLevel.ERROR) {
-      console.error(this.formatMessage("ERROR", message));
-      if (error?.stack) {
-        console.error(error.stack);
-      }
-    }
+    if (this.level < LogLevel.ERROR) return;
+
+    console.error(this.formatMessage("ERROR", message));
+    if (error?.stack) console.error(error.stack);
   }
 
   warn(message: string): void {
@@ -51,12 +49,10 @@ export class Logger {
   }
 
   debug(message: string, data?: LogData): void {
-    if (this.level >= LogLevel.DEBUG) {
-      console.log(this.formatMessage("DEBUG", message));
-      if (data !== undefined) {
-        console.log(JSON.stringify(data, null, 2));
-      }
-    }
+    if (this.level < LogLevel.DEBUG) return;
+
+    console.log(this.formatMessage("DEBUG", message));
+    if (data !== undefined) console.log(JSON.stringify(data, null, 2));
   }
 }
 
@@ -67,10 +63,12 @@ const logLevelMap: Record<string, LogLevelType> = {
   DEBUG: LogLevel.DEBUG,
 };
 
-const globalLevel = process.env.LOG_LEVEL
-  ? logLevelMap[process.env.LOG_LEVEL] || LogLevel.INFO
-  : LogLevel.INFO;
+const getGlobalLevel = (): LogLevelType => {
+  const logLevel = process.env.LOG_LEVEL;
+  if (!logLevel) return LogLevel.INFO;
+  return logLevelMap[logLevel] ?? LogLevel.INFO;
+};
 
 export function createLogger(name: string): Logger {
-  return new Logger(name, globalLevel);
+  return new Logger(name, getGlobalLevel());
 }

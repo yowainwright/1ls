@@ -1,47 +1,45 @@
 /**
- * GOOD: Method entries for the interactive autocomplete registry.
+ * GOOD: Suggestions for the autocomplete registry.
  *
- * Each entry drives the tooltip in `1ls -i`.
- * Reference: src/interactive/methods/constants.ts, src/interactive/methods/types.ts
+ * Each entry drives the inline tooltip.
+ * Reference: src/ac/constants.ts, src/ac/types.ts
  */
-import type { Method } from "../../src/interactive/methods/types";
+import type { Suggestion } from "../../src/ac/types";
 
-// GOOD: Native JS method — name matches expression syntax, working template, short description
-const findLast: Method = {
+// GOOD: Native JS method — name matches expression syntax, working insert text, short description
+const findLast: Suggestion = {
   name: "findLast",
   signature: ".findLast(x => ...)",
   description: "Find last matching item",
-  template: ".findLast(x => x)",
-  category: "Search",
+  type: "method",
+  insertText: ".findLast(x => x)",
 };
 
-// GOOD: 1ls builtin — isBuiltin: true, name matches BUILTIN_FUNCTIONS key exactly
-const median: Method = {
+// GOOD: 1ls builtin — name matches BUILTIN_FUNCTIONS key exactly
+const median: Suggestion = {
   name: "median",
   signature: "median",
   description: "Median of array values",
-  template: "median",
-  category: "Aggregate",
-  isBuiltin: true,
+  type: "builtin",
+  insertText: "median",
 };
 
-// GOOD: Universal builtin (no type restriction) — goes in UNIVERSAL_BUILTINS
-const keys: Method = {
+// GOOD: Object suggestion — include the name in OBJECT_SUGGESTIONS
+const keys: Suggestion = {
   name: "keys",
   signature: ".keys",
   description: "Array of all keys",
-  template: ".keys",
-  category: "Access",
+  type: "builtin",
+  insertText: ".keys",
 };
 
-// GOOD: Builtin with arrow fn — template is a complete, runnable expression
-const groupBy: Method = {
+// GOOD: Builtin with arrow fn — insertText is a complete, runnable expression
+const groupBy: Suggestion = {
   name: "groupBy",
   signature: "groupBy(x => ...)",
   description: "Group items by key",
-  template: "groupBy(x => x)",
-  category: "Aggregate",
-  isBuiltin: true,
+  type: "builtin",
+  insertText: "groupBy(x => x)",
 };
 
 export { findLast, median, keys, groupBy };

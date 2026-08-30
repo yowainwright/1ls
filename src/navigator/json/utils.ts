@@ -1,5 +1,5 @@
-import type { EvaluationContext } from "../types";
-import { OPERATORS } from "./constants";
+import type { EvaluationContext } from "../types.ts";
+import { OPERATORS } from "./constants.ts";
 
 export const isOperatorMethod = (method: string): boolean =>
   method.startsWith("__operator_") && method.endsWith("__");
@@ -62,22 +62,20 @@ export const evaluateObjectOperation = (
 ): unknown => {
   if (!isValidObject(obj)) return undefined;
 
-  switch (operation) {
-    case "keys":
-      return Object.keys(obj);
-    case "values":
-      return Object.values(obj);
-    case "entries":
-      return Object.entries(obj);
-    case "length":
-      return Array.isArray(obj) ? obj.length : Object.keys(obj).length;
+  if (operation === "keys") return Object.keys(obj);
+  if (operation === "values") return Object.values(obj);
+  if (operation === "entries") return Object.entries(obj);
+  if (operation === "length") {
+    return Array.isArray(obj) ? obj.length : Object.keys(obj).length;
   }
+  return undefined;
 };
 
 export const isCallableMethod = (target: unknown, method: string): boolean => {
   if (!isValidObject(target)) return false;
   const methodValue = (target as Record<string, unknown>)[method];
-  return typeof methodValue === "function";
+  const isFunction = typeof methodValue === "function";
+  return isFunction;
 };
 
 const hasMethodOnTarget = (target: unknown, method: string): boolean => {
@@ -85,7 +83,9 @@ const hasMethodOnTarget = (target: unknown, method: string): boolean => {
   if (isNullish) return false;
 
   const targetObj = target as Record<string, unknown>;
-  return typeof targetObj[method] === "function";
+  const methodValue = targetObj[method];
+  const isFunction = typeof methodValue === "function";
+  return isFunction;
 };
 
 const extractErrorMessage = (error: unknown): string =>

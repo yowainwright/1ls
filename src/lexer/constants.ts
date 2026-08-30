@@ -1,4 +1,4 @@
-import { TokenType } from "../types";
+import { TokenType } from "../types.ts";
 
 export const SINGLE_CHAR_TOKENS: Record<string, TokenType> = {
   ".": TokenType.DOT,

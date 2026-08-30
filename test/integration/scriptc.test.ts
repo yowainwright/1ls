@@ -1,0 +1,95 @@
+import { after as afterAll, before as beforeAll, describe, test } from "node:test";
+import assert from "node:assert/strict";
+import { spawn } from "node:child_process";
+import { existsSync, mkdirSync, unlinkSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { text } from "node:stream/consumers";
+
+const SCRIPTC_BIN = join(import.meta.dirname, "../../node_modules/.bin/scriptc");
+const SCRIPTC_ENTRY = join(import.meta.dirname, "../../src/scriptc/cli.ts");
+const BINARY_PATH = join(import.meta.dirname, "../../bin/1ls-scriptc-test");
+const FIXTURES_PATH = join(import.meta.dirname, "../fixtures");
+const TEST_TMP = join(import.meta.dirname, "../../tmp/scriptc-test");
+
+interface CommandResult {
+  stdout: string;
+  stderr: string;
+  exitCode: number;
+}
+
+const runCommand = async (
+  command: string[],
+  input?: string,
+): Promise<CommandResult> => {
+  const proc = spawn(command[0], command.slice(1), {
+    env: { ...process.env, TMPDIR: TEST_TMP },
+    stdio: [input === undefined ? "ignore" : "pipe", "pipe", "pipe"],
+  });
+
+  if (input !== undefined) {
+    proc.stdin.write(input);
+    proc.stdin.end();
+  }
+
+  const stdout = await text(proc.stdout);
+  const stderr = await text(proc.stderr);
+  const exitCode = await new Promise<number>((resolve) => {
+    proc.on("close", (code) => resolve(code ?? 0));
+  });
+
+  return { stdout, stderr, exitCode };
+};
+
+const runBinary = (args: string[], input?: string): Promise<CommandResult> =>
+  runCommand([BINARY_PATH, ...args], input);
+
+describe("scriptc native binary", () => {
+  beforeAll(async () => {
+    mkdirSync(dirname(BINARY_PATH), { recursive: true });
+    mkdirSync(TEST_TMP, { recursive: true });
+    const result = await runCommand([
+      SCRIPTC_BIN,
+      "build",
+      SCRIPTC_ENTRY,
+      "--no-keep-c",
+      "-o",
+      BINARY_PATH,
+    ]);
+
+    assert.strictEqual(result.stderr, "");
+    assert.strictEqual(result.exitCode, 0);
+    assert.strictEqual(existsSync(BINARY_PATH), true);
+  });
+
+  afterAll(() => {
+    if (existsSync(BINARY_PATH)) unlinkSync(BINARY_PATH);
+  });
+
+  test("prints version", async () => {
+    const result = await runBinary(["--version"]);
+
+    assert.strictEqual(result.exitCode, 0);
+    assert.strictEqual(result.stdout.trim(), "1ls version 0.1.15");
+  });
+
+  test("queries stdin JSON", async () => {
+    const result = await runBinary([".users[0].name"], '{"users":[{"name":"Ada"}]}');
+
+    assert.strictEqual(result.exitCode, 0);
+    assert.strictEqual(result.stdout.trim(), '"Ada"');
+  });
+
+  test("supports raw string output", async () => {
+    const result = await runBinary(["--raw", ".name"], '{"name":"Ada"}');
+
+    assert.strictEqual(result.exitCode, 0);
+    assert.strictEqual(result.stdout.trim(), "Ada");
+  });
+
+  test("queries JSON files", async () => {
+    const result = await runBinary(["readFile", join(FIXTURES_PATH, "data.json"), ".settings.host"]);
+
+    assert.strictEqual(result.exitCode, 0);
+    assert.strictEqual(result.stdout.trim(), '"localhost"');
+  });
+});

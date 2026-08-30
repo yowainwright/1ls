@@ -1,4 +1,4 @@
-import type { ObjectOperationType } from "../types";
+import type { ObjectOperationType } from "../types.ts";
 
 export const BOOLEAN_LITERALS = ["true", "false", "null"] as const;
 

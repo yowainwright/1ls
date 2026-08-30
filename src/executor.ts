@@ -1,9 +1,10 @@
-import { Lexer } from "./lexer";
-import { ExpressionParser } from "./expression";
-import { JsonNavigator } from "./navigator/json";
-import { Formatter } from "./formatter/output";
-import { expandShortcuts } from "./shortcuts";
-import type { CliOptions } from "./types";
+import { Lexer } from "./lexer/index.ts";
+import { ExpressionParser } from "./expression/index.ts";
+import { JsonNavigator } from "./navigator/json/index.ts";
+import { Formatter } from "./formatter/index.ts";
+import { parseInputSync } from "./formats/sync.ts";
+import { expandShortcuts } from "./shortcuts/index.ts";
+import type { CliOptions } from "./types.ts";
 
 type StrictnessOptions = Pick<CliOptions, "strict">;
 
@@ -32,4 +33,17 @@ export const evaluateAndFormatExpression = (
 ): string => {
   const result = evaluateExpression(expression, data, options);
   return formatResult(result, options);
+};
+
+export const processData = (data: unknown, options: CliOptions): string => {
+  if (!options.expression) {
+    return formatResult(data, options);
+  }
+
+  return evaluateAndFormatExpression(options.expression, data, options);
+};
+
+export const processContent = (input: string, options: CliOptions = {}): string => {
+  const data = parseInputSync(input, options.inputFormat);
+  return processData(data, options);
 };

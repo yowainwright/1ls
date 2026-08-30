@@ -1,6 +1,7 @@
-import { test, expect } from "bun:test";
-import { Lexer } from "../../src/lexer";
-import { ExpressionParser } from "../../src/expression";
+import { test } from "node:test";
+import assert from "node:assert/strict";
+import { Lexer } from "../../src/lexer/index.ts";
+import { ExpressionParser } from "../../src/expression/index.ts";
 
 test("Expression: identity (pass-through)", () => {
   const lexer = new Lexer(".");
@@ -8,8 +9,8 @@ test("Expression: identity (pass-through)", () => {
   const parser = new ExpressionParser(tokens);
   const ast = parser.parse();
 
-  expect(ast.type).toBe("Root");
-  expect(ast.expression?.type).toBe("Root");
+  assert.strictEqual(ast.type, "Root");
+  assert.strictEqual(ast.expression?.type, "Root");
 });
 
 test("Expression: simple property access", () => {
@@ -18,9 +19,17 @@ test("Expression: simple property access", () => {
   const parser = new ExpressionParser(tokens);
   const ast = parser.parse();
 
-  expect(ast.type).toBe("Root");
-  expect(ast.expression?.type).toBe("PropertyAccess");
-  expect((ast.expression as any).property).toBe("name");
+  assert.strictEqual(ast.type, "Root");
+  assert.strictEqual(ast.expression?.type, "PropertyAccess");
+  assert.strictEqual((ast.expression as any).property, "name");
+});
+
+test("Expression: rejects trailing tokens", () => {
+  const lexer = new Lexer(".name garbage");
+  const tokens = lexer.tokenize();
+  const parser = new ExpressionParser(tokens);
+
+  assert.throws(() => parser.parse(), /Unexpected token after expression/);
 });
 
 test("Expression: nested property access", () => {
@@ -29,10 +38,10 @@ test("Expression: nested property access", () => {
   const parser = new ExpressionParser(tokens);
   const ast = parser.parse();
 
-  expect(ast.expression?.type).toBe("PropertyAccess");
-  expect((ast.expression as any).property).toBe("email");
-  expect((ast.expression as any).object?.type).toBe("PropertyAccess");
-  expect((ast.expression as any).object?.property).toBe("user");
+  assert.strictEqual(ast.expression?.type, "PropertyAccess");
+  assert.strictEqual((ast.expression as any).property, "email");
+  assert.strictEqual((ast.expression as any).object?.type, "PropertyAccess");
+  assert.strictEqual((ast.expression as any).object?.property, "user");
 });
 
 test("Expression: array index", () => {
@@ -41,9 +50,9 @@ test("Expression: array index", () => {
   const parser = new ExpressionParser(tokens);
   const ast = parser.parse();
 
-  expect(ast.expression?.type).toBe("IndexAccess");
-  expect((ast.expression as any).index).toBe(0);
-  expect((ast.expression as any).object?.type).toBe("PropertyAccess");
+  assert.strictEqual(ast.expression?.type, "IndexAccess");
+  assert.strictEqual((ast.expression as any).index, 0);
+  assert.strictEqual((ast.expression as any).object?.type, "PropertyAccess");
 });
 
 test("Expression: array slice", () => {
@@ -52,9 +61,9 @@ test("Expression: array slice", () => {
   const parser = new ExpressionParser(tokens);
   const ast = parser.parse();
 
-  expect(ast.expression?.type).toBe("SliceAccess");
-  expect((ast.expression as any).start).toBe(0);
-  expect((ast.expression as any).end).toBe(5);
+  assert.strictEqual(ast.expression?.type, "SliceAccess");
+  assert.strictEqual((ast.expression as any).start, 0);
+  assert.strictEqual((ast.expression as any).end, 5);
 });
 
 test("Expression: array spread", () => {
@@ -63,8 +72,8 @@ test("Expression: array spread", () => {
   const parser = new ExpressionParser(tokens);
   const ast = parser.parse();
 
-  expect(ast.expression?.type).toBe("ArraySpread");
-  expect((ast.expression as any).object?.type).toBe("PropertyAccess");
+  assert.strictEqual(ast.expression?.type, "ArraySpread");
+  assert.strictEqual((ast.expression as any).object?.type, "PropertyAccess");
 });
 
 test("Expression: object operation", () => {
@@ -73,8 +82,8 @@ test("Expression: object operation", () => {
   const parser = new ExpressionParser(tokens);
   const ast = parser.parse();
 
-  expect(ast.expression?.type).toBe("ObjectOperation");
-  expect((ast.expression as any).operation).toBe("keys");
+  assert.strictEqual(ast.expression?.type, "ObjectOperation");
+  assert.strictEqual((ast.expression as any).operation, "keys");
 });
 
 test("Expression: method call with arrow function", () => {
@@ -83,10 +92,10 @@ test("Expression: method call with arrow function", () => {
   const parser = new ExpressionParser(tokens);
   const ast = parser.parse();
 
-  expect(ast.expression?.type).toBe("MethodCall");
-  expect((ast.expression as any).method).toBe("map");
-  expect((ast.expression as any).args).toHaveLength(1);
-  expect((ast.expression as any).args[0].type).toBe("ArrowFunction");
+  assert.strictEqual(ast.expression?.type, "MethodCall");
+  assert.strictEqual((ast.expression as any).method, "map");
+  assert.strictEqual((ast.expression as any).args.length, 1);
+  assert.strictEqual((ast.expression as any).args[0].type, "ArrowFunction");
 });
 
 test("Expression: method call inside arrow function body", () => {
@@ -95,22 +104,22 @@ test("Expression: method call inside arrow function body", () => {
   const parser = new ExpressionParser(tokens);
   const ast = parser.parse();
 
-  expect(ast.expression?.type).toBe("MethodCall");
-  expect((ast.expression as any).method).toBe("filter");
+  assert.strictEqual(ast.expression?.type, "MethodCall");
+  assert.strictEqual((ast.expression as any).method, "filter");
 
   const arrowFn = (ast.expression as any).args[0];
-  expect(arrowFn.type).toBe("ArrowFunction");
-  expect(arrowFn.params).toEqual(["l"]);
+  assert.strictEqual(arrowFn.type, "ArrowFunction");
+  assert.deepStrictEqual(arrowFn.params, ["l"]);
 
   const body = arrowFn.body;
-  expect(body.type).toBe("MethodCall");
-  expect(body.method).toBe("includes");
-  expect(body.args).toHaveLength(1);
-  expect(body.args[0].type).toBe("Literal");
-  expect(body.args[0].value).toBe("KILL");
+  assert.strictEqual(body.type, "MethodCall");
+  assert.strictEqual(body.method, "includes");
+  assert.strictEqual(body.args.length, 1);
+  assert.strictEqual(body.args[0].type, "Literal");
+  assert.strictEqual(body.args[0].value, "KILL");
 
-  expect(body.object.type).toBe("PropertyAccess");
-  expect(body.object.property).toBe("l");
+  assert.strictEqual(body.object.type, "PropertyAccess");
+  assert.strictEqual(body.object.property, "l");
 });
 
 test("Expression: chained method calls inside arrow function", () => {
@@ -119,16 +128,16 @@ test("Expression: chained method calls inside arrow function", () => {
   const parser = new ExpressionParser(tokens);
   const ast = parser.parse();
 
-  expect(ast.expression?.type).toBe("MethodCall");
-  expect((ast.expression as any).method).toBe("map");
+  assert.strictEqual(ast.expression?.type, "MethodCall");
+  assert.strictEqual((ast.expression as any).method, "map");
 
   const arrowFn = (ast.expression as any).args[0];
-  expect(arrowFn.type).toBe("ArrowFunction");
+  assert.strictEqual(arrowFn.type, "ArrowFunction");
 
   const body = arrowFn.body;
-  expect(body.type).toBe("MethodCall");
-  expect(body.method).toBe("toLowerCase");
+  assert.strictEqual(body.type, "MethodCall");
+  assert.strictEqual(body.method, "toLowerCase");
 
-  expect(body.object.type).toBe("MethodCall");
-  expect(body.object.method).toBe("trim");
+  assert.strictEqual(body.object.type, "MethodCall");
+  assert.strictEqual(body.object.method, "trim");
 });

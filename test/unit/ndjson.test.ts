@@ -1,5 +1,6 @@
-import { describe, test, expect } from "bun:test";
-import { parseNDJSON } from "../../src/formats/ndjson";
+import { describe, test } from "node:test";
+import assert from "node:assert/strict";
+import { parseNDJSON } from "../../src/formats/ndjson.ts";
 
 describe("parseNDJSON", () => {
   test("parses newline-delimited JSON objects", () => {
@@ -9,7 +10,7 @@ describe("parseNDJSON", () => {
 {"name": "Charlie", "age": 35}
 `;
     const result = parseNDJSON(input);
-    expect(result).toEqual([
+    assert.deepStrictEqual(result, [
       { name: "Alice", age: 30 },
       { name: "Bob", age: 25 },
       { name: "Charlie", age: 35 },
@@ -23,7 +24,7 @@ describe("parseNDJSON", () => {
 {"timestamp": "2025-01-01T10:02:00Z", "level": "info", "message": "Retrying connection"}
 `;
     const result = parseNDJSON(input);
-    expect(result).toEqual([
+    assert.deepStrictEqual(result, [
       { timestamp: "2025-01-01T10:00:00Z", level: "info", message: "Server started" },
       { timestamp: "2025-01-01T10:01:00Z", level: "error", message: "Connection failed" },
       { timestamp: "2025-01-01T10:02:00Z", level: "info", message: "Retrying connection" },
@@ -37,7 +38,7 @@ describe("parseNDJSON", () => {
 {"id": 3, "active": true, "score": null}
 `;
     const result = parseNDJSON(input);
-    expect(result).toEqual([
+    assert.deepStrictEqual(result, [
       { id: 1, active: true, score: 98.5 },
       { id: 2, active: false, score: 87.2 },
       { id: 3, active: true, score: null },
@@ -50,7 +51,7 @@ describe("parseNDJSON", () => {
 {"user": "bob", "tags": ["user"]}
 `;
     const result = parseNDJSON(input);
-    expect(result).toEqual([
+    assert.deepStrictEqual(result, [
       { user: "alice", tags: ["admin", "developer"] },
       { user: "bob", tags: ["user"] },
     ]);
@@ -62,7 +63,7 @@ describe("parseNDJSON", () => {
 {"user": {"name": "Bob", "email": "bob@example.com"}, "active": false}
 `;
     const result = parseNDJSON(input);
-    expect(result).toEqual([
+    assert.deepStrictEqual(result, [
       { user: { name: "Alice", email: "alice@example.com" }, active: true },
       { user: { name: "Bob", email: "bob@example.com" }, active: false },
     ]);
@@ -77,7 +78,7 @@ describe("parseNDJSON", () => {
 {"name": "Charlie"}
 `;
     const result = parseNDJSON(input);
-    expect(result).toEqual([{ name: "Alice" }, { name: "Bob" }, { name: "Charlie" }]);
+    assert.deepStrictEqual(result, [{ name: "Alice" }, { name: "Bob" }, { name: "Charlie" }]);
   });
 
   test("handles malformed JSON as strings", () => {
@@ -87,7 +88,7 @@ invalid line
 {"another": "valid"}
 `;
     const result = parseNDJSON(input);
-    expect(result).toEqual([{ valid: "json" }, "invalid line", { another: "valid" }]);
+    assert.deepStrictEqual(result, [{ valid: "json" }, "invalid line", { another: "valid" }]);
   });
 
   test("handles single-line arrays as NDJSON", () => {
@@ -97,7 +98,7 @@ invalid line
 [7, 8, 9]
 `;
     const result = parseNDJSON(input);
-    expect(result).toEqual([
+    assert.deepStrictEqual(result, [
       [1, 2, 3],
       [4, 5, 6],
       [7, 8, 9],
@@ -107,12 +108,12 @@ invalid line
   test("handles empty input", () => {
     const input = "";
     const result = parseNDJSON(input);
-    expect(result).toEqual([]);
+    assert.deepStrictEqual(result, []);
   });
 
   test("handles single JSON object", () => {
     const input = '{"name": "Alice", "age": 30}';
     const result = parseNDJSON(input);
-    expect(result).toEqual([{ name: "Alice", age: 30 }]);
+    assert.deepStrictEqual(result, [{ name: "Alice", age: 30 }]);
   });
 });

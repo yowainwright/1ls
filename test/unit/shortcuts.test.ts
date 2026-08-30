@@ -1,80 +1,86 @@
-import { test, expect } from "bun:test";
+import { test } from "node:test";
+import assert from "node:assert/strict";
 import {
   expandShortcuts,
   shortenExpression,
   getFullMethod,
   getShortMethod,
   isShortcut,
-} from "../../src/shortcuts";
+} from "../../src/shortcuts/index.ts";
 
 test("Shortcuts: expand single shortcut", () => {
-  expect(expandShortcuts(".mp")).toBe(".map");
-  expect(expandShortcuts(".flt")).toBe(".filter");
-  expect(expandShortcuts(".kys")).toBe(".{keys}");
-  expect(expandShortcuts(".lc")).toBe(".toLowerCase");
+  assert.strictEqual(expandShortcuts(".mp"), ".map");
+  assert.strictEqual(expandShortcuts(".flt"), ".filter");
+  assert.strictEqual(expandShortcuts(".kys"), ".{keys}");
+  assert.strictEqual(expandShortcuts(".lc"), ".toLowerCase");
 });
 
 test("Shortcuts: shorten single method", () => {
-  expect(shortenExpression(".map")).toBe(".mp");
-  expect(shortenExpression(".filter")).toBe(".flt");
-  expect(shortenExpression(".{keys}")).toBe(".kys");
-  expect(shortenExpression(".toLowerCase")).toBe(".lc");
+  assert.strictEqual(shortenExpression(".map"), ".mp");
+  assert.strictEqual(shortenExpression(".filter"), ".flt");
+  assert.strictEqual(shortenExpression(".{keys}"), ".kys");
+  assert.strictEqual(shortenExpression(".toLowerCase"), ".lc");
 });
 
 test("Shortcuts: expand chained shortcuts", () => {
   const input = ".mp(x => x * 2).flt(x => x > 5)";
   const expected = ".map(x => x * 2).filter(x => x > 5)";
-  expect(expandShortcuts(input)).toBe(expected);
+  assert.strictEqual(expandShortcuts(input), expected);
 });
 
 test("Shortcuts: shorten chained methods", () => {
   const input = ".map(x => x * 2).filter(x => x > 5)";
   const expected = ".mp(x => x * 2).flt(x => x > 5)";
-  expect(shortenExpression(input)).toBe(expected);
+  assert.strictEqual(shortenExpression(input), expected);
 });
 
 test("Shortcuts: expand complex expression", () => {
   const input = '.users.mp(.name).flt(.lc().stsWith("j"))';
   const expected = '.users.map(x => x.name).filter(x => x.toLowerCase().startsWith("j"))';
-  expect(expandShortcuts(input)).toBe(expected);
+  assert.strictEqual(expandShortcuts(input), expected);
 });
 
 test("Shortcuts: shorten complex expression", () => {
   const input = '.users.map(u => u.name).filter(n => n.toLowerCase().startsWith("j"))';
   const expected = '.users.mp(.name).flt(.lc().stsWith("j"))';
-  expect(shortenExpression(input)).toBe(expected);
+  assert.strictEqual(shortenExpression(input), expected);
 });
 
 test("Shortcuts: preserve non-shortcut text", () => {
   const input = ".customMethod().mp(x => x * 2)";
   const expanded = ".customMethod().map(x => x * 2)";
-  expect(expandShortcuts(input)).toBe(expanded);
-  expect(shortenExpression(expanded)).toBe(input);
+  assert.strictEqual(expandShortcuts(input), expanded);
+  assert.strictEqual(shortenExpression(expanded), input);
+});
+
+test("Shortcuts: preserve shortcut-looking text inside string literals", () => {
+  assert.strictEqual(expandShortcuts('.filter(x => x.name === ".mp")'), '.filter(x => x.name === ".mp")',);
+  assert.strictEqual(shortenExpression('.filter(x => x.name === ".map")'), '.flt(x => x.name === ".map")',);
 });
 
 test("Shortcuts: handle object operations", () => {
-  expect(expandShortcuts(".kys")).toBe(".{keys}");
-  expect(expandShortcuts(".vls")).toBe(".{values}");
-  expect(expandShortcuts(".ents")).toBe(".{entries}");
-  expect(expandShortcuts(".len")).toBe(".{length}");
+  assert.strictEqual(expandShortcuts(".kys"), ".{keys}");
+  assert.strictEqual(expandShortcuts(".vls"), ".{values}");
+  assert.strictEqual(expandShortcuts(".ents"), ".{entries}");
+  assert.strictEqual(expandShortcuts(".len"), ".{length}");
 });
 
 test("Shortcuts: lookup methods", () => {
-  expect(getFullMethod(".mp")).toBe(".map");
-  expect(getShortMethod(".map")).toBe(".mp");
-  expect(isShortcut(".mp")).toBe(true);
-  expect(isShortcut(".map")).toBe(true);
-  expect(isShortcut(".notAShortcut")).toBe(false);
+  assert.strictEqual(getFullMethod(".mp"), ".map");
+  assert.strictEqual(getShortMethod(".map"), ".mp");
+  assert.strictEqual(isShortcut(".mp"), true);
+  assert.strictEqual(isShortcut(".map"), true);
+  assert.strictEqual(isShortcut(".notAShortcut"), false);
 });
 
 test("Shortcuts: avoid partial replacements", () => {
   // Should not replace 'mp' in 'template'
-  expect(expandShortcuts("template")).toBe("template");
-  expect(expandShortcuts(".template")).toBe(".template");
+  assert.strictEqual(expandShortcuts("template"), "template");
+  assert.strictEqual(expandShortcuts(".template"), ".template");
 
   // Should only replace when it's a complete method
-  expect(expandShortcuts(".mp(")).toBe(".map(");
-  expect(expandShortcuts(".mpa")).toBe(".mpa"); // Should not expand
+  assert.strictEqual(expandShortcuts(".mp("), ".map(");
+  assert.strictEqual(expandShortcuts(".mpa"), ".mpa"); // Should not expand
 });
 
 test("Shortcuts: handle array methods correctly", () => {
@@ -88,8 +94,8 @@ test("Shortcuts: handle array methods correctly", () => {
   ];
 
   arrayShortcuts.forEach(({ short, full }) => {
-    expect(expandShortcuts(short)).toBe(full);
-    expect(shortenExpression(full)).toBe(short);
+    assert.strictEqual(expandShortcuts(short), full);
+    assert.strictEqual(shortenExpression(full), short);
   });
 });
 
@@ -102,47 +108,45 @@ test("Shortcuts: handle string methods correctly", () => {
   ];
 
   stringShortcuts.forEach(({ short, full }) => {
-    expect(expandShortcuts(short)).toBe(full);
-    expect(shortenExpression(full)).toBe(short);
+    assert.strictEqual(expandShortcuts(short), full);
+    assert.strictEqual(shortenExpression(full), short);
   });
 });
 
-test("Shortcuts: getShortcutHelp returns formatted help text", () => {
-  const { getShortcutHelp } = require("../../src/shortcuts");
+test("Shortcuts: getShortcutHelp returns formatted help text", async () => {
+  const { getShortcutHelp } = await import("../../src/shortcuts/index.ts");
   const help = getShortcutHelp();
 
-  expect(typeof help).toBe("string");
-  expect(help).toContain("Array Methods");
-  expect(help).toContain("Object Methods");
-  expect(help).toContain("String Methods");
-  expect(help).toContain("Universal Methods");
-  expect(help).toContain(".mp");
-  expect(help).toContain(".map");
-  expect(help).toContain("Examples");
+  assert.strictEqual(typeof help, "string");
+  assert.ok(help.includes("Array Methods"));
+  assert.ok(help.includes("Object Methods"));
+  assert.ok(help.includes("String Methods"));
+  assert.ok(help.includes("Universal Methods"));
+  assert.ok(help.includes(".mp"));
+  assert.ok(help.includes(".map"));
+  assert.ok(help.includes("Examples"));
 });
 
 test("Shortcuts: expand implicit property access", () => {
-  expect(expandShortcuts(".mp(.name)")).toBe(".map(x => x.name)");
-  expect(expandShortcuts(".flt(.active)")).toBe(".filter(x => x.active)");
-  expect(expandShortcuts(".fnd(.id === 1)")).toBe(".find(x => x.id === 1)");
+  assert.strictEqual(expandShortcuts(".mp(.name)"), ".map(x => x.name)");
+  assert.strictEqual(expandShortcuts(".flt(.active)"), ".filter(x => x.active)");
+  assert.strictEqual(expandShortcuts(".fnd(.id === 1)"), ".find(x => x.id === 1)");
 });
 
 test("Shortcuts: expand implicit property with operators", () => {
-  expect(expandShortcuts(".flt(.age > 30)")).toBe(".filter(x => x.age > 30)");
-  expect(expandShortcuts(".flt(.active && .verified)")).toBe(
-    ".filter(x => x.active && x.verified)",
-  );
+  assert.strictEqual(expandShortcuts(".flt(.age > 30)"), ".filter(x => x.age > 30)");
+  assert.strictEqual(expandShortcuts(".flt(.active && .verified)"), ".filter(x => x.active && x.verified)",);
 });
 
 test("Shortcuts: shorten to implicit property access", () => {
-  expect(shortenExpression(".map(x => x.name)")).toBe(".mp(.name)");
-  expect(shortenExpression(".filter(u => u.active)")).toBe(".flt(.active)");
-  expect(shortenExpression(".find(item => item.id === 1)")).toBe(".fnd(.id === 1)");
+  assert.strictEqual(shortenExpression(".map(x => x.name)"), ".mp(.name)");
+  assert.strictEqual(shortenExpression(".filter(u => u.active)"), ".flt(.active)");
+  assert.strictEqual(shortenExpression(".find(item => item.id === 1)"), ".fnd(.id === 1)");
 });
 
 test("Shortcuts: roundtrip implicit property access", () => {
   const short = ".mp(.name).flt(.age > 30)";
   const expanded = expandShortcuts(short);
   const shortened = shortenExpression(expanded);
-  expect(shortened).toBe(short);
+  assert.strictEqual(shortened, short);
 });

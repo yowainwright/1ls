@@ -9,17 +9,17 @@
  * 5. Link validity — relative source links point to existing files
  * 6. agents.md exists and has required sections
  *
- * Usage: bun skills/eval.ts
+ * Usage: node skills/eval.ts
  */
 
 import { readdirSync, readFileSync, existsSync, statSync } from "fs";
 import { join, resolve } from "path";
 import { spawnSync } from "child_process";
 
-const ROOT = resolve(import.meta.dir, "..");
+const ROOT = resolve(import.meta.dirname, "..");
 const SKILLS_DIR = join(ROOT, "skills");
 
-const SKILL_DIRS = ["add-builtin", "add-format", "add-test", "add-method", "qjs-compat"];
+const SKILL_DIRS = ["add-builtin", "add-format", "add-test", "add-method"];
 const REQUIRED_FILES = ["SKILL.md", "good-example.ts", "bad-example.ts"];
 const REQUIRED_SECTIONS = ["## Files to Touch", "## Constraints", "## See Examples", "## Links", "## Run"];
 const AGENTS_SECTIONS = ["## Code Style", "## Testing", "## Benchmarking", "## Project Intent"];
@@ -81,11 +81,10 @@ for (const dir of SKILL_DIRS) {
   }
 }
 
-const bunPath = process.argv[0] || "bun";
-const tscResult = spawnSync(bunPath, [
-  "tsc", "--noEmit", "--strict", "--target", "esnext",
+const tscResult = spawnSync("pnpm", [
+  "exec", "tsc", "--noEmit", "--strict", "--target", "esnext",
   "--module", "esnext", "--moduleResolution", "bundler",
-  "--types", "bun", "--skipLibCheck",
+  "--types", "node", "--skipLibCheck",
   ...tsFiles,
 ], { cwd: ROOT, encoding: "utf-8" });
 

@@ -6,26 +6,26 @@ class Onels < Formula
 
   on_macos do
     if Hardware::CPU.arm?
-      url "https://github.com/yowainwright/1ls/releases/download/v#{version}/1ls-qjs-darwin-arm64"
+      url "https://github.com/yowainwright/1ls/releases/download/v#{version}/1ls-darwin-arm64"
       sha256 "PLACEHOLDER" # arm64
     else
-      url "https://github.com/yowainwright/1ls/releases/download/v#{version}/1ls-qjs-darwin-x64"
+      url "https://github.com/yowainwright/1ls/releases/download/v#{version}/1ls-darwin-x64"
       sha256 "PLACEHOLDER" # x64
     end
   end
 
   on_linux do
     if Hardware::CPU.arm?
-      url "https://github.com/yowainwright/1ls/releases/download/v#{version}/1ls-qjs-linux-arm64"
+      url "https://github.com/yowainwright/1ls/releases/download/v#{version}/1ls-linux-arm64"
       sha256 "PLACEHOLDER" # linux-arm64
     else
-      url "https://github.com/yowainwright/1ls/releases/download/v#{version}/1ls-qjs-linux-x64"
+      url "https://github.com/yowainwright/1ls/releases/download/v#{version}/1ls-linux-x64"
       sha256 "PLACEHOLDER" # linux-x64
     end
   end
 
   def install
-    bin.install Dir["1ls-qjs-*"].first => "1ls"
+    bin.install Dir["1ls-*"].first => "1ls"
   end
 
   test do

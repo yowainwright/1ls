@@ -1,28 +1,29 @@
-import { describe, expect, test } from "bun:test";
-import { spawn } from "bun";
-import { join } from "path";
-import { existsSync } from "fs";
+import { describe, test } from "node:test";
+import assert from "node:assert/strict";
+import { spawn } from "node:child_process";
+import { existsSync } from "node:fs";
+import { join } from "node:path";
+import { text } from "node:stream/consumers";
 
-const CLI_PATH = join(import.meta.dir, "../../dist/index.js");
+const CLI_PATH = join(import.meta.dirname, "../../dist/index.js");
 const HAS_CLI = existsSync(CLI_PATH);
 
 async function runWithStdin(
   input: string,
   args: string[] = [],
 ): Promise<{ stdout: string; stderr: string; exitCode: number }> {
-  const proc = spawn(["bun", CLI_PATH, ...args], {
-    stdin: "pipe",
-    stdout: "pipe",
-    stderr: "pipe",
+  const proc = spawn(process.execPath, [CLI_PATH, ...args], {
+    stdio: ["pipe", "pipe", "pipe"],
   });
 
   proc.stdin.write(input);
   proc.stdin.end();
 
-  const stdout = await new Response(proc.stdout).text();
-  const stderr = await new Response(proc.stderr).text();
-  await proc.exited;
-  const exitCode = proc.exitCode || 0;
+  const stdout = await text(proc.stdout);
+  const stderr = await text(proc.stderr);
+  const exitCode = await new Promise<number>((resolve) => {
+    proc.on("close", (code) => resolve(code ?? 0));
+  });
 
   return { stdout, stderr, exitCode };
 }
@@ -33,14 +34,14 @@ describeStdin("CLI Stdin Pipe Integration", () => {
   describe("JSON input", () => {
     test("processes simple JSON object", async () => {
       const result = await runWithStdin('{"name":"test","value":42}', [".name"]);
-      expect(result.exitCode).toBe(0);
-      expect(result.stdout.trim()).toBe('"test"');
+      assert.strictEqual(result.exitCode, 0);
+      assert.strictEqual(result.stdout.trim(), '"test"');
     });
 
     test("processes JSON array", async () => {
       const result = await runWithStdin("[1,2,3,4,5]", [".map(x => x * 2)"]);
-      expect(result.exitCode).toBe(0);
-      expect(JSON.parse(result.stdout)).toEqual([2, 4, 6, 8, 10]);
+      assert.strictEqual(result.exitCode, 0);
+      assert.deepStrictEqual(JSON.parse(result.stdout), [2, 4, 6, 8, 10]);
     });
 
     test("processes nested JSON", async () => {
@@ -51,89 +52,89 @@ describeStdin("CLI Stdin Pipe Integration", () => {
         ],
       });
       const result = await runWithStdin(input, [".users[0].name"]);
-      expect(result.exitCode).toBe(0);
-      expect(result.stdout.trim()).toBe('"Alice"');
+      assert.strictEqual(result.exitCode, 0);
+      assert.strictEqual(result.stdout.trim(), '"Alice"');
     });
   });
 
   describe("output flags", () => {
     test("--raw removes quotes from strings", async () => {
       const result = await runWithStdin('{"name":"hello world"}', ["--raw", ".name"]);
-      expect(result.exitCode).toBe(0);
-      expect(result.stdout.trim()).toBe("hello world");
+      assert.strictEqual(result.exitCode, 0);
+      assert.strictEqual(result.stdout.trim(), "hello world");
     });
 
     test("-r removes quotes from strings", async () => {
       const result = await runWithStdin('{"greeting":"hi"}', ["-r", ".greeting"]);
-      expect(result.exitCode).toBe(0);
-      expect(result.stdout.trim()).toBe("hi");
+      assert.strictEqual(result.exitCode, 0);
+      assert.strictEqual(result.stdout.trim(), "hi");
     });
 
     test("--compact outputs minified JSON", async () => {
       const result = await runWithStdin('{"items":[1,2,3]}', ["--compact", ".items"]);
-      expect(result.exitCode).toBe(0);
-      expect(result.stdout.trim()).toBe("[1,2,3]");
+      assert.strictEqual(result.exitCode, 0);
+      assert.strictEqual(result.stdout.trim(), "[1,2,3]");
     });
 
     test("-c outputs minified JSON", async () => {
       const result = await runWithStdin('{"a":1,"b":2}', ["-c"]);
-      expect(result.exitCode).toBe(0);
+      assert.strictEqual(result.exitCode, 0);
     });
 
     test("--type shows value type", async () => {
       const result = await runWithStdin('{"items":[1,2,3]}', ["--type", ".items"]);
-      expect(result.exitCode).toBe(0);
-      expect(result.stdout).toContain("[array]");
+      assert.strictEqual(result.exitCode, 0);
+      assert.ok(result.stdout.includes("[array]"));
     });
 
     test("-t shows value type for object", async () => {
       const result = await runWithStdin('{"nested":{"a":1}}', ["-t", ".nested"]);
-      expect(result.exitCode).toBe(0);
-      expect(result.stdout).toContain("[object]");
+      assert.strictEqual(result.exitCode, 0);
+      assert.ok(result.stdout.includes("[object]"));
     });
 
     test("-t shows value type for string", async () => {
       const result = await runWithStdin('{"name":"test"}', ["-t", ".name"]);
-      expect(result.exitCode).toBe(0);
-      expect(result.stdout).toContain("[string]");
+      assert.strictEqual(result.exitCode, 0);
+      assert.ok(result.stdout.includes("[string]"));
     });
 
     test("-t shows value type for number", async () => {
       const result = await runWithStdin('{"count":42}', ["-t", ".count"]);
-      expect(result.exitCode).toBe(0);
-      expect(result.stdout).toContain("[number]");
+      assert.strictEqual(result.exitCode, 0);
+      assert.ok(result.stdout.includes("[number]"));
     });
 
     test("-t shows value type for boolean", async () => {
       const result = await runWithStdin('{"active":true}', ["-t", ".active"]);
-      expect(result.exitCode).toBe(0);
-      expect(result.stdout).toContain("[boolean]");
+      assert.strictEqual(result.exitCode, 0);
+      assert.ok(result.stdout.includes("[boolean]"));
     });
 
     test("-t shows value type for null", async () => {
       const result = await runWithStdin('{"value":null}', ["-t", ".value"]);
-      expect(result.exitCode).toBe(0);
-      expect(result.stdout).toContain("[object]");
+      assert.strictEqual(result.exitCode, 0);
+      assert.ok(result.stdout.includes("[object]"));
     });
   });
 
   describe("array operations", () => {
     test("map transforms elements", async () => {
       const result = await runWithStdin("[1,2,3]", [".map(x => x * x)"]);
-      expect(result.exitCode).toBe(0);
-      expect(JSON.parse(result.stdout)).toEqual([1, 4, 9]);
+      assert.strictEqual(result.exitCode, 0);
+      assert.deepStrictEqual(JSON.parse(result.stdout), [1, 4, 9]);
     });
 
     test("filter selects elements", async () => {
       const result = await runWithStdin("[1,2,3,4,5,6]", [".filter(x => x % 2 === 0)"]);
-      expect(result.exitCode).toBe(0);
-      expect(JSON.parse(result.stdout)).toEqual([2, 4, 6]);
+      assert.strictEqual(result.exitCode, 0);
+      assert.deepStrictEqual(JSON.parse(result.stdout), [2, 4, 6]);
     });
 
     test("reduce aggregates values", async () => {
       const result = await runWithStdin("[1,2,3,4]", [".reduce((a,b) => a + b, 0)"]);
-      expect(result.exitCode).toBe(0);
-      expect(JSON.parse(result.stdout)).toBe(10);
+      assert.strictEqual(result.exitCode, 0);
+      assert.strictEqual(JSON.parse(result.stdout), 10);
     });
 
     test("find returns first match", async () => {
@@ -142,64 +143,64 @@ describeStdin("CLI Stdin Pipe Integration", () => {
         { id: 2, name: "Bob" },
       ]);
       const result = await runWithStdin(input, [".find(x => x.id === 2)"]);
-      expect(result.exitCode).toBe(0);
-      expect(JSON.parse(result.stdout)).toEqual({ id: 2, name: "Bob" });
+      assert.strictEqual(result.exitCode, 0);
+      assert.deepStrictEqual(JSON.parse(result.stdout), { id: 2, name: "Bob" });
     });
 
     test("some checks for any match", async () => {
       const result = await runWithStdin("[1,2,3]", [".some(x => x > 2)"]);
-      expect(result.exitCode).toBe(0);
-      expect(JSON.parse(result.stdout)).toBe(true);
+      assert.strictEqual(result.exitCode, 0);
+      assert.strictEqual(JSON.parse(result.stdout), true);
     });
 
     test("every checks all match", async () => {
       const result = await runWithStdin("[2,4,6]", [".every(x => x % 2 === 0)"]);
-      expect(result.exitCode).toBe(0);
-      expect(JSON.parse(result.stdout)).toBe(true);
+      assert.strictEqual(result.exitCode, 0);
+      assert.strictEqual(JSON.parse(result.stdout), true);
     });
 
     test("sort orders elements", async () => {
       const result = await runWithStdin("[3,1,4,1,5]", [".sort((a,b) => a - b)"]);
-      expect(result.exitCode).toBe(0);
-      expect(JSON.parse(result.stdout)).toEqual([1, 1, 3, 4, 5]);
+      assert.strictEqual(result.exitCode, 0);
+      assert.deepStrictEqual(JSON.parse(result.stdout), [1, 1, 3, 4, 5]);
     });
 
     test("reverse reverses array", async () => {
       const result = await runWithStdin("[1,2,3]", [".reverse()"]);
-      expect(result.exitCode).toBe(0);
-      expect(JSON.parse(result.stdout)).toEqual([3, 2, 1]);
+      assert.strictEqual(result.exitCode, 0);
+      assert.deepStrictEqual(JSON.parse(result.stdout), [3, 2, 1]);
     });
 
     test("slice extracts portion", async () => {
       const result = await runWithStdin("[1,2,3,4,5]", [".slice(1,4)"]);
-      expect(result.exitCode).toBe(0);
-      expect(JSON.parse(result.stdout)).toEqual([2, 3, 4]);
+      assert.strictEqual(result.exitCode, 0);
+      assert.deepStrictEqual(JSON.parse(result.stdout), [2, 3, 4]);
     });
 
     test("join creates string", async () => {
       const result = await runWithStdin('["a","b","c"]', ['.join("-")', "-r"]);
-      expect(result.exitCode).toBe(0);
-      expect(result.stdout.trim()).toBe("a-b-c");
+      assert.strictEqual(result.exitCode, 0);
+      assert.strictEqual(result.stdout.trim(), "a-b-c");
     });
   });
 
   describe("object operations", () => {
     test("{keys} returns keys", async () => {
       const result = await runWithStdin('{"a":1,"b":2,"c":3}', [".{keys}"]);
-      expect(result.exitCode).toBe(0);
-      expect(JSON.parse(result.stdout)).toEqual(["a", "b", "c"]);
+      assert.strictEqual(result.exitCode, 0);
+      assert.deepStrictEqual(JSON.parse(result.stdout), ["a", "b", "c"]);
     });
 
     test("{values} returns values", async () => {
       const result = await runWithStdin('{"a":1,"b":2,"c":3}', [".{values}"]);
-      expect(result.exitCode).toBe(0);
-      expect(JSON.parse(result.stdout)).toEqual([1, 2, 3]);
+      assert.strictEqual(result.exitCode, 0);
+      assert.deepStrictEqual(JSON.parse(result.stdout), [1, 2, 3]);
     });
 
     test("{entries} returns entries", async () => {
       const result = await runWithStdin('{"a":1,"b":2}', [".{entries}"]);
-      expect(result.exitCode).toBe(0);
-      expect(JSON.parse(result.stdout)).toEqual([
+      assert.strictEqual(result.exitCode, 0);
+      assert.deepStrictEqual(JSON.parse(result.stdout), [
         ["a", 1],
         ["b", 2],
       ]);
@@ -207,46 +208,46 @@ describeStdin("CLI Stdin Pipe Integration", () => {
 
     test("{length} returns array length", async () => {
       const result = await runWithStdin("[1,2,3,4,5]", [".{length}"]);
-      expect(result.exitCode).toBe(0);
-      expect(JSON.parse(result.stdout)).toBe(5);
+      assert.strictEqual(result.exitCode, 0);
+      assert.strictEqual(JSON.parse(result.stdout), 5);
     });
 
     test("{length} returns object key count", async () => {
       const result = await runWithStdin('{"a":1,"b":2,"c":3}', [".{length}"]);
-      expect(result.exitCode).toBe(0);
-      expect(JSON.parse(result.stdout)).toBe(3);
+      assert.strictEqual(result.exitCode, 0);
+      assert.strictEqual(JSON.parse(result.stdout), 3);
     });
   });
 
   describe("shortcuts", () => {
     test(".mp expands to .map", async () => {
       const result = await runWithStdin("[1,2,3]", [".mp(x => x * 2)"]);
-      expect(result.exitCode).toBe(0);
-      expect(JSON.parse(result.stdout)).toEqual([2, 4, 6]);
+      assert.strictEqual(result.exitCode, 0);
+      assert.deepStrictEqual(JSON.parse(result.stdout), [2, 4, 6]);
     });
 
     test(".flt expands to .filter", async () => {
       const result = await runWithStdin("[1,2,3,4,5]", [".flt(x => x > 3)"]);
-      expect(result.exitCode).toBe(0);
-      expect(JSON.parse(result.stdout)).toEqual([4, 5]);
+      assert.strictEqual(result.exitCode, 0);
+      assert.deepStrictEqual(JSON.parse(result.stdout), [4, 5]);
     });
 
     test(".kys expands to .{keys}", async () => {
       const result = await runWithStdin('{"x":1,"y":2}', [".kys"]);
-      expect(result.exitCode).toBe(0);
-      expect(JSON.parse(result.stdout)).toEqual(["x", "y"]);
+      assert.strictEqual(result.exitCode, 0);
+      assert.deepStrictEqual(JSON.parse(result.stdout), ["x", "y"]);
     });
 
     test(".vls expands to .{values}", async () => {
       const result = await runWithStdin('{"x":1,"y":2}', [".vls"]);
-      expect(result.exitCode).toBe(0);
-      expect(JSON.parse(result.stdout)).toEqual([1, 2]);
+      assert.strictEqual(result.exitCode, 0);
+      assert.deepStrictEqual(JSON.parse(result.stdout), [1, 2]);
     });
 
     test(".len expands to .{length}", async () => {
       const result = await runWithStdin("[1,2,3,4]", [".len"]);
-      expect(result.exitCode).toBe(0);
-      expect(JSON.parse(result.stdout)).toBe(4);
+      assert.strictEqual(result.exitCode, 0);
+      assert.strictEqual(JSON.parse(result.stdout), 4);
     });
 
     test("chained shortcuts work", async () => {
@@ -256,8 +257,8 @@ describeStdin("CLI Stdin Pipe Integration", () => {
         { name: "Carol", active: true },
       ]);
       const result = await runWithStdin(input, [".flt(x => x.active).mp(x => x.name)"]);
-      expect(result.exitCode).toBe(0);
-      expect(JSON.parse(result.stdout)).toEqual(["Alice", "Carol"]);
+      assert.strictEqual(result.exitCode, 0);
+      assert.deepStrictEqual(JSON.parse(result.stdout), ["Alice", "Carol"]);
     });
   });
 
@@ -273,8 +274,8 @@ describeStdin("CLI Stdin Pipe Integration", () => {
       const result = await runWithStdin(input, [
         ".products.filter(p => p.inStock).map(p => p.name)",
       ]);
-      expect(result.exitCode).toBe(0);
-      expect(JSON.parse(result.stdout)).toEqual(["Apple", "Cherry"]);
+      assert.strictEqual(result.exitCode, 0);
+      assert.deepStrictEqual(JSON.parse(result.stdout), ["Apple", "Cherry"]);
     });
 
     test("map then filter then sort", async () => {
@@ -282,58 +283,58 @@ describeStdin("CLI Stdin Pipe Integration", () => {
       const result = await runWithStdin(input, [
         ".map(x => x * 2).filter(x => x > 5).sort((a,b) => b - a)",
       ]);
-      expect(result.exitCode).toBe(0);
-      expect(JSON.parse(result.stdout)).toEqual([18, 16, 10, 6]);
+      assert.strictEqual(result.exitCode, 0);
+      assert.deepStrictEqual(JSON.parse(result.stdout), [18, 16, 10, 6]);
     });
   });
 
   describe("error handling", () => {
     test("handles invalid JSON gracefully", async () => {
       const result = await runWithStdin("not valid json", [".foo"]);
-      expect(result.exitCode).toBe(0);
+      assert.strictEqual(result.exitCode, 0);
     });
 
     test("handles missing expression gracefully", async () => {
       const result = await runWithStdin('{"a":1}', []);
-      expect(result.exitCode).toBe(0);
+      assert.strictEqual(result.exitCode, 0);
     });
   });
 
   describe("--detect flag", () => {
     test("detects JSON format", async () => {
       const result = await runWithStdin('{"name":"test"}', ["--detect"]);
-      expect(result.exitCode).toBe(0);
-      expect(result.stdout.trim()).toBe("json");
+      assert.strictEqual(result.exitCode, 0);
+      assert.strictEqual(result.stdout.trim(), "json");
     });
 
     test("detects YAML format", async () => {
       const result = await runWithStdin("name: test\nvalue: 42", ["--detect"]);
-      expect(result.exitCode).toBe(0);
-      expect(result.stdout.trim()).toBe("yaml");
+      assert.strictEqual(result.exitCode, 0);
+      assert.strictEqual(result.stdout.trim(), "yaml");
     });
 
     test("detects CSV format", async () => {
       const result = await runWithStdin("a,b,c\n1,2,3", ["--detect"]);
-      expect(result.exitCode).toBe(0);
-      expect(result.stdout.trim()).toBe("csv");
+      assert.strictEqual(result.exitCode, 0);
+      assert.strictEqual(result.stdout.trim(), "csv");
     });
 
     test("detects TSV format", async () => {
       const result = await runWithStdin("a\tb\tc\n1\t2\t3", ["--detect"]);
-      expect(result.exitCode).toBe(0);
-      expect(result.stdout.trim()).toBe("tsv");
+      assert.strictEqual(result.exitCode, 0);
+      assert.strictEqual(result.stdout.trim(), "tsv");
     });
 
     test("detects JSON array", async () => {
       const result = await runWithStdin("[1,2,3]", ["--detect"]);
-      expect(result.exitCode).toBe(0);
-      expect(result.stdout.trim()).toBe("json");
+      assert.strictEqual(result.exitCode, 0);
+      assert.strictEqual(result.stdout.trim(), "json");
     });
 
     test("detects plain text", async () => {
       const result = await runWithStdin("hello world", ["--detect"]);
-      expect(result.exitCode).toBe(0);
-      expect(result.stdout.trim()).toBe("text");
+      assert.strictEqual(result.exitCode, 0);
+      assert.strictEqual(result.stdout.trim(), "text");
     });
   });
 });

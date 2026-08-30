@@ -1,5 +1,5 @@
-import type { DataFormat } from "./types";
-import { DETECTION } from "./constants";
+import type { DataFormat } from "./types.ts";
+import { DETECTION } from "./constants.ts";
 
 export function parseLines(input: string): string[] {
   return input
@@ -83,7 +83,8 @@ const detectJSONLike = (
   const isObjectLike = firstChar === "{" && lastChar === "}";
   const isArrayLike = firstChar === "[" && lastChar === "]";
 
-  if (isObjectLike || isArrayLike) {
+  const isJSONLike = isObjectLike || isArrayLike;
+  if (isJSONLike) {
     return tryParseJSON(trimmed);
   }
 
@@ -98,63 +99,31 @@ const detectXML = (trimmed: string): DataFormat | null => {
   return isXML ? "xml" : null;
 };
 
-const hasTypeScriptFeatures = (trimmed: string): boolean =>
-  DETECTION.TS_INTERFACE.test(trimmed) ||
-  DETECTION.TS_TYPE_ALIAS.test(trimmed) ||
-  DETECTION.TS_TYPE_ANNOTATION.test(trimmed);
-
-const detectJavaScriptOrTypeScript = (trimmed: string): DataFormat | null => {
-  const hasExport = DETECTION.JS_EXPORT.test(trimmed);
-  if (!hasExport) return null;
-
-  return hasTypeScriptFeatures(trimmed) ? "typescript" : "javascript";
-};
-
 const detectByFirstChar = (
   trimmed: string,
   firstChar: string,
   lastChar: string,
 ): DataFormat | null => {
-  switch (firstChar) {
-    case "{":
-    case "[":
-      return detectJSONLike(trimmed, firstChar, lastChar);
+  const isUnsupportedCode = DETECTION.UNSUPPORTED_CODE_FEATURES.test(trimmed);
+  if (isUnsupportedCode) return "text";
 
-    case "<":
-      return detectXML(trimmed);
-
-    case "-":
-      return trimmed.startsWith("---") ? "yaml" : null;
-
-    case "e":
-      return detectJavaScriptOrTypeScript(trimmed);
-
-    case "i":
-      return DETECTION.TS_INTERFACE.test(trimmed) ? "typescript" : null;
-
-    case "t":
-      return DETECTION.TS_TYPE_ALIAS.test(trimmed) ? "typescript" : null;
-
-    case "c":
-    case "l":
-    case "v":
-      return DETECTION.TS_TYPE_ANNOTATION.test(trimmed) ? "typescript" : null;
-
-    default:
-      return null;
-  }
+  const isJSONLike = firstChar === "{" || firstChar === "[";
+  if (isJSONLike) return detectJSONLike(trimmed, firstChar, lastChar);
+  if (firstChar === "<") return detectXML(trimmed);
+  if (firstChar === "-") return trimmed.startsWith("---") ? "yaml" : null;
+  return null;
 };
 
 const detectByContent = (trimmed: string): DataFormat | null => {
-  const hasEquals = trimmed.includes("=");
+  const hasEquals = /=/.test(trimmed);
   if (hasEquals) return detectConfigFormat(trimmed);
 
-  const hasYamlColon = trimmed.includes(": ");
+  const hasYamlColon = /: /.test(trimmed);
   const hasYamlListItem = /^[\s]*-\s+/m.test(trimmed);
   const isYAML = hasYamlColon || hasYamlListItem;
   if (isYAML) return "yaml";
 
-  const hasMultipleLines = trimmed.includes("\n");
+  const hasMultipleLines = /\n/.test(trimmed);
   if (hasMultipleLines) return detectMultiline(trimmed);
 
   return null;
@@ -164,10 +133,9 @@ export function detectFormat(input: string): DataFormat {
   const trimmed = input.trim();
   if (!trimmed) return "text";
 
-  const firstChar = trimmed[0];
   const lastChar = trimmed[trimmed.length - 1];
 
-  const formatByFirstChar = detectByFirstChar(trimmed, firstChar, lastChar);
+  const formatByFirstChar = detectByFirstChar(trimmed, trimmed[0], lastChar);
   if (formatByFirstChar) return formatByFirstChar;
 
   const formatByContent = detectByContent(trimmed);

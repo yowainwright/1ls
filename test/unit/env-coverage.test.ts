@@ -1,10 +1,11 @@
-import { test, expect } from "bun:test";
-import { parseENV } from "../../src/formats/env";
+import { test } from "node:test";
+import assert from "node:assert/strict";
+import { parseENV } from "../../src/formats/env.ts";
 
 test("parseENV strips comments after closed quotes", () => {
   const input = 'KEY="value" # this is a comment';
   const result = parseENV(input);
-  expect(result.KEY).toBe("value");
+  assert.strictEqual(result.KEY, "value");
 });
 
 test("parseENV handles mixed quotes", () => {
@@ -12,15 +13,15 @@ test("parseENV handles mixed quotes", () => {
 KEY2='value2'
 KEY3=value3`;
   const result = parseENV(input);
-  expect(result.KEY1).toBe("value1");
-  expect(result.KEY2).toBe("value2");
-  expect(result.KEY3).toBe("value3");
+  assert.strictEqual(result.KEY1, "value1");
+  assert.strictEqual(result.KEY2, "value2");
+  assert.strictEqual(result.KEY3, "value3");
 });
 
 test("parseENV handles export prefix", () => {
   const input = 'export KEY="value"';
   const result = parseENV(input);
-  expect(result.KEY).toBe("value");
+  assert.strictEqual(result.KEY, "value");
 });
 
 test("parseENV handles empty lines and comments", () => {
@@ -30,30 +31,30 @@ KEY1=value1
 # another comment
 KEY2=value2`;
   const result = parseENV(input);
-  expect(result.KEY1).toBe("value1");
-  expect(result.KEY2).toBe("value2");
+  assert.strictEqual(result.KEY1, "value1");
+  assert.strictEqual(result.KEY2, "value2");
 });
 
 test("parseENV handles boolean values", () => {
   const input = `TRUE_VAL=true
 FALSE_VAL=false`;
   const result = parseENV(input);
-  expect(result.TRUE_VAL).toBe(true);
-  expect(result.FALSE_VAL).toBe(false);
+  assert.strictEqual(result.TRUE_VAL, true);
+  assert.strictEqual(result.FALSE_VAL, false);
 });
 
 test("parseENV handles null values", () => {
   const input = "NULL_VAL=null";
   const result = parseENV(input);
-  expect(result.NULL_VAL).toBe(null);
+  assert.strictEqual(result.NULL_VAL, null);
 });
 
 test("parseENV handles number values", () => {
   const input = `INT_VAL=42
 FLOAT_VAL=3.14`;
   const result = parseENV(input);
-  expect(result.INT_VAL).toBe(42);
-  expect(result.FLOAT_VAL).toBe(3.14);
+  assert.strictEqual(result.INT_VAL, 42);
+  assert.strictEqual(result.FLOAT_VAL, 3.14);
 });
 
 test("parseENV handles line without equals sign", () => {
@@ -61,7 +62,7 @@ test("parseENV handles line without equals sign", () => {
 INVALID_LINE
 OTHER=other`;
   const result = parseENV(input);
-  expect(result.KEY).toBe("value");
-  expect(result.OTHER).toBe("other");
-  expect(result.INVALID_LINE).toBeUndefined();
+  assert.strictEqual(result.KEY, "value");
+  assert.strictEqual(result.OTHER, "other");
+  assert.strictEqual(result.INVALID_LINE, undefined);
 });

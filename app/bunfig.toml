@@ -1,5 +1,0 @@
-[test]
-preload = ["./src/test/setup.ts"]
-
-[resolve]
-alias = { "@" = "./src", "1ls/browser" = "../src/browser/index.ts" }

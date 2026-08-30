@@ -11,7 +11,7 @@ _1ls() {
         '--compact[Output compact JSON (no whitespace)]'
         '--type[Show the type of the result]'
         '--format[Output format: json, yaml, csv, table]:format:(json yaml csv table)'
-        '--input-format[Input format: json, yaml, toml, csv, tsv, lines, text]'
+        '--input-format[Input format: json, json5, yaml, toml, xml, ini, csv, tsv, env, ndjson, lines, text]:input format:(json json5 yaml toml xml ini csv tsv env ndjson lines text)'
         '--detect[Show detected input format without processing]'
         '--list[List files in directory]:directory:_files -/'
         '--grep[Search for pattern in files]'
@@ -27,7 +27,6 @@ _1ls() {
         '--strict[Strict mode]'
         '--slurp[Read all inputs into array]'
         '--null-input[Use null as input]'
-        '--interactive[Interactive mode]'
     )
 
     subcmds=(

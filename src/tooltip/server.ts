@@ -1,13 +1,24 @@
-import { unlinkSync, existsSync, writeFileSync, statSync } from "fs";
+import { unlinkSync, existsSync, writeFileSync, statSync, readFileSync } from "fs";
 import { spawnSync } from "child_process";
-import { complete } from "./completion";
-import { openTty, closeTty, render, hide, resetSelection, selectNext, selectPrev, getSelectedIndex, renderPreview } from "./renderer";
-import { FIFO_PATH, RESPONSE_PATH } from "./constants";
-import { readFile } from "../file";
-import { Lexer } from "../lexer";
-import { ExpressionParser } from "../expression";
-import { JsonNavigator } from "../navigator/json";
-import { expandShortcuts } from "../shortcuts";
+import { complete } from "../ac/index.ts";
+import {
+  openTty,
+  closeTty,
+  render,
+  hide,
+  resetSelection,
+  selectNext,
+  selectPrev,
+  getSelectedIndex,
+  renderPreview,
+} from "./renderer.ts";
+import { FIFO_PATH, RESPONSE_PATH } from "./constants.ts";
+import type { DaemonConfig } from "./types.ts";
+import { readFile } from "../fs/index.ts";
+import { Lexer } from "../lexer/index.ts";
+import { ExpressionParser } from "../expression/index.ts";
+import { JsonNavigator } from "../navigator/json/index.ts";
+import { expandShortcuts } from "../shortcuts/index.ts";
 
 export interface Message {
   input: string;
@@ -25,14 +36,14 @@ export const createFifo = (path: string): boolean => {
 export const cleanup = (): void => {
   closeTty();
 
-  const fifoExists = existsSync(FIFO_PATH);
+  const fifoExists = existsSync(config.fifoPath);
   if (fifoExists) {
-    unlinkSync(FIFO_PATH);
+    unlinkSync(config.fifoPath);
   }
 
-  const responseExists = existsSync(RESPONSE_PATH);
+  const responseExists = existsSync(config.responsePath);
   if (responseExists) {
-    unlinkSync(RESPONSE_PATH);
+    unlinkSync(config.responsePath);
   }
 };
 
@@ -54,18 +65,30 @@ export const parseMessage = (raw: string): Message | null => {
 
 let lastSuggestions: ReturnType<typeof complete>["suggestions"] = [];
 const fileCache = new Map<string, { mtimeMs: number; data: unknown }>();
+let config: DaemonConfig = {
+  fifoPath: FIFO_PATH,
+  responsePath: RESPONSE_PATH,
+};
+
+export const configureDaemon = (nextConfig: Partial<DaemonConfig>): void => {
+  config = { ...config, ...nextConfig };
+};
+
+const getNonEmptyLines = (raw: string): string[] =>
+  raw.split("\n").filter((line) => line.length > 0);
 
 const writeResponseWithSelected = (): void => {
   const selectedIdx = getSelectedIndex();
   const selected = lastSuggestions[selectedIdx];
   const value = selected?.insertText || selected?.signature || "";
-  writeFileSync(RESPONSE_PATH, value);
+  writeFileSync(config.responsePath, value);
 };
 
 const readCachedFile = async (filePath: string): Promise<unknown> => {
   const { mtimeMs } = statSync(filePath);
   const cached = fileCache.get(filePath);
-  if (cached && cached.mtimeMs === mtimeMs) {
+  const hasCurrentCache = cached !== undefined && cached.mtimeMs === mtimeMs;
+  if (hasCurrentCache) {
     return cached.data;
   }
 
@@ -97,57 +120,47 @@ const handlePreview = async (msg: Message): Promise<void> => {
   }
 };
 
-export const handleMessage = async (msg: Message): Promise<void> => {
-  if (msg.tty) {
-    openTty(msg.tty);
-  }
+const handleHide = (): void => {
+  hide();
+  lastSuggestions = [];
+  writeFileSync(config.responsePath, "");
+};
 
-  const isHideAction = msg.action === "hide";
-  if (isHideAction) {
-    hide();
-    lastSuggestions = [];
-    writeFileSync(RESPONSE_PATH, "");
-    return;
-  }
+const handleNavigation = (msg: Message): boolean => {
+  const hasSuggestions = lastSuggestions.length > 0;
+  if (!hasSuggestions) return false;
 
-  const isPreviewAction = msg.action === "preview";
-  if (isPreviewAction) {
-    await handlePreview(msg);
-    return;
-  }
-
-  const isNextAction = msg.action === "next";
-  if (isNextAction && lastSuggestions.length > 0) {
+  if (msg.action === "next") {
     selectNext(lastSuggestions.length);
     render(lastSuggestions);
     writeResponseWithSelected();
-    return;
+    return true;
   }
 
-  const isPrevAction = msg.action === "prev";
-  if (isPrevAction && lastSuggestions.length > 0) {
+  if (msg.action === "prev") {
     selectPrev(lastSuggestions.length);
     render(lastSuggestions);
     writeResponseWithSelected();
-    return;
+    return true;
   }
 
-  let result: ReturnType<typeof complete>;
+  return false;
+};
+
+const getCompletionResult = async (msg: Message): Promise<ReturnType<typeof complete>> => {
   const hasCompletionContext = Boolean(msg.file && msg.expr);
+  if (!hasCompletionContext) return complete(msg.input);
 
-  if (hasCompletionContext) {
-    try {
-      const data = await readCachedFile(msg.file!);
-      result = complete(msg.input, { data, expression: msg.expr });
-    } catch {
-      result = complete(msg.input);
-    }
-  } else {
-    result = complete(msg.input);
+  try {
+    const data = await readCachedFile(msg.file!);
+    return complete(msg.input, { data, expression: msg.expr });
+  } catch {
+    return complete(msg.input);
   }
+};
 
+const renderCompletionResult = (result: ReturnType<typeof complete>): void => {
   lastSuggestions = result.suggestions;
-
   const hasSuggestions = result.suggestions.length > 0;
   if (hasSuggestions) {
     resetSelection();
@@ -155,8 +168,18 @@ export const handleMessage = async (msg: Message): Promise<void> => {
     writeResponseWithSelected();
   } else {
     hide();
-    writeFileSync(RESPONSE_PATH, "");
+    writeFileSync(config.responsePath, "");
   }
+};
+
+export const handleMessage = async (msg: Message): Promise<void> => {
+  if (msg.tty) openTty(msg.tty);
+  if (msg.action === "hide") return handleHide();
+  if (msg.action === "preview") return handlePreview(msg);
+  const didNavigate = handleNavigation(msg);
+  if (didNavigate) return;
+  const result = await getCompletionResult(msg);
+  renderCompletionResult(result);
 };
 
 export const processLines = async (lines: string[]): Promise<void> => {
@@ -169,32 +192,18 @@ export const processLines = async (lines: string[]): Promise<void> => {
 export const startServer = async (): Promise<void> => {
   cleanup();
 
-  const created = createFifo(FIFO_PATH);
+  const created = createFifo(config.fifoPath);
   if (!created) {
-    throw new Error(`Failed to create FIFO at ${FIFO_PATH}`);
+    throw new Error(`Failed to create FIFO at ${config.fifoPath}`);
   }
 
-  console.log(`1ls daemon listening on ${FIFO_PATH}`);
-
-  const file = Bun.file(FIFO_PATH);
+  console.log(`1ls daemon listening on ${config.fifoPath}`);
 
   while (true) {
-    const stream = file.stream();
-    const reader = stream.getReader();
+    const raw = readFileSync(config.fifoPath, "utf8");
+    if (!raw) continue;
 
-    try {
-      const { value, done } = await reader.read();
-      const isDone = done || !value;
-      if (isDone) continue;
-
-      const raw = new TextDecoder().decode(value);
-      const nonEmpty = (line: string): boolean => line.length > 0;
-      const lines = raw.split("\n").filter(nonEmpty);
-
-      await processLines(lines);
-    } finally {
-      reader.releaseLock();
-    }
+    await processLines(getNonEmptyLines(raw));
   }
 };
 
