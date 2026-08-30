@@ -37,22 +37,20 @@ export class Logger {
   }
 
   warn(message: string): void {
-    if (this.level >= LogLevel.WARN) {
-      console.warn(this.formatMessage("WARN", message));
-    }
+    if (this.level < LogLevel.WARN) return;
+    console.warn(this.formatMessage("WARN", message));
   }
 
   info(message: string): void {
-    if (this.level >= LogLevel.INFO) {
-      console.log(this.formatMessage("INFO", message));
-    }
+    if (this.level < LogLevel.INFO) return;
+    console.error(this.formatMessage("INFO", message));
   }
 
   debug(message: string, data?: LogData): void {
     if (this.level < LogLevel.DEBUG) return;
 
-    console.log(this.formatMessage("DEBUG", message));
-    if (data !== undefined) console.log(JSON.stringify(data, null, 2));
+    console.error(this.formatMessage("DEBUG", message));
+    if (data !== undefined) console.error(JSON.stringify(data, null, 2));
   }
 }
 

@@ -48,7 +48,7 @@ jobs:
       - name: Build scriptc binary
         run: |
           mkdir -p dist
-          ./node_modules/.bin/scriptc build ./src/scriptc/cli.ts --no-keep-c -o ./dist/${{ matrix.artifact }}
+          ./node_modules/.bin/scriptc build ./src/scriptc/index.ts --dynamic --no-keep-c -o ./dist/${{ matrix.artifact }}
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4

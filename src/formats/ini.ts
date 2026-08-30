@@ -22,10 +22,23 @@ export function parseINIValue(value: string): unknown {
 }
 
 export function stripINIComments(line: string): string {
-  const commentMatch = /[;#]/.exec(line);
-  if (!commentMatch) return line;
-  return line.substring(0, commentMatch.index);
+  const commentIndex = findINICommentIndex(line);
+  if (commentIndex < 0) return line;
+  return line.substring(0, commentIndex);
 }
+
+const isINICommentChar = (char: string): boolean => {
+  if (char === ";") return true;
+  return char === "#";
+};
+
+const findINICommentIndex = (line: string): number => {
+  for (let index = 0; index < line.length; index++) {
+    if (isINICommentChar(line[index])) return index;
+  }
+
+  return -1;
+};
 
 const processINISection = (state: INIParseState, trimmed: string): INIParseState => {
   const sectionName = trimmed.slice(1, -1).trim();

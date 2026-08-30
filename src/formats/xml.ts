@@ -20,16 +20,14 @@ export function parseXMLValue(value: string): unknown {
 }
 
 export function parseXMLAttributes(attrString: string): Record<string, unknown> {
-  const matches = Array.from(attrString.matchAll(XML.ATTRIBUTES));
+  const attrs: Record<string, unknown> = {};
 
-  return matches.reduce(
-    (attrs, match) => {
-      const [, key, value] = match;
-      attrs[key] = parseXMLValue(value);
-      return attrs;
-    },
-    {} as Record<string, unknown>,
-  );
+  for (const match of attrString.matchAll(XML.ATTRIBUTES)) {
+    const [, key, value] = match;
+    attrs[key] = parseXMLValue(value);
+  }
+
+  return attrs;
 }
 
 export function parseXMLElement(xml: string): unknown {
@@ -76,11 +74,16 @@ function parseNestedElement(
 ): Record<string, unknown> {
   const children = parseXMLChildren(innerContent);
   if (!hasXMLAttributes(attrsString)) return { [tagName]: children };
+  const element: Record<string, unknown> = {
+    _attributes: parseXMLAttributes(attrsString),
+  };
+
+  for (const [key, value] of Object.entries(children)) {
+    element[key] = value;
+  }
+
   return {
-    [tagName]: {
-      _attributes: parseXMLAttributes(attrsString),
-      ...children,
-    },
+    [tagName]: element,
   };
 }
 
@@ -181,16 +184,23 @@ function mergeXMLElement(
   if (!hasExisting) return { ...result, [key]: value };
 
   const isArray = Array.isArray(existing);
-  if (isArray) return { ...result, [key]: [...existing, value] };
+  if (isArray) {
+    const values = (existing as unknown[]).slice();
+    values[values.length] = value;
+    return { ...result, [key]: values };
+  }
 
   return { ...result, [key]: [existing, value] };
 }
 
 function mergeXMLElementObject(result: Record<string, unknown>, parsed: object): Record<string, unknown> {
-  return Object.entries(parsed).reduce(
-    (nextResult, [key, value]) => mergeXMLElement(nextResult, key, value),
-    result,
-  );
+  let nextResult = result;
+
+  for (const [key, value] of Object.entries(parsed)) {
+    nextResult = mergeXMLElement(nextResult, key, value);
+  }
+
+  return nextResult;
 }
 
 export function parseXMLChildren(content: string): Record<string, unknown> {

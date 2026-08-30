@@ -21,14 +21,44 @@ const escapeCsvValue = (value: unknown): string => {
 const formatCsvRecord = (keys: string[], item: Record<string, unknown>): string =>
   keys.map((key) => escapeCsvValue(item[key])).join(",");
 
-const getColumnWidth = (data: Record<string, unknown>[], key: string): number =>
-  Math.max(key.length, ...data.map((item) => String(item[key] ?? "").length));
+const getColumnWidth = (data: Record<string, unknown>[], key: string): number => {
+  let width = key.length;
+
+  for (const item of data) {
+    const valueWidth = String(item[key] ?? "").length;
+    if (valueWidth > width) width = valueWidth;
+  }
+
+  return width;
+};
 
 const formatTableRow = (
   keys: string[],
   item: Record<string, unknown>,
   widths: Record<string, number>,
 ): string => keys.map((key) => String(item[key] ?? "").padEnd(widths[key])).join(" | ");
+
+const hasTableKey = (keys: string[], key: string): boolean => {
+  for (const existingKey of keys) {
+    if (existingKey === key) return true;
+  }
+
+  return false;
+};
+
+const appendTableKeys = (keys: string[], item: Record<string, unknown>): void => {
+  for (const key of Object.keys(item)) {
+    if (!hasTableKey(keys, key)) keys[keys.length] = key;
+  }
+};
+
+const firstArrayItem = (data: unknown[]): unknown => {
+  for (const item of data) {
+    return item;
+  }
+
+  return undefined;
+};
 
 const formatYamlString = (value: string, spaces: string): string => {
   const hasSpecialCharacters = /[\n"']/.test(value);
@@ -149,9 +179,9 @@ export class Formatter {
       return "";
     }
 
-    if (isObjectRecord(data[0])) {
+    if (isObjectRecord(firstArrayItem(data))) {
       const records = data as Record<string, unknown>[];
-      const keys = Object.keys(data[0]);
+      const keys = Object.keys(firstArrayItem(data) as Record<string, unknown>);
       const headers = keys.join(",");
       const rows = records.map((item) => formatCsvRecord(keys, item));
       return [headers, ...rows].join("\n");
@@ -168,7 +198,7 @@ export class Formatter {
       return "(empty array)";
     }
 
-    if (isObjectRecord(data[0])) {
+    if (isObjectRecord(firstArrayItem(data))) {
       return this.formatObjectTable(data as Record<string, unknown>[]);
     }
     return data
@@ -177,7 +207,7 @@ export class Formatter {
   }
 
   private formatObjectTable(data: Record<string, unknown>[]): string {
-    const keys = [...new Set(data.flatMap((item) => Object.keys(item)))];
+    const keys = this.getTableKeys(data);
 
     const widths = Object.fromEntries(keys.map((key) => [key, getColumnWidth(data, key)]));
     const header = keys.map((key) => key.padEnd(widths[key])).join(" | ");
@@ -185,5 +215,15 @@ export class Formatter {
     const rows = data.map((item) => formatTableRow(keys, item, widths));
 
     return [header, separator, ...rows].join("\n");
+  }
+
+  private getTableKeys(data: Record<string, unknown>[]): string[] {
+    const keys: string[] = [];
+
+    for (const item of data) {
+      appendTableKeys(keys, item);
+    }
+
+    return keys;
   }
 }

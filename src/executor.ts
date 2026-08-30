@@ -8,6 +8,16 @@ import type { CliOptions } from "./types.ts";
 
 type StrictnessOptions = Pick<CliOptions, "strict">;
 
+const isStrictMode = (options: StrictnessOptions): boolean => {
+  if (!("strict" in options)) return false;
+  return Boolean(options.strict);
+};
+
+const getExpression = (options: CliOptions): string | undefined => {
+  if (!("expression" in options)) return undefined;
+  return options.expression;
+};
+
 export const evaluateExpression = (
   expression: string,
   data: unknown,
@@ -18,7 +28,7 @@ export const evaluateExpression = (
   const tokens = lexer.tokenize();
   const parser = new ExpressionParser(tokens);
   const ast = parser.parse();
-  const navigator = new JsonNavigator({ strict: options.strict });
+  const navigator = new JsonNavigator({ strict: isStrictMode(options) });
 
   return navigator.evaluate(ast, data);
 };
@@ -36,11 +46,13 @@ export const evaluateAndFormatExpression = (
 };
 
 export const processData = (data: unknown, options: CliOptions): string => {
-  if (!options.expression) {
+  const expression = getExpression(options);
+
+  if (!expression) {
     return formatResult(data, options);
   }
 
-  return evaluateAndFormatExpression(options.expression, data, options);
+  return evaluateAndFormatExpression(expression, data, options);
 };
 
 export const processContent = (input: string, options: CliOptions = {}): string => {

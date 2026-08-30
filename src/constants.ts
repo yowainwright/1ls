@@ -1,4 +1,3 @@
-import type { DataFormat } from "./formats/types.ts";
 import type { ShortcutMapping } from "./shortcuts/index.ts";
 
 export const VALID_OUTPUT_FORMATS = ["json", "yaml", "csv", "table"] as const;
@@ -16,7 +15,7 @@ export const VALID_INPUT_FORMATS = [
   "ndjson",
   "lines",
   "text",
-] as const satisfies readonly DataFormat[];
+] as const;
 
 export const SHORTCUTS: ShortcutMapping[] = [
   { short: ".mp", full: ".map", description: "Transform each element", type: "array" },

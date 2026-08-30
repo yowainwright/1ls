@@ -1,39 +1,11 @@
-#!/usr/bin/env node
-
-import { parseArgs } from "./parser.ts";
 import { showHelp } from "./help.ts";
-import { processInput, readStdin } from "./stream.ts";
-import { readFile, listFiles, grep } from "../fs/index.ts";
-import { Formatter, warning, info } from "../formatter/index.ts";
+import { readFile } from "../fs/io.ts";
 import { expandShortcuts, shortenExpression, getShortcutHelp } from "../shortcuts/index.ts";
-import { detectFormat } from "../formats/index.ts";
+import { detectFormat } from "../formats/detect.ts";
 import type { CliOptions } from "../types.ts";
 import { VERSION } from "../version.ts";
 import { processData } from "../executor.ts";
-import { resolveReadFileInvocation } from "./read-file.ts";
-
-export const getDaemon = () => import("../tooltip/index.ts");
-
-export function handleGrepOperation(options: CliOptions): void {
-  const results = grep(options.grep!, options.find!, {
-    recursive: options.recursive,
-    ignoreCase: options.ignoreCase,
-    showLineNumbers: options.showLineNumbers,
-  });
-
-  if (results.length === 0) {
-    console.log(warning("No matches found"));
-    return;
-  }
-
-  for (const result of results) {
-    const location = `${info(result.file)}:${result.line}:${result.column}`;
-    const output = options.showLineNumbers
-      ? `${location}: ${result.match}`
-      : `${info(result.file)}: ${result.match}`;
-    console.log(output);
-  }
-}
+import { parseArgs, processInput, readStdin, resolveReadFileInvocation } from "./utils.ts";
 
 const readDataFile = (filePath: string, options: CliOptions): unknown => {
   if (options.inputFormat) {
@@ -96,16 +68,6 @@ const handleHelpFlags = (options: CliOptions): boolean => {
   return false;
 };
 
-const handleDaemon = async (options: CliOptions): Promise<boolean> => {
-  if (options.daemon) {
-    const { startDaemon } = await getDaemon();
-    await startDaemon();
-    return true;
-  }
-
-  return false;
-};
-
 const handleExpressionTools = (options: CliOptions): boolean => {
   if (options.shorten) {
     console.log(shortenExpression(options.shorten));
@@ -135,18 +97,6 @@ const handleDetect = async (options: CliOptions): Promise<boolean> => {
   process.exit(0);
 };
 
-const handleList = (options: CliOptions): boolean => {
-  if (!options.list) return false;
-
-  const files = listFiles(options.list, {
-    recursive: options.recursive,
-    extensions: options.extensions,
-    maxDepth: options.maxDepth,
-  });
-  console.log(new Formatter(options).format(files));
-  return true;
-};
-
 const handleReadFile = (options: CliOptions, args: string[]): boolean => {
   if (!options.readFile) return false;
 
@@ -157,34 +107,13 @@ const handleReadFile = (options: CliOptions, args: string[]): boolean => {
   return true;
 };
 
-const handleGrep = (options: CliOptions): boolean => {
-  const hasGrepQuery = options.grep !== undefined;
-  const hasFindPattern = options.find !== undefined;
-  const hasGrepOperation = hasGrepQuery && hasFindPattern;
-  if (!hasGrepOperation) return false;
-
-  handleGrepOperation(options);
-  return true;
-};
-
 export async function main(args: string[]): Promise<void> {
   const options = parseArgs(args);
   if (handleHelpFlags(options)) return;
-  if (await handleDaemon(options)) return;
   if (handleExpressionTools(options)) return;
   if (await handleDetect(options)) return;
-  if (handleList(options)) return;
-  if (handleGrep(options)) return;
   if (handleReadFile(options, args)) return;
 
   const jsonData = await loadData(options, args);
   processExpression(options, jsonData);
-}
-
-if (import.meta.main) {
-  main(process.argv.slice(2)).catch((err: unknown) => {
-    const message = err instanceof Error ? err.message : String(err);
-    console.error("Error:", message);
-    process.exit(1);
-  });
 }

@@ -1,8 +1,8 @@
 import { describe, test } from "node:test";
 import assert from "node:assert/strict";
-import { resolveReadFileInvocation } from "../../../src/cli/read-file.ts";
+import { resolveReadFileInvocation } from "../../../src/cli/utils.ts";
 
-describe("cli/read-file", () => {
+describe("cli utils readFile", () => {
   test("resolves readFile command with explicit expression", () => {
     assert.deepStrictEqual(resolveReadFileInvocation(["readFile", "data.json", ".name"]), {
       filePath: "data.json",

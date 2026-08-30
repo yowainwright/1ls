@@ -84,27 +84,27 @@ export type ASTNode =
 export interface PropertyAccessNode {
   type: "PropertyAccess";
   property: string;
-  object?: ASTNode;
+  object: ASTNode | null;
 }
 
 export interface IndexAccessNode {
   type: "IndexAccess";
   index: number;
-  object?: ASTNode;
+  object: ASTNode | null;
 }
 
 export interface SliceAccessNode {
   type: "SliceAccess";
   start?: number;
   end?: number;
-  object?: ASTNode;
+  object: ASTNode | null;
 }
 
 export interface MethodCallNode {
   type: "MethodCall";
   method: string;
   args: ASTNode[];
-  object?: ASTNode;
+  object: ASTNode | null;
 }
 
 export type ObjectOperationType = "keys" | "values" | "entries" | "length";
@@ -112,12 +112,12 @@ export type ObjectOperationType = "keys" | "values" | "entries" | "length";
 export interface ObjectOperationNode {
   type: "ObjectOperation";
   operation: ObjectOperationType;
-  object?: ASTNode;
+  object: ASTNode | null;
 }
 
 export interface ArraySpreadNode {
   type: "ArraySpread";
-  object?: ASTNode;
+  object: ASTNode | null;
 }
 
 export interface LiteralNode {
@@ -133,18 +133,18 @@ export interface ArrowFunctionNode {
 
 export interface RootNode {
   type: "Root";
-  expression?: ASTNode;
+  expression: ASTNode | null;
 }
 
 export interface RecursiveDescentNode {
   type: "RecursiveDescent";
-  object?: ASTNode;
+  object: ASTNode | null;
 }
 
 export interface OptionalAccessNode {
   type: "OptionalAccess";
   expression: ASTNode;
-  object?: ASTNode;
+  object: ASTNode | null;
 }
 
 export interface NullCoalescingNode {

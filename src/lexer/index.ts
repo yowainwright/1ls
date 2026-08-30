@@ -1,6 +1,6 @@
 import type { Token } from "../types.ts";
 import { TokenType } from "../types.ts";
-import { SINGLE_CHAR_TOKENS, OPERATOR_CHARS, WHITESPACE_CHARS } from "./constants.ts";
+import { OPERATOR_CHARS, WHITESPACE_CHARS } from "./constants.ts";
 
 export function getContextSnippet(input: string, position: number, length = 20): string {
   const start = Math.max(0, position - length);
@@ -77,7 +77,7 @@ export class Lexer {
       return createToken(TokenType.QUESTION, "?", tokenStartPosition);
     }
 
-    const tokenType = SINGLE_CHAR_TOKENS[this.current];
+    const tokenType = this.getSingleCharTokenType(this.current);
     if (tokenType) {
       const token = createToken(tokenType, this.current, tokenStartPosition);
       this.advance();
@@ -91,6 +91,19 @@ export class Lexer {
       return createToken(TokenType.ARROW, "=>", tokenStartPosition);
     }
 
+    return null;
+  }
+
+  private getSingleCharTokenType(char: string): TokenType | null {
+    if (char === ".") return TokenType.DOT;
+    if (char === "[") return TokenType.LEFT_BRACKET;
+    if (char === "]") return TokenType.RIGHT_BRACKET;
+    if (char === "{") return TokenType.LEFT_BRACE;
+    if (char === "}") return TokenType.RIGHT_BRACE;
+    if (char === "(") return TokenType.LEFT_PAREN;
+    if (char === ")") return TokenType.RIGHT_PAREN;
+    if (char === ":") return TokenType.COLON;
+    if (char === ",") return TokenType.COMMA;
     return null;
   }
 
@@ -205,7 +218,7 @@ export class Lexer {
   }
 
   private skipWhitespace(): void {
-    while ((WHITESPACE_CHARS as readonly string[]).includes(this.current)) {
+    while (this.isWhitespace(this.current)) {
       this.advance();
     }
   }
@@ -218,6 +231,13 @@ export class Lexer {
   private peek(): string {
     const nextPosition = this.position + 1;
     return this.input[nextPosition] || "";
+  }
+
+  private isWhitespace(char: string): boolean {
+    if (char === WHITESPACE_CHARS[0]) return true;
+    if (char === WHITESPACE_CHARS[1]) return true;
+    if (char === WHITESPACE_CHARS[2]) return true;
+    return char === WHITESPACE_CHARS[3];
   }
 
   private isDigit(char: string): boolean {

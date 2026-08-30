@@ -1,4 +1,4 @@
-export const EMPTY_SYMBOL = Symbol("empty");
+export const EMPTY_SYMBOL = "__1ls_empty__";
 
 export const BUILTIN_FUNCTIONS = {
   PIPE: "pipe",

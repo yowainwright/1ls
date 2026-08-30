@@ -1,6 +1,11 @@
 import type { ENVParseState } from "./types.ts";
 import { parseBooleanValue, parseNullValue, tryParseNumber } from "./utils.ts";
 
+const isENVQuote = (char: string): boolean => {
+  if (char === '"') return true;
+  return char === "'";
+};
+
 export function parseENVValue(value: string): unknown {
   const trimmed = value.trim();
 
@@ -35,7 +40,7 @@ function stripENVComments(line: string): string {
   const hasQuotedContent = insideQuotes !== null;
 
   if (hasQuotedContent) {
-    const quoteCount = (beforeComment.match(/["']/g) || []).length;
+    const quoteCount = countENVQuotes(beforeComment);
     const isInsideQuote = quoteCount % 2 !== 0;
 
     if (isInsideQuote) {
@@ -45,6 +50,17 @@ function stripENVComments(line: string): string {
 
   return beforeComment;
 }
+
+const countENVQuotes = (line: string): number => {
+  let count = 0;
+
+  for (let index = 0; index < line.length; index++) {
+    const char = line[index];
+    if (isENVQuote(char)) count++;
+  }
+
+  return count;
+};
 
 function processENVLine(state: ENVParseState, line: string): ENVParseState {
   const withoutComments = stripENVComments(line);

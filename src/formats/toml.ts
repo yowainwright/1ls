@@ -1,5 +1,10 @@
 import { TOML } from "./constants.ts";
 
+const isTOMLQuote = (char: string): boolean => {
+  if (char === '"') return true;
+  return char === "'";
+};
+
 export function parseTOMLValue(value: string): unknown {
   const hasDoubleQuotes = value.startsWith('"') && value.endsWith('"');
   if (hasDoubleQuotes) return value.slice(1, -1).replace(/\\"/g, '"');
@@ -22,7 +27,13 @@ function parseTOMLStructuredValue(value: string): unknown {
   const isArray = value.startsWith("[") && value.endsWith("]");
   if (isArray) {
     const items = value.slice(1, -1).split(",");
-    return items.map((item) => parseTOMLValue(item.trim()));
+    const values: unknown[] = [];
+
+    for (let index = 0; index < items.length; index++) {
+      values[index] = parseTOMLValue(items[index].trim());
+    }
+
+    return values;
   }
 
   const isInlineTable = value.startsWith("{") && value.endsWith("}");
@@ -70,10 +81,21 @@ const stripTOMLComment = (line: string): string => {
   const commentIdx = line.indexOf("#");
   if (commentIdx < 0) return line;
   const beforeComment = line.substring(0, commentIdx);
-  const quoteCount = (beforeComment.match(/["']/g) || []).length;
+  const quoteCount = countTOMLQuotes(beforeComment);
   const isOutsideQuotes = quoteCount % 2 === 0;
   if (!isOutsideQuotes) return line;
   return beforeComment;
+};
+
+const countTOMLQuotes = (line: string): number => {
+  let count = 0;
+
+  for (let index = 0; index < line.length; index++) {
+    const char = line[index];
+    if (isTOMLQuote(char)) count++;
+  }
+
+  return count;
 };
 
 const parseTOMLLine = (

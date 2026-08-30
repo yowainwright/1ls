@@ -24,18 +24,19 @@ export const COLOR_PATTERNS = [
 ];
 
 const hasColor = (): boolean => {
-  const processLike = (globalThis as { process?: { env?: Record<string, string | undefined> } })
-    .process;
-  return !processLike?.env?.NO_COLOR;
+  return !process.env.NO_COLOR;
 };
 
 export function colorize(json: string): string {
   if (!hasColor()) return json;
 
-  return COLOR_PATTERNS.reduce(
-    (result, { regex, replacement }) => result.replace(regex, replacement),
-    json,
-  );
+  let result = json;
+
+  for (const pattern of COLOR_PATTERNS) {
+    result = result.replace(pattern.regex, pattern.replacement);
+  }
+
+  return result;
 }
 
 export function error(message: string): string {

@@ -1,9 +1,23 @@
 import { YAML } from "../constants.ts";
 import { parseBooleanValue, parseNullValue } from "../utils.ts";
 
+const isYAMLQuote = (char: string): boolean => {
+  if (char === '"') return true;
+  return char === "'";
+};
+
 export const getIndent = (line: string): number => line.length - line.trimStart().length;
 
-export const countQuotes = (text: string): number => (text.match(/["']/g) || []).length;
+export const countQuotes = (text: string): number => {
+  let count = 0;
+
+  for (let index = 0; index < text.length; index++) {
+    const char = text[index];
+    if (isYAMLQuote(char)) count++;
+  }
+
+  return count;
+};
 
 export const isCommentOutsideQuotes = (line: string, commentIdx: number): boolean => {
   const beforeComment = line.substring(0, commentIdx);
@@ -60,6 +74,14 @@ export const parseKeyValue = (line: string): { key: string; value: string } | nu
   };
 };
 
+const hasYAMLKeySeparator = (line: string): boolean => {
+  for (let index = 0; index < line.length; index++) {
+    if (line[index] === ":") return true;
+  }
+
+  return false;
+};
+
 export const extractAnchorFromValue = (
   value: string,
 ): { anchorName: string | null; cleanValue: string } => {
@@ -113,10 +135,14 @@ const parseInlineArray = (content: string): unknown[] | null => {
   const isInlineArray = content.startsWith("[") && content.endsWith("]");
   if (!isInlineArray) return null;
 
-  return content
-    .slice(1, -1)
-    .split(",")
-    .map((v) => parseYAMLValue(v.trim()));
+  const items = content.slice(1, -1).split(",");
+  const values: unknown[] = [];
+
+  for (let index = 0; index < items.length; index++) {
+    values[index] = parseYAMLValue(items[index].trim());
+  }
+
+  return values;
 };
 
 const parseInlineObjectPair = (pair: string): readonly [string, string] | null => {
@@ -133,13 +159,17 @@ const parseInlineObject = (content: string): Record<string, unknown> | null => {
   if (!isInlineObject) return null;
 
   const pairs = content.slice(1, -1).split(",");
-  return pairs.reduce<Record<string, unknown>>((object, pair) => {
+  const object: Record<string, unknown> = {};
+
+  for (const pair of pairs) {
     const parsedPair = parseInlineObjectPair(pair);
-    if (!parsedPair) return object;
+    if (!parsedPair) continue;
 
     const [key, value] = parsedPair;
-    return { ...object, [key]: parseYAMLValue(value) };
-  }, {});
+    object[key] = parseYAMLValue(value);
+  }
+
+  return object;
 };
 
 export const parseYAMLValue = (value: string): unknown => {
@@ -170,25 +200,26 @@ export const parseYAMLValue = (value: string): unknown => {
   return content;
 };
 
-export const findPreviousKey = (lines: string[], currentIndex: number): string | null =>
-  Array.from({ length: currentIndex }, (_, i) => currentIndex - 1 - i).reduce<string | null>(
-    (found, i) => {
-      if (found !== null) return found;
+export const findPreviousKey = (lines: string[], currentIndex: number): string | null => {
+  for (let index = currentIndex - 1; index >= 0; index--) {
+    const line = stripComment(lines[index]);
+    const trimmed = line.trim();
 
-      const line = stripComment(lines[i]);
-      const trimmed = line.trim();
+    const hasContent = Boolean(trimmed);
+    const isListItem = trimmed.startsWith("-");
+    const hasColon = hasYAMLKeySeparator(trimmed);
+    const hasKeyLine = hasContent && !isListItem && hasColon;
+    if (!hasKeyLine) continue;
 
-      const hasKeyLine = Boolean(trimmed) && !trimmed.startsWith("-") && trimmed.includes(":");
-      if (!hasKeyLine) return null;
+    const parsed = parseKeyValue(trimmed);
+    if (!parsed) continue;
 
-      const parsed = parseKeyValue(trimmed);
-      if (!parsed) return null;
+    const hasEmptyOrMultilineValue = !parsed.value || isMultilineIndicator(parsed.value);
+    if (hasEmptyOrMultilineValue) return parsed.key;
+  }
 
-      const hasEmptyOrMultilineValue = !parsed.value || isMultilineIndicator(parsed.value);
-      return hasEmptyOrMultilineValue ? parsed.key : null;
-    },
-    null,
-  );
+  return null;
+};
 
 interface MultilineState {
   contentLines: string[];
@@ -217,11 +248,15 @@ const collectMultilineLine = (
 };
 
 const trimTrailingBlankLines = (lines: string[]): string[] =>
-  lines.reduceRight<string[]>((acc, line) => {
-    const shouldDrop = acc.length === 0 && line === "";
-    if (shouldDrop) return acc;
-    return [line, ...acc];
-  }, []);
+  lines.slice(0, findLastMultilineContentIndex(lines) + 1);
+
+const findLastMultilineContentIndex = (lines: string[]): number => {
+  for (let index = lines.length - 1; index >= 0; index--) {
+    if (lines[index] !== "") return index;
+  }
+
+  return -1;
+};
 
 export const collectMultilineContent = (
   lines: string[],

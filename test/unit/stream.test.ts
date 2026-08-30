@@ -24,7 +24,7 @@ describe("stream utilities", () => {
       writable: true,
     });
 
-    const { processInput } = await import("../../src/cli/stream.ts");
+    const { processInput } = await import("../../src/cli/utils.ts");
     const result = await processInput();
     assert.deepStrictEqual(result, { foo: "bar", num: 42 });
   });
@@ -37,7 +37,7 @@ describe("stream utilities", () => {
       writable: true,
     });
 
-    const { processInput } = await import("../../src/cli/stream.ts");
+    const { processInput } = await import("../../src/cli/utils.ts");
     const result = await processInput();
     assert.strictEqual(result, null);
   });
@@ -51,7 +51,7 @@ describe("stream utilities", () => {
       writable: true,
     });
 
-    const { processInput } = await import("../../src/cli/stream.ts");
+    const { processInput } = await import("../../src/cli/utils.ts");
     const result = await processInput("yaml");
     assert.deepStrictEqual(result, { name: "test", value: 42 });
   });
@@ -65,7 +65,7 @@ describe("stream utilities", () => {
       writable: true,
     });
 
-    const { processInput } = await import("../../src/cli/stream.ts");
+    const { processInput } = await import("../../src/cli/utils.ts");
     const result = await processInput();
     assert.deepStrictEqual(result, { auto: "detect" });
   });
@@ -85,7 +85,7 @@ describe("stream utilities", () => {
       writable: true,
     });
 
-    const { processInput } = await import("../../src/cli/stream.ts");
+    const { processInput } = await import("../../src/cli/utils.ts");
     const result = await processInput();
     assert.deepStrictEqual(result, [1, 2, 3]);
   });

@@ -1,35 +1,32 @@
 import { mock, describe, test, beforeEach, afterEach } from "node:test";
 import assert from "node:assert/strict";
-import { Logger, createLogger, LogLevel } from "../../src/logger.ts";
+import { Logger, createLogger, LogLevel } from "../../src/observability/index.ts";
 
 describe("Logger", () => {
   let consoleErrorSpy: ReturnType<typeof mock.method>;
   let consoleWarnSpy: ReturnType<typeof mock.method>;
-  let consoleLogSpy: ReturnType<typeof mock.method>;
 
   beforeEach(() => {
     consoleErrorSpy = mock.method(console, "error", () => {});
     consoleWarnSpy = mock.method(console, "warn", () => {});
-    consoleLogSpy = mock.method(console, "log", () => {});
   });
 
   afterEach(() => {
     consoleErrorSpy.mock.restore();
     consoleWarnSpy.mock.restore();
-    consoleLogSpy.mock.restore();
   });
 
   describe("constructor", () => {
     test("creates logger with default INFO level", () => {
       const logger = new Logger("test");
       logger.info("test message");
-      assert.ok(consoleLogSpy.mock.calls.length > 0);
+      assert.ok(consoleErrorSpy.mock.calls.length > 0);
     });
 
     test("creates logger with custom level", () => {
       const logger = new Logger("test", LogLevel.ERROR);
       logger.info("test message");
-      assert.strictEqual(consoleLogSpy.mock.calls.length, 0);
+      assert.strictEqual(consoleErrorSpy.mock.calls.length, 0);
     });
   });
 
@@ -37,11 +34,11 @@ describe("Logger", () => {
     test("changes log level", () => {
       const logger = new Logger("test", LogLevel.ERROR);
       logger.info("should not log");
-      assert.strictEqual(consoleLogSpy.mock.calls.length, 0);
+      assert.strictEqual(consoleErrorSpy.mock.calls.length, 0);
 
       logger.setLevel(LogLevel.INFO);
       logger.info("should log");
-      assert.ok(consoleLogSpy.mock.calls.length > 0);
+      assert.ok(consoleErrorSpy.mock.calls.length > 0);
     });
   });
 
@@ -106,8 +103,8 @@ describe("Logger", () => {
       const logger = new Logger("test", LogLevel.INFO);
       logger.info("info message");
 
-      assert.ok(consoleLogSpy.mock.calls.length > 0);
-      const call = String(consoleLogSpy.mock.calls[0]?.arguments[0]);
+      assert.ok(consoleErrorSpy.mock.calls.length > 0);
+      const call = String(consoleErrorSpy.mock.calls[0]?.arguments[0]);
       assert.ok(call.includes("INFO"));
       assert.ok(call.includes("test"));
       assert.ok(call.includes("info message"));
@@ -116,7 +113,7 @@ describe("Logger", () => {
     test("does not log when level is too low", () => {
       const logger = new Logger("test", LogLevel.WARN);
       logger.info("info message");
-      assert.strictEqual(consoleLogSpy.mock.calls.length, 0);
+      assert.strictEqual(consoleErrorSpy.mock.calls.length, 0);
     });
   });
 
@@ -125,8 +122,8 @@ describe("Logger", () => {
       const logger = new Logger("test", LogLevel.DEBUG);
       logger.debug("debug message");
 
-      assert.ok(consoleLogSpy.mock.calls.length > 0);
-      const call = String(consoleLogSpy.mock.calls[0]?.arguments[0]);
+      assert.ok(consoleErrorSpy.mock.calls.length > 0);
+      const call = String(consoleErrorSpy.mock.calls[0]?.arguments[0]);
       assert.ok(call.includes("DEBUG"));
       assert.ok(call.includes("test"));
       assert.ok(call.includes("debug message"));
@@ -137,8 +134,8 @@ describe("Logger", () => {
       const data = { foo: "bar", num: 42 };
       logger.debug("debug message", data);
 
-      assert.strictEqual(consoleLogSpy.mock.calls.length, 2);
-      const dataCall = String(consoleLogSpy.mock.calls[1]?.arguments[0]);
+      assert.strictEqual(consoleErrorSpy.mock.calls.length, 2);
+      const dataCall = String(consoleErrorSpy.mock.calls[1]?.arguments[0]);
       assert.ok(dataCall.includes("foo"));
       assert.ok(dataCall.includes("bar"));
     });
@@ -147,20 +144,20 @@ describe("Logger", () => {
       const logger = new Logger("test", LogLevel.DEBUG);
       logger.debug("debug message", undefined);
 
-      assert.strictEqual(consoleLogSpy.mock.calls.length, 1);
+      assert.strictEqual(consoleErrorSpy.mock.calls.length, 1);
     });
 
     test("logs data when explicitly passed as empty object", () => {
       const logger = new Logger("test", LogLevel.DEBUG);
       logger.debug("debug message", {});
 
-      assert.strictEqual(consoleLogSpy.mock.calls.length, 2);
+      assert.strictEqual(consoleErrorSpy.mock.calls.length, 2);
     });
 
     test("does not log when level is too low", () => {
       const logger = new Logger("test", LogLevel.INFO);
       logger.debug("debug message");
-      assert.strictEqual(consoleLogSpy.mock.calls.length, 0);
+      assert.strictEqual(consoleErrorSpy.mock.calls.length, 0);
     });
   });
 
@@ -169,7 +166,7 @@ describe("Logger", () => {
       const logger = new Logger("test", LogLevel.INFO);
       logger.info("test");
 
-      const call = String(consoleLogSpy.mock.calls[0]?.arguments[0]);
+      const call = String(consoleErrorSpy.mock.calls[0]?.arguments[0]);
       assert.match(call, /\[\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z\]/);
     });
 
@@ -177,7 +174,7 @@ describe("Logger", () => {
       const logger = new Logger("my-logger", LogLevel.INFO);
       logger.info("test");
 
-      const call = String(consoleLogSpy.mock.calls[0]?.arguments[0]);
+      const call = String(consoleErrorSpy.mock.calls[0]?.arguments[0]);
       assert.ok(call.includes("[my-logger]"));
     });
   });
@@ -186,7 +183,7 @@ describe("Logger", () => {
     test("creates logger with default level from environment", () => {
       const logger = createLogger("env-logger");
       logger.info("test message");
-      assert.ok(consoleLogSpy.mock.calls.length > 0);
+      assert.ok(consoleErrorSpy.mock.calls.length > 0);
     });
 
     test("respects LOG_LEVEL environment variable", () => {
@@ -196,7 +193,7 @@ describe("Logger", () => {
       try {
         const logger = createLogger("env-test");
         logger.info("should not log");
-        assert.strictEqual(consoleLogSpy.mock.calls.length, 0);
+        assert.strictEqual(consoleErrorSpy.mock.calls.length, 0);
       } finally {
         if (originalEnv) {
           process.env.LOG_LEVEL = originalEnv;
