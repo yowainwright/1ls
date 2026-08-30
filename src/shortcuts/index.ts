@@ -1,8 +1,8 @@
-import type { ShortcutMapping } from "./types.ts";
-import { REGEX_SPECIAL_CHARS, IMPLICIT_PROP, BUILTIN_SHORTCUTS, SHORTCUTS } from "./constants.ts";
+import type { ShortcutMapping } from "./types";
+import { REGEX_SPECIAL_CHARS, IMPLICIT_PROP, BUILTIN_SHORTCUTS, SHORTCUTS } from "./constants";
 
-export type { ShortcutMapping } from "./types.ts";
-export { BUILTIN_SHORTCUTS, SHORTCUTS } from "./constants.ts";
+export type { ShortcutMapping } from "./types";
+export { BUILTIN_SHORTCUTS, SHORTCUTS } from "./constants";
 
 export const escapeRegExp = (str: string): string => str.replace(REGEX_SPECIAL_CHARS, "\\$&");
 

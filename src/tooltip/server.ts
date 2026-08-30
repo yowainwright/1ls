@@ -1,6 +1,6 @@
 import { unlinkSync, existsSync, writeFileSync, statSync, readFileSync } from "fs";
 import { spawnSync } from "child_process";
-import { complete } from "../ac/index.ts";
+import { complete } from "../ac/index";
 import {
   openTty,
   closeTty,
@@ -11,14 +11,14 @@ import {
   selectPrev,
   getSelectedIndex,
   renderPreview,
-} from "./renderer.ts";
-import { FIFO_PATH, RESPONSE_PATH } from "./constants.ts";
-import type { DaemonConfig } from "./types.ts";
-import { readFile } from "../fs/index.ts";
-import { Lexer } from "../lexer/index.ts";
-import { ExpressionParser } from "../expression/index.ts";
-import { JsonNavigator } from "../navigator/json/index.ts";
-import { expandShortcuts } from "../shortcuts/index.ts";
+} from "./renderer";
+import { FIFO_PATH, RESPONSE_PATH } from "./constants";
+import type { DaemonConfig } from "./types";
+import { readFile } from "../fs/index";
+import { Lexer } from "../lexer/index";
+import { ExpressionParser } from "../expression/index";
+import { JsonNavigator } from "../navigator/json/index";
+import { expandShortcuts } from "../shortcuts/index";
 
 export interface Message {
   input: string;

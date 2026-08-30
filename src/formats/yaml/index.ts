@@ -1,4 +1,4 @@
-import type { StackFrame, AnchorStore } from "./types.ts";
+import type { StackFrame, AnchorStore } from "./types";
 import {
   getIndent,
   stripComment,
@@ -14,9 +14,9 @@ import {
   findPreviousKey,
   collectMultilineContent,
   formatMultilineValue,
-} from "./utils.ts";
+} from "./utils";
 
-export { parseYAMLValue, findPreviousKey } from "./utils.ts";
+export { parseYAMLValue, findPreviousKey } from "./utils";
 
 const resolveAliasString = (value: string, anchors: AnchorStore): unknown => {
   const alias = value.substring(1);

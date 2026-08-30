@@ -1,6 +1,6 @@
-import type { EvaluationContext } from "../types.ts";
-import type { EvaluatedFunction } from "../types.ts";
-import { OPERATORS } from "./constants.ts";
+import type { EvaluationContext } from "../types";
+import type { EvaluatedFunction } from "../types";
+import { OPERATORS } from "./constants";
 
 type JsonValue = null | string | number | boolean | JsonValue[] | { [key: string]: JsonValue };
 type JsonObject = { [key: string]: JsonValue };

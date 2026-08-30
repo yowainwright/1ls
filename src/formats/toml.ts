@@ -1,4 +1,4 @@
-import { TOML } from "./constants.ts";
+import { TOML } from "./constants";
 
 const isTOMLQuote = (char: string): boolean => {
   if (char === '"') return true;

@@ -2,7 +2,6 @@ import { describe, test } from "node:test";
 import assert from "node:assert/strict";
 import {
   COLORS,
-  Formatter,
   colorize,
   dim,
   error,
@@ -10,7 +9,8 @@ import {
   setColorEnabled,
   success,
   warning,
-} from "../../src/formatter/index.ts";
+} from "../../src/dx";
+import { Formatter } from "../../src/fmt";
 
 const stripAnsi = (value: string): string => value.replace(/\x1b\[[0-9;]*m/g, "");
 

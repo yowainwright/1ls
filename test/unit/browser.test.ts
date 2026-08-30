@@ -6,7 +6,7 @@ import {
   Lexer,
   ExpressionParser,
   JsonNavigator,
-} from "../../src/browser/index.ts";
+} from "../../src/browser/index";
 
 describe("Browser evaluate function", () => {
   describe("property access", () => {

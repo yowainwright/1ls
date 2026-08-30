@@ -1,5 +1,5 @@
-import type { DataFormat } from "./types.ts";
-import { DETECTION } from "./constants.ts";
+import type { DataFormat } from "./types";
+import { DETECTION } from "./constants";
 
 export function parseLines(input: string): string[] {
   return input

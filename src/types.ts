@@ -1,4 +1,4 @@
-import type { DataFormat } from "./formats/types.ts";
+import type { DataFormat } from "./formats/types";
 
 export type OutputFormat = "json" | "yaml" | "csv" | "table";
 

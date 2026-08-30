@@ -1,8 +1,8 @@
 import { statSync } from "node:fs";
-import { DEFAULT_SEARCH_EXTENSIONS } from "./constants.ts";
-import { readFile } from "./io.ts";
-import { listFiles } from "./walk.ts";
-import type { GrepOptions, GrepResult } from "./types.ts";
+import { DEFAULT_SEARCH_EXTENSIONS } from "./constants";
+import { readFile } from "./io";
+import { listFiles } from "./walk";
+import type { GrepOptions, GrepResult } from "./types";
 
 interface GrepContextInput {
   lines: readonly string[];

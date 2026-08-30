@@ -1,4 +1,4 @@
-import type { FileInfo } from "./types.ts";
+import type { FileInfo } from "./types";
 
 export const isHiddenFile = (entry: string): boolean => entry.startsWith(".");
 

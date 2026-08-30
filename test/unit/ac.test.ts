@@ -10,8 +10,8 @@ import {
   SCORE_PREFIX_MATCH,
   SCORE_CONTAINS_MATCH,
   SCORE_FUZZY_MATCH,
-} from "../../src/ac/index.ts";
-import type { Suggestion } from "../../src/ac/index.ts";
+} from "../../src/ac/index";
+import type { Suggestion } from "../../src/ac/index";
 
 describe("ac", () => {
   describe("fuzzySearch", () => {

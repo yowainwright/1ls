@@ -1,6 +1,6 @@
 import { openSync, writeSync, closeSync } from "fs";
-import type { Suggestion } from "../ac/index.ts";
-import { ANSI, CURSOR, BORDER } from "./constants.ts";
+import type { Suggestion } from "../ac/index";
+import { ANSI, CURSOR, BORDER } from "./constants";
 
 const TYPE_COLORS: Record<Suggestion["type"], string> = {
   method: ANSI.cyan,

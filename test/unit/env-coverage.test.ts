@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { parseENV } from "../../src/formats/env.ts";
+import { parseENV } from "../../src/formats/env";
 
 test("parseENV strips comments after closed quotes", () => {
   const input = 'KEY="value" # this is a comment';

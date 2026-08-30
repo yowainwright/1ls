@@ -9,10 +9,10 @@ import {
   getBuiltinCompletions,
   generateBashCompletions,
   generateZshCompletions,
-} from "../../../src/completions/index.ts";
-import { SHORTCUTS, BUILTIN_SHORTCUTS } from "../../../src/shortcuts/constants.ts";
-import { BUILTIN_FUNCTIONS } from "../../../src/navigator/builtins/constants.ts";
-import { VALID_INPUT_FORMATS, VALID_OUTPUT_FORMATS } from "../../../src/constants.ts";
+} from "../../../src/completions/index";
+import { SHORTCUTS, BUILTIN_SHORTCUTS } from "../../../src/shortcuts/constants";
+import { BUILTIN_FUNCTIONS } from "../../../src/navigator/builtins/constants";
+import { VALID_INPUT_FORMATS, VALID_OUTPUT_FORMATS } from "../../../src/constants";
 
 describe("getFlags", () => {
   it("returns long flags", () => {

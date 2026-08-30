@@ -1,9 +1,9 @@
-import { BUILTIN_FUNCTIONS } from "../navigator/builtins/constants.ts";
-import { BUILTIN_SHORTCUTS } from "../shortcuts/index.ts";
-import { parseInput } from "../formats/index.ts";
-import type { DataFormat } from "../formats/types.ts";
-import type { CliOptions, OutputFormat } from "../types.ts";
-import { DEFAULT_OPTIONS, VALID_INPUT_FORMATS, VALID_OUTPUT_FORMATS } from "./constants.ts";
+import { BUILTIN_FUNCTIONS } from "../navigator/builtins/constants";
+import { BUILTIN_SHORTCUTS } from "../shortcuts/index";
+import { parseInput } from "../formats/index";
+import type { DataFormat } from "../formats/types";
+import type { CliOptions, OutputFormat } from "../types";
+import { DEFAULT_OPTIONS, VALID_INPUT_FORMATS, VALID_OUTPUT_FORMATS } from "./constants";
 
 export interface ReadFileInvocation {
   filePath: string;

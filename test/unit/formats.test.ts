@@ -1,9 +1,9 @@
 import { describe, test } from "node:test";
 import assert from "node:assert/strict";
-import { detectFormat, parseLines, parseInput } from "../../src/formats/index.ts";
-import { parseCSV, parseTSV } from "../../src/formats/csv.ts";
-import { parseYAML } from "../../src/formats/yaml/index.ts";
-import { parseTOML } from "../../src/formats/toml.ts";
+import { detectFormat, parseLines, parseInput } from "../../src/formats/index";
+import { parseCSV, parseTSV } from "../../src/formats/csv";
+import { parseYAML } from "../../src/formats/yaml/index";
+import { parseTOML } from "../../src/formats/toml";
 
 describe("Format Detection", () => {
   test("detects JSON objects", () => {

@@ -1,14 +1,14 @@
-import type { DataFormat } from "./types.ts";
-import { detectFormat, parseLines } from "./detect.ts";
-import { parseCSV, parseTSV } from "./csv.ts";
-import { parseENV } from "./env.ts";
-import { parseINI } from "./ini.ts";
-import { parseJSON5 } from "./json5.ts";
-import { parseNDJSON } from "./ndjson.ts";
-import { parseProtobuf } from "./protobuf.ts";
-import { parseTOML } from "./toml.ts";
-import { parseXML } from "./xml.ts";
-import { parseYAML } from "./yaml/index.ts";
+import type { DataFormat } from "./types";
+import { detectFormat, parseLines } from "./detect";
+import { parseCSV, parseTSV } from "./csv";
+import { parseENV } from "./env";
+import { parseINI } from "./ini";
+import { parseJSON5 } from "./json5";
+import { parseNDJSON } from "./ndjson";
+import { parseProtobuf } from "./protobuf";
+import { parseTOML } from "./toml";
+import { parseXML } from "./xml";
+import { parseYAML } from "./yaml/index";
 
 const parseJsonWithPreview = (input: string): unknown => {
   try {

@@ -1,5 +1,5 @@
-import type { ENVParseState } from "./types.ts";
-import { parseBooleanValue, parseNullValue, tryParseNumber } from "./utils.ts";
+import type { ENVParseState } from "./types";
+import { parseBooleanValue, parseNullValue, tryParseNumber } from "./utils";
 
 const isENVQuote = (char: string): boolean => {
   if (char === '"') return true;

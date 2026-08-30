@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { parseYAML, findPreviousKey } from "../../src/formats/yaml/index.ts";
+import { parseYAML, findPreviousKey } from "../../src/formats/yaml/index";
 
 test("findPreviousKey finds key with empty value", () => {
   const lines = ["parent:", "  - child1"];

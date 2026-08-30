@@ -1,6 +1,6 @@
 import { describe, test } from "node:test";
 import assert from "node:assert/strict";
-import { parseINI, parseINIValue } from "../../src/formats/ini.ts";
+import { parseINI, parseINIValue } from "../../src/formats/ini";
 
 describe("INI Value Parser", () => {
   test("parses string values", () => {

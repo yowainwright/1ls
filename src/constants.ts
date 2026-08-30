@@ -1,4 +1,4 @@
-import type { ShortcutMapping } from "./shortcuts/index.ts";
+import type { ShortcutMapping } from "./shortcuts/index";
 
 export const VALID_OUTPUT_FORMATS = ["json", "yaml", "csv", "table"] as const;
 

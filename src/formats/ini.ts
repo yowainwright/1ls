@@ -1,5 +1,5 @@
-import { INI } from "./constants.ts";
-import type { INIParseState } from "./types.ts";
+import { INI } from "./constants";
+import type { INIParseState } from "./types";
 
 export function parseINIValue(value: string): unknown {
   const trimmed = value.trim();

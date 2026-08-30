@@ -1,6 +1,6 @@
 import { describe, test } from "node:test";
 import assert from "node:assert/strict";
-import { parseJSON5, stripJSON5Comments, normalizeJSON5 } from "../../src/formats/json5.ts";
+import { parseJSON5, stripJSON5Comments, normalizeJSON5 } from "../../src/formats/json5";
 
 describe("JSON5 Comment Stripper", () => {
   test("strips single-line comments", () => {

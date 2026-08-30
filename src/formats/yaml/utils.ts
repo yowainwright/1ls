@@ -1,5 +1,5 @@
-import { YAML } from "../constants.ts";
-import { parseBooleanValue, parseNullValue } from "../utils.ts";
+import { YAML } from "../constants";
+import { parseBooleanValue, parseNullValue } from "../utils";
 
 const isYAMLQuote = (char: string): boolean => {
   if (char === '"') return true;

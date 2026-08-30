@@ -1,4 +1,4 @@
-import type { OperatorFunction } from "../types.ts";
+import type { OperatorFunction } from "../types";
 
 const compareNumberValues = (left: number, right: number, operator: string): boolean => {
   if (operator === ">") return left > right;

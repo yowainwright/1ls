@@ -1,4 +1,4 @@
-import { parseBooleanValue, parseNullValue, tryParseNumber } from "./utils.ts";
+import { parseBooleanValue, parseNullValue, tryParseNumber } from "./utils";
 
 interface CSVLineState {
   fields: string[];

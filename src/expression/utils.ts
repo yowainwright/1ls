@@ -14,8 +14,8 @@ import type {
   RecursiveDescentNode,
   OptionalAccessNode,
   NullCoalescingNode,
-} from "../types.ts";
-import { BOOLEAN_LITERALS } from "./constants.ts";
+} from "../types";
+import { BOOLEAN_LITERALS } from "./constants";
 
 export const isBooleanLiteral = (value: string): value is (typeof BOOLEAN_LITERALS)[number] => {
   const normalizedValue = value.toLowerCase();

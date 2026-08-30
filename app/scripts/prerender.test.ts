@@ -12,7 +12,7 @@ import {
   toHtmlPath,
   writeRoutes,
   type RenderRoute,
-} from "./prerender.ts";
+} from "./prerender";
 
 const THIS_DIR = dirname(fileURLToPath(import.meta.url));
 const TEST_ROOT = join(THIS_DIR, "..", "..", "tmp", "app-prerender");

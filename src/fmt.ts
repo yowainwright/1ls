@@ -1,5 +1,5 @@
-import type { CliOptions } from "../types.ts";
-import { colorize } from "./colors.ts";
+import type { CliOptions } from "./types";
+import { colorize } from "./dx";
 
 const isObjectRecord = (value: unknown): value is Record<string, unknown> => {
   const isObjectValue = typeof value === "object" && value !== null;

@@ -1,6 +1,6 @@
-import type { Token } from "../types.ts";
-import { TokenType } from "../types.ts";
-import { OPERATOR_CHARS, WHITESPACE_CHARS } from "./constants.ts";
+import type { Token } from "../types";
+import { TokenType } from "../types";
+import { OPERATOR_CHARS, WHITESPACE_CHARS } from "./constants";
 
 export function getContextSnippet(input: string, position: number, length = 20): string {
   const start = Math.max(0, position - length);

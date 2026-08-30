@@ -1,14 +1,15 @@
-import { showHelp } from "./help.ts";
-import { readFile, listFiles, grep } from "../fs/index.ts";
-import { Formatter, warning, info, setColorEnabled } from "../formatter/index.ts";
-import { expandShortcuts, shortenExpression, getShortcutHelp } from "../shortcuts/index.ts";
-import { detectFormat } from "../formats/detect.ts";
-import type { CliOptions } from "../types.ts";
-import { VERSION } from "../version.ts";
-import { processData } from "../executor.ts";
-import { parseArgs, processInput, readStdin, resolveReadFileInvocation } from "./utils.ts";
+import { showHelp } from "./help";
+import { readFile, listFiles, grep } from "../fs/index";
+import { Formatter } from "../fmt";
+import { warning, info, setColorEnabled } from "../dx";
+import { expandShortcuts, shortenExpression, getShortcutHelp } from "../shortcuts/index";
+import { detectFormat } from "../formats/detect";
+import type { CliOptions } from "../types";
+import { VERSION } from "../version";
+import { processData } from "../executor";
+import { parseArgs, processInput, readStdin, resolveReadFileInvocation } from "./utils";
 
-export const getDaemon = () => import("../tooltip/index.ts");
+export const getDaemon = () => import("../tooltip/index");
 
 export function handleGrepOperation(options: CliOptions): void {
   const results = grep(options.grep!, options.find!, {

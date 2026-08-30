@@ -2,7 +2,7 @@ import { afterEach, describe, test } from "node:test";
 import assert from "node:assert/strict";
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync } from "fs";
 import { join } from "path";
-import { BORDER } from "../../../src/tooltip/constants.ts";
+import { BORDER } from "../../../src/tooltip/constants";
 import {
   closeTty,
   getSelectedIndex,
@@ -11,7 +11,7 @@ import {
   resetSelection,
   selectNext,
   selectPrev,
-} from "../../../src/tooltip/renderer.ts";
+} from "../../../src/tooltip/renderer";
 
 afterEach(() => {
   closeTty();

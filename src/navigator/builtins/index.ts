@@ -1,5 +1,5 @@
-import type { BuiltinFn, KeyExtractor, Predicate } from "./types.ts";
-import { EMPTY_SYMBOL, BUILTIN_FUNCTIONS } from "./constants.ts";
+import type { BuiltinFn, KeyExtractor, Predicate } from "./types";
+import { EMPTY_SYMBOL, BUILTIN_FUNCTIONS } from "./constants";
 import {
   isArray,
   isObject,
@@ -13,10 +13,10 @@ import {
   setValueAtPath,
   collectAllValues,
   collectPaths,
-} from "./utils.ts";
+} from "./utils";
 
-export { EMPTY_SYMBOL, BUILTIN_FUNCTIONS } from "./constants.ts";
-export type { BuiltinFn, KeyExtractor, Predicate } from "./types.ts";
+export { EMPTY_SYMBOL, BUILTIN_FUNCTIONS } from "./constants";
+export type { BuiltinFn, KeyExtractor, Predicate } from "./types";
 
 const hasValue = (values: unknown[], value: unknown): boolean => {
   for (const existingValue of values) {

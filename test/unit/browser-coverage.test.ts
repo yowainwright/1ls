@@ -15,7 +15,7 @@ import {
   parseInput,
   processContent,
   processInput,
-} from "../../src/browser/index.ts";
+} from "../../src/browser/index";
 
 test("browser evaluate works with data and expression", () => {
   const data = [1, 2, 3];

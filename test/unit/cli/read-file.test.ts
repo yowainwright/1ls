@@ -1,6 +1,6 @@
 import { describe, test } from "node:test";
 import assert from "node:assert/strict";
-import { parseArgs, resolveReadFileInvocation } from "../../../src/cli/utils.ts";
+import { parseArgs, resolveReadFileInvocation } from "../../../src/cli/utils";
 
 describe("cli utils parseArgs", () => {
   test("parses long boolean flags", () => {

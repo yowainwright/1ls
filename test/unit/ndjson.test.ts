@@ -1,6 +1,6 @@
 import { describe, test } from "node:test";
 import assert from "node:assert/strict";
-import { parseNDJSON } from "../../src/formats/ndjson.ts";
+import { parseNDJSON } from "../../src/formats/ndjson";
 
 describe("parseNDJSON", () => {
   test("parses newline-delimited JSON objects", () => {

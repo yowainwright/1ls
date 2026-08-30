@@ -1,6 +1,6 @@
-import type { CompletionResult } from "./types.ts";
-import { ALL_SUGGESTIONS, MAX_SUGGESTIONS } from "./constants.ts";
-import { scoreMatch, extractPartialMethod } from "./utils.ts";
+import type { CompletionResult } from "./types";
+import { ALL_SUGGESTIONS, MAX_SUGGESTIONS } from "./constants";
+import { scoreMatch, extractPartialMethod } from "./utils";
 
 const EMPTY_RESULT: CompletionResult = {
   suggestions: [],
@@ -27,5 +27,5 @@ export const complete = (input: string): CompletionResult => {
   return { suggestions, prefix, startIndex };
 };
 
-export * from "./types.ts";
-export * from "./constants.ts";
+export * from "./types";
+export * from "./constants";

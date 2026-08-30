@@ -1,13 +1,13 @@
 #!/usr/bin/env node
 
-import { showHelp } from "../cli/help.ts";
-import { readFile } from "../fs/io.ts";
-import { expandShortcuts, shortenExpression, getShortcutHelp } from "../shortcuts/index.ts";
-import { detectFormat } from "../formats/detect.ts";
-import type { CliOptions } from "../types.ts";
-import { VERSION } from "../version.ts";
-import { processData } from "../executor.ts";
-import { parseArgs, processInput, readStdin, resolveReadFileInvocation } from "../cli/utils.ts";
+import { showHelp } from "../cli/help";
+import { readFile } from "../fs/io";
+import { expandShortcuts, shortenExpression, getShortcutHelp } from "../shortcuts/index";
+import { detectFormat } from "../formats/detect";
+import type { CliOptions } from "../types";
+import { VERSION } from "../version";
+import { processData } from "../executor";
+import { parseArgs, processInput, readStdin, resolveReadFileInvocation } from "../cli/utils";
 
 const readDataFile = (filePath: string, options: CliOptions): unknown => {
   if (options.inputFormat) return readFile(filePath, options.inputFormat);

@@ -1,4 +1,4 @@
-import { XML } from "./constants.ts";
+import { XML } from "./constants";
 
 interface XMLElementState {
   elements: string[];

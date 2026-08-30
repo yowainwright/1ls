@@ -1,4 +1,4 @@
-import type { ShortcutMapping } from "./types.ts";
+import type { ShortcutMapping } from "./types";
 
 export const REGEX_SPECIAL_CHARS = /[.*+?^${}()|[\]\\]/g;
 

@@ -1,6 +1,6 @@
 import { mock, describe, test, beforeEach, afterEach } from "node:test";
 import assert from "node:assert/strict";
-import { Logger, createLogger, LogLevel } from "../../src/observability/index.ts";
+import { Logger, createLogger, LogLevel } from "../../src/observability/index";
 
 describe("Logger", () => {
   let consoleErrorSpy: ReturnType<typeof mock.method>;

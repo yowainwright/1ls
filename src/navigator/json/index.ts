@@ -5,11 +5,11 @@ import type {
   RecursiveDescentNode,
   OptionalAccessNode,
   NullCoalescingNode,
-} from "../../types.ts";
-import type { EvaluationContext, EvaluatedFunction } from "../types.ts";
-import type { NavigatorOptions } from "./types.ts";
-import { BUILTIN_FUNCTIONS } from "../builtins/constants.ts";
-import { isBuiltin, executeBuiltin } from "../builtins/index.ts";
+} from "../../types";
+import type { EvaluationContext, EvaluatedFunction } from "../types";
+import type { NavigatorOptions } from "./types";
+import { BUILTIN_FUNCTIONS } from "../builtins/constants";
+import { isBuiltin, executeBuiltin } from "../builtins/index";
 import {
   isOperatorMethod,
   extractOperator,
@@ -21,7 +21,7 @@ import {
   sliceArray,
   evaluateObjectOperation,
   callMethod,
-} from "./utils.ts";
+} from "./utils";
 
 type AccessNode = Extract<ASTNode, { type: "IndexAccess" | "SliceAccess" | "ArraySpread" }>;
 
@@ -49,8 +49,8 @@ const getRootExpression = (ast: { expression: ASTNode | null }): ASTNode | null 
   return ast.expression;
 };
 
-export { OPERATORS } from "./constants.ts";
-export type { NavigatorOptions } from "./types.ts";
+export { OPERATORS } from "./constants";
+export type { NavigatorOptions } from "./types";
 export {
   isOperatorMethod,
   extractOperator,
@@ -65,7 +65,7 @@ export {
   evaluateObjectOperation,
   isCallableMethod,
   callMethod,
-} from "./utils.ts";
+} from "./utils";
 
 export class JsonNavigator {
   private options: NavigatorOptions;

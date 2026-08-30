@@ -1,10 +1,10 @@
-import { Lexer } from "./lexer/index.ts";
-import { ExpressionParser } from "./expression/index.ts";
-import { JsonNavigator } from "./navigator/json/index.ts";
-import { Formatter } from "./formatter/index.ts";
-import { parseInputSync } from "./formats/sync.ts";
-import { expandShortcuts } from "./shortcuts/index.ts";
-import type { CliOptions } from "./types.ts";
+import { Lexer } from "./lexer/index";
+import { ExpressionParser } from "./expression/index";
+import { JsonNavigator } from "./navigator/json/index";
+import { Formatter } from "./fmt";
+import { parseInputSync } from "./formats/sync";
+import { expandShortcuts } from "./shortcuts/index";
+import type { CliOptions } from "./types";
 
 type StrictnessOptions = Pick<CliOptions, "strict">;
 

@@ -1,6 +1,6 @@
 import { describe, test } from "node:test";
 import assert from "node:assert/strict";
-import { escapeRegExp } from "../../src/shortcuts/index.ts";
+import { escapeRegExp } from "../../src/shortcuts/index";
 
 describe("escapeRegExp", () => {
   test("escapes dot character", () => {

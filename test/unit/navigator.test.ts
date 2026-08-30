@@ -1,9 +1,9 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { Lexer } from "../../src/lexer/index.ts";
-import { ExpressionParser } from "../../src/expression/index.ts";
-import { JsonNavigator } from "../../src/navigator/json/index.ts";
-import { OPERATORS } from "../../src/navigator/json/constants.ts";
+import { Lexer } from "../../src/lexer/index";
+import { ExpressionParser } from "../../src/expression/index";
+import { JsonNavigator } from "../../src/navigator/json/index";
+import { OPERATORS } from "../../src/navigator/json/constants";
 import {
   callMethod,
   createParameterContext,
@@ -16,14 +16,14 @@ import {
   isCallableMethod,
   isOperatorMethod,
   sliceArray,
-} from "../../src/navigator/json/utils.ts";
+} from "../../src/navigator/json/utils";
 import {
   collectAllValues,
   collectPaths,
   deepContains,
   getValueAtPath,
   setValueAtPath,
-} from "../../src/navigator/builtins/utils.ts";
+} from "../../src/navigator/builtins/utils";
 
 function evaluate(expression: string, data: unknown): unknown {
   const lexer = new Lexer(expression);
@@ -524,7 +524,7 @@ test("Navigator: compact removes falsy values", () => {
 });
 
 test("Navigator: deepMerge recursively merges objects", async () => {
-  const { executeBuiltin } = await import("../../src/navigator/builtins/index.ts");
+  const { executeBuiltin } = await import("../../src/navigator/builtins/index");
   const base = { a: 1, nested: { x: 1, y: 2 } };
   const override = { b: 2, nested: { y: 3, z: 4 } };
   assert.deepStrictEqual(executeBuiltin("deepMerge", base, [override]), {
@@ -628,7 +628,7 @@ test("Navigator: nth gets element at index", () => {
 });
 
 test("Navigator: contains checks for subset", async () => {
-  const { executeBuiltin } = await import("../../src/navigator/builtins/index.ts");
+  const { executeBuiltin } = await import("../../src/navigator/builtins/index");
   assert.strictEqual(executeBuiltin("contains", [1, 2, 3], [[2]]), true);
   assert.strictEqual(executeBuiltin("contains", [1, 2, 3], [[5]]), false);
   assert.strictEqual(executeBuiltin("contains", { a: 1, b: 2 }, [{ a: 1 }]), true);
@@ -646,7 +646,7 @@ test("Navigator: add concatenates arrays or sums numbers", () => {
 });
 
 test("Navigator: getpath retrieves nested values", async () => {
-  const { executeBuiltin } = await import("../../src/navigator/builtins/index.ts");
+  const { executeBuiltin } = await import("../../src/navigator/builtins/index");
   const data = { a: { b: { c: 1 } } };
   assert.strictEqual(executeBuiltin("getpath", data, [["a", "b", "c"]]), 1);
   assert.deepStrictEqual(executeBuiltin("getpath", data, [["a", "b"]]), { c: 1 });
@@ -696,7 +696,7 @@ test("Navigator: not negates boolean", () => {
 });
 
 test("Navigator: select returns value if predicate passes", async () => {
-  const { executeBuiltin, EMPTY_SYMBOL } = await import("../../src/navigator/builtins/index.ts");
+  const { executeBuiltin, EMPTY_SYMBOL } = await import("../../src/navigator/builtins/index");
   const gt3 = (x: number) => x > 3;
   const lt3 = (x: number) => x < 3;
   assert.strictEqual(executeBuiltin("select", 5, [gt3]), 5);

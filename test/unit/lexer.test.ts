@@ -1,8 +1,8 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { isDeepStrictEqual } from "node:util";
-import { Lexer } from "../../src/lexer/index.ts";
-import { TokenType } from "../../src/types.ts";
+import { Lexer } from "../../src/lexer/index";
+import { TokenType } from "../../src/types";
 
 test("Lexer: simple property access", () => {
   const lexer = new Lexer(".name");

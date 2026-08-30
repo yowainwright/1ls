@@ -1,6 +1,6 @@
 import { describe, test } from "node:test";
 import assert from "node:assert/strict";
-import { complete, extractPartialMethod } from "../../src/ac/index.ts";
+import { complete, extractPartialMethod } from "../../src/ac/index";
 
 describe("ac", () => {
   describe("extractPartialMethod", () => {
