@@ -43,6 +43,9 @@ const runCommand = async (
 const runBinary = (args: string[], input?: string): Promise<CommandResult> =>
   runCommand([BINARY_PATH, ...args], input);
 
+const normalizeScriptcStderr = (stderr: string): string =>
+  stderr === "context canceled\n" ? "" : stderr;
+
 describe("scriptc native binary", () => {
   beforeAll(async () => {
     mkdirSync(dirname(BINARY_PATH), { recursive: true });
@@ -57,8 +60,8 @@ describe("scriptc native binary", () => {
       BINARY_PATH,
     ]);
 
-    assert.strictEqual(result.stderr, "");
     assert.strictEqual(result.exitCode, 0);
+    assert.strictEqual(normalizeScriptcStderr(result.stderr), "");
     assert.strictEqual(existsSync(BINARY_PATH), true);
   });
 

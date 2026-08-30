@@ -82,6 +82,11 @@ describe("Formatter", () => {
 });
 
 describe("formatter colors", () => {
+  test("defaults to plain output for direct formatter consumers", () => {
+    assert.strictEqual(colorize('{"name": "Ada"}'), '{"name": "Ada"}');
+    assert.strictEqual(new Formatter({ pretty: true }).format({ name: "Ada" }), '{\n  "name": "Ada"\n}');
+  });
+
   test("can disable colors without requiring a Node-only process global", () => {
     setColorEnabled(false);
 

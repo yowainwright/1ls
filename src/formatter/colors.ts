@@ -23,7 +23,7 @@ export const COLOR_PATTERNS = [
   { regex: /: (null)/g, replacement: `: ${COLORS.gray}$1${COLORS.reset}` },
 ];
 
-let colorEnabled = true;
+let colorEnabled = false;
 
 export const setColorEnabled = (enabled: boolean): void => {
   colorEnabled = enabled;
