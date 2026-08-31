@@ -233,8 +233,27 @@ const callTargetMethod = (target: unknown, method: string, args: readonly unknow
   }
 
   const targetObject = target as Record<string, unknown>;
-  const methodFunction = targetObject[method] as (...methodArgs: unknown[]) => unknown;
-  return methodFunction.call(target, ...args);
+  if (args.length === 0) return (targetObject[method] as () => unknown)();
+  if (args.length === 1) return (targetObject[method] as (arg0: unknown) => unknown)(args[0]);
+  if (args.length === 2) {
+    return (targetObject[method] as (arg0: unknown, arg1: unknown) => unknown)(args[0], args[1]);
+  }
+  if (args.length === 3) {
+    return (targetObject[method] as (arg0: unknown, arg1: unknown, arg2: unknown) => unknown)(
+      args[0],
+      args[1],
+      args[2],
+    );
+  }
+  if (args.length === 4) {
+    return (targetObject[method] as (arg0: unknown, arg1: unknown, arg2: unknown, arg3: unknown) => unknown)(
+      args[0],
+      args[1],
+      args[2],
+      args[3],
+    );
+  }
+  throw new Error(`Method ${method} received too many arguments`);
 };
 
 export const callMethod = (target: unknown, method: string, args: readonly unknown[]): unknown => {
