@@ -68,6 +68,7 @@
   },
   "homepage": "https://github.com/yowainwright/1ls",
   "devDependencies": {
+    "@1ls/dynamic-invoke": "workspace:*",
     "@total-typescript/ts-reset": "^0.6.1",
     "@types/node": "^25.3.5",
     "c8": "^12.0.0",
@@ -98,6 +99,7 @@
     }
   },
   "workspaces": [
-    "app"
+    "app",
+    "packages/*"
   ]
 }
