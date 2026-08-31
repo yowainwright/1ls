@@ -196,6 +196,18 @@ test("Navigator: callable object methods keep target binding", () => {
   assert.strictEqual(evaluate('.user.label("Ada")', data), "name:Ada");
 });
 
+test("Navigator: callable object methods receive all arguments", () => {
+  const data = {
+    user: {
+      format(...values: unknown[]): string {
+        return values.join(":");
+      },
+    },
+  };
+
+  assert.strictEqual(evaluate('.user.format("a", "b", "c", "d")', data), "a:b:c:d");
+});
+
 test("Navigator: callable array and string methods outside allowlists", () => {
   assert.strictEqual(evaluate(".at(-1)", [1, 2, 3]), 3);
   assert.strictEqual(evaluate(".substring(1, 4)", "hello"), "ell");

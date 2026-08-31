@@ -233,7 +233,8 @@ const callTargetMethod = (target: unknown, method: string, args: readonly unknow
   }
 
   const targetObject = target as Record<string, unknown>;
-  return (targetObject[method] as EvaluatedFunction)(args[0], args[1], args[2]);
+  const methodFunction = targetObject[method] as (...methodArgs: unknown[]) => unknown;
+  return methodFunction.call(target, ...args);
 };
 
 export const callMethod = (target: unknown, method: string, args: readonly unknown[]): unknown => {
