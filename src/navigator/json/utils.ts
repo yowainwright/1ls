@@ -9,28 +9,166 @@ type TargetMethod1 = (arg0: unknown) => unknown;
 type TargetMethod2 = (arg0: unknown, arg1: unknown) => unknown;
 type TargetMethod3 = (arg0: unknown, arg1: unknown, arg2: unknown) => unknown;
 type TargetMethod4 = (arg0: unknown, arg1: unknown, arg2: unknown, arg3: unknown) => unknown;
+/* eslint-disable legibility/max-function-parameters */
+type TargetMethod5 = (arg0: unknown, arg1: unknown, arg2: unknown, arg3: unknown, arg4: unknown) => unknown;
+type TargetMethod6 = (
+  arg0: unknown,
+  arg1: unknown,
+  arg2: unknown,
+  arg3: unknown,
+  arg4: unknown,
+  arg5: unknown,
+) => unknown;
+type TargetMethod7 = (
+  arg0: unknown,
+  arg1: unknown,
+  arg2: unknown,
+  arg3: unknown,
+  arg4: unknown,
+  arg5: unknown,
+  arg6: unknown,
+) => unknown;
+type TargetMethod8 = (
+  arg0: unknown,
+  arg1: unknown,
+  arg2: unknown,
+  arg3: unknown,
+  arg4: unknown,
+  arg5: unknown,
+  arg6: unknown,
+  arg7: unknown,
+) => unknown;
+type TargetMethod9 = (
+  arg0: unknown,
+  arg1: unknown,
+  arg2: unknown,
+  arg3: unknown,
+  arg4: unknown,
+  arg5: unknown,
+  arg6: unknown,
+  arg7: unknown,
+  arg8: unknown,
+) => unknown;
+type TargetMethod10 = (
+  arg0: unknown,
+  arg1: unknown,
+  arg2: unknown,
+  arg3: unknown,
+  arg4: unknown,
+  arg5: unknown,
+  arg6: unknown,
+  arg7: unknown,
+  arg8: unknown,
+  arg9: unknown,
+) => unknown;
+type TargetMethod11 = (
+  arg0: unknown,
+  arg1: unknown,
+  arg2: unknown,
+  arg3: unknown,
+  arg4: unknown,
+  arg5: unknown,
+  arg6: unknown,
+  arg7: unknown,
+  arg8: unknown,
+  arg9: unknown,
+  arg10: unknown,
+) => unknown;
+type TargetMethod12 = (
+  arg0: unknown,
+  arg1: unknown,
+  arg2: unknown,
+  arg3: unknown,
+  arg4: unknown,
+  arg5: unknown,
+  arg6: unknown,
+  arg7: unknown,
+  arg8: unknown,
+  arg9: unknown,
+  arg10: unknown,
+  arg11: unknown,
+) => unknown;
+type TargetMethod13 = (
+  arg0: unknown,
+  arg1: unknown,
+  arg2: unknown,
+  arg3: unknown,
+  arg4: unknown,
+  arg5: unknown,
+  arg6: unknown,
+  arg7: unknown,
+  arg8: unknown,
+  arg9: unknown,
+  arg10: unknown,
+  arg11: unknown,
+  arg12: unknown,
+) => unknown;
+type TargetMethod14 = (
+  arg0: unknown,
+  arg1: unknown,
+  arg2: unknown,
+  arg3: unknown,
+  arg4: unknown,
+  arg5: unknown,
+  arg6: unknown,
+  arg7: unknown,
+  arg8: unknown,
+  arg9: unknown,
+  arg10: unknown,
+  arg11: unknown,
+  arg12: unknown,
+  arg13: unknown,
+) => unknown;
+type TargetMethod15 = (
+  arg0: unknown,
+  arg1: unknown,
+  arg2: unknown,
+  arg3: unknown,
+  arg4: unknown,
+  arg5: unknown,
+  arg6: unknown,
+  arg7: unknown,
+  arg8: unknown,
+  arg9: unknown,
+  arg10: unknown,
+  arg11: unknown,
+  arg12: unknown,
+  arg13: unknown,
+  arg14: unknown,
+) => unknown;
+type TargetMethod16 = (
+  arg0: unknown,
+  arg1: unknown,
+  arg2: unknown,
+  arg3: unknown,
+  arg4: unknown,
+  arg5: unknown,
+  arg6: unknown,
+  arg7: unknown,
+  arg8: unknown,
+  arg9: unknown,
+  arg10: unknown,
+  arg11: unknown,
+  arg12: unknown,
+  arg13: unknown,
+  arg14: unknown,
+  arg15: unknown,
+) => unknown;
+/* eslint-enable legibility/max-function-parameters */
 
 const callTargetMethodWithFiveArgs = (
   targetObject: Record<string, unknown>,
   method: string,
   args: readonly unknown[],
 ): unknown =>
-  // eslint-disable-next-line legibility/max-function-parameters
-  (targetObject[method] as (a: unknown, b: unknown, c: unknown, d: unknown, e: unknown) => unknown)(
-    args[0],
-    args[1],
-    args[2],
-    args[3],
-    args[4],
-  );
+  (targetObject[method] as TargetMethod5)(args[0], args[1], args[2], args[3], args[4]);
 
 const callTargetMethodWithSixArgs = (
   targetObject: Record<string, unknown>,
   method: string,
   args: readonly unknown[],
 ): unknown =>
-  // eslint-disable-next-line legibility/max-function-parameters
-  (targetObject[method] as (a: unknown, b: unknown, c: unknown, d: unknown, e: unknown, f: unknown) => unknown)(
+  (targetObject[method] as TargetMethod6)(
     args[0],
     args[1],
     args[2],
@@ -44,8 +182,7 @@ const callTargetMethodWithSevenArgs = (
   method: string,
   args: readonly unknown[],
 ): unknown =>
-  // eslint-disable-next-line legibility/max-function-parameters
-  (targetObject[method] as (a: unknown, b: unknown, c: unknown, d: unknown, e: unknown, f: unknown, g: unknown) => unknown)(
+  (targetObject[method] as TargetMethod7)(
     args[0],
     args[1],
     args[2],
@@ -60,8 +197,7 @@ const callTargetMethodWithEightArgs = (
   method: string,
   args: readonly unknown[],
 ): unknown =>
-  // eslint-disable-next-line legibility/max-function-parameters
-  (targetObject[method] as (a: unknown, b: unknown, c: unknown, d: unknown, e: unknown, f: unknown, g: unknown, h: unknown) => unknown)(
+  (targetObject[method] as TargetMethod8)(
     args[0],
     args[1],
     args[2],
@@ -72,7 +208,99 @@ const callTargetMethodWithEightArgs = (
     args[7],
   );
 
-const callTargetMethodWithFiveOrMoreArgs = (
+const callTargetMethodWithNineArgs = (
+  targetObject: Record<string, unknown>,
+  method: string,
+  args: readonly unknown[],
+): unknown =>
+  (targetObject[method] as TargetMethod9)(
+    args[0], args[1], args[2], args[3],
+    args[4], args[5], args[6], args[7],
+    args[8],
+  );
+
+const callTargetMethodWithTenArgs = (
+  targetObject: Record<string, unknown>,
+  method: string,
+  args: readonly unknown[],
+): unknown =>
+  (targetObject[method] as TargetMethod10)(
+    args[0], args[1], args[2], args[3],
+    args[4], args[5], args[6], args[7],
+    args[8], args[9],
+  );
+
+const callTargetMethodWithElevenArgs = (
+  targetObject: Record<string, unknown>,
+  method: string,
+  args: readonly unknown[],
+): unknown =>
+  (targetObject[method] as TargetMethod11)(
+    args[0], args[1], args[2], args[3],
+    args[4], args[5], args[6], args[7],
+    args[8], args[9], args[10],
+  );
+
+const callTargetMethodWithTwelveArgs = (
+  targetObject: Record<string, unknown>,
+  method: string,
+  args: readonly unknown[],
+): unknown =>
+  (targetObject[method] as TargetMethod12)(
+    args[0], args[1], args[2], args[3],
+    args[4], args[5], args[6], args[7],
+    args[8], args[9], args[10], args[11],
+  );
+
+const callTargetMethodWithThirteenArgs = (
+  targetObject: Record<string, unknown>,
+  method: string,
+  args: readonly unknown[],
+): unknown =>
+  (targetObject[method] as TargetMethod13)(
+    args[0], args[1], args[2], args[3],
+    args[4], args[5], args[6], args[7],
+    args[8], args[9], args[10], args[11],
+    args[12],
+  );
+
+const callTargetMethodWithFourteenArgs = (
+  targetObject: Record<string, unknown>,
+  method: string,
+  args: readonly unknown[],
+): unknown =>
+  (targetObject[method] as TargetMethod14)(
+    args[0], args[1], args[2], args[3],
+    args[4], args[5], args[6], args[7],
+    args[8], args[9], args[10], args[11],
+    args[12], args[13],
+  );
+
+const callTargetMethodWithFifteenArgs = (
+  targetObject: Record<string, unknown>,
+  method: string,
+  args: readonly unknown[],
+): unknown =>
+  (targetObject[method] as TargetMethod15)(
+    args[0], args[1], args[2], args[3],
+    args[4], args[5], args[6], args[7],
+    args[8], args[9], args[10], args[11],
+    args[12], args[13], args[14],
+  );
+
+const callTargetMethodWithSixteenArgs = (
+  targetObject: Record<string, unknown>,
+  method: string,
+  args: readonly unknown[],
+): unknown =>
+  (targetObject[method] as TargetMethod16)(
+    args[0], args[1], args[2], args[3],
+    args[4], args[5], args[6], args[7],
+    args[8], args[9], args[10], args[11],
+    args[12], args[13], args[14], args[15],
+  );
+
+const callTargetMethodWithFiveToTenArgs = (
   targetObject: Record<string, unknown>,
   method: string,
   args: readonly unknown[],
@@ -80,7 +308,34 @@ const callTargetMethodWithFiveOrMoreArgs = (
   if (args.length === 5) return callTargetMethodWithFiveArgs(targetObject, method, args);
   if (args.length === 6) return callTargetMethodWithSixArgs(targetObject, method, args);
   if (args.length === 7) return callTargetMethodWithSevenArgs(targetObject, method, args);
-  return callTargetMethodWithEightArgs(targetObject, method, args);
+  if (args.length === 8) return callTargetMethodWithEightArgs(targetObject, method, args);
+  if (args.length === 9) return callTargetMethodWithNineArgs(targetObject, method, args);
+  if (args.length === 10) return callTargetMethodWithTenArgs(targetObject, method, args);
+  throw new Error(`Method ${method} received an invalid argument count`);
+};
+
+const callTargetMethodWithElevenToSixteenArgs = (
+  targetObject: Record<string, unknown>,
+  method: string,
+  args: readonly unknown[],
+): unknown => {
+  if (args.length === 11) return callTargetMethodWithElevenArgs(targetObject, method, args);
+  if (args.length === 12) return callTargetMethodWithTwelveArgs(targetObject, method, args);
+  if (args.length === 13) return callTargetMethodWithThirteenArgs(targetObject, method, args);
+  if (args.length === 14) return callTargetMethodWithFourteenArgs(targetObject, method, args);
+  if (args.length === 15) return callTargetMethodWithFifteenArgs(targetObject, method, args);
+  if (args.length === 16) return callTargetMethodWithSixteenArgs(targetObject, method, args);
+  throw new Error(`Method ${method} supports up to 16 arguments`);
+};
+
+const callTargetMethodWithFiveOrMoreArgs = (
+  targetObject: Record<string, unknown>,
+  method: string,
+  args: readonly unknown[],
+): unknown => {
+  const hasAtMostTenArgs = args.length <= 10;
+  if (hasAtMostTenArgs) return callTargetMethodWithFiveToTenArgs(targetObject, method, args);
+  return callTargetMethodWithElevenToSixteenArgs(targetObject, method, args);
 };
 
 const callTargetMethodWithArgs = (
