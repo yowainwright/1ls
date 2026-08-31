@@ -4,6 +4,97 @@ import { OPERATORS } from "./constants";
 
 type JsonValue = null | string | number | boolean | JsonValue[] | { [key: string]: JsonValue };
 type JsonObject = { [key: string]: JsonValue };
+type TargetMethod0 = () => unknown;
+type TargetMethod1 = (arg0: unknown) => unknown;
+type TargetMethod2 = (arg0: unknown, arg1: unknown) => unknown;
+type TargetMethod3 = (arg0: unknown, arg1: unknown, arg2: unknown) => unknown;
+type TargetMethod4 = (arg0: unknown, arg1: unknown, arg2: unknown, arg3: unknown) => unknown;
+
+const callTargetMethodWithFiveArgs = (
+  targetObject: Record<string, unknown>,
+  method: string,
+  args: readonly unknown[],
+): unknown =>
+  // eslint-disable-next-line legibility/max-function-parameters
+  (targetObject[method] as (a: unknown, b: unknown, c: unknown, d: unknown, e: unknown) => unknown)(
+    args[0],
+    args[1],
+    args[2],
+    args[3],
+    args[4],
+  );
+
+const callTargetMethodWithSixArgs = (
+  targetObject: Record<string, unknown>,
+  method: string,
+  args: readonly unknown[],
+): unknown =>
+  // eslint-disable-next-line legibility/max-function-parameters
+  (targetObject[method] as (a: unknown, b: unknown, c: unknown, d: unknown, e: unknown, f: unknown) => unknown)(
+    args[0],
+    args[1],
+    args[2],
+    args[3],
+    args[4],
+    args[5],
+  );
+
+const callTargetMethodWithSevenArgs = (
+  targetObject: Record<string, unknown>,
+  method: string,
+  args: readonly unknown[],
+): unknown =>
+  // eslint-disable-next-line legibility/max-function-parameters
+  (targetObject[method] as (a: unknown, b: unknown, c: unknown, d: unknown, e: unknown, f: unknown, g: unknown) => unknown)(
+    args[0],
+    args[1],
+    args[2],
+    args[3],
+    args[4],
+    args[5],
+    args[6],
+  );
+
+const callTargetMethodWithEightArgs = (
+  targetObject: Record<string, unknown>,
+  method: string,
+  args: readonly unknown[],
+): unknown =>
+  // eslint-disable-next-line legibility/max-function-parameters
+  (targetObject[method] as (a: unknown, b: unknown, c: unknown, d: unknown, e: unknown, f: unknown, g: unknown, h: unknown) => unknown)(
+    args[0],
+    args[1],
+    args[2],
+    args[3],
+    args[4],
+    args[5],
+    args[6],
+    args[7],
+  );
+
+const callTargetMethodWithFiveOrMoreArgs = (
+  targetObject: Record<string, unknown>,
+  method: string,
+  args: readonly unknown[],
+): unknown => {
+  if (args.length === 5) return callTargetMethodWithFiveArgs(targetObject, method, args);
+  if (args.length === 6) return callTargetMethodWithSixArgs(targetObject, method, args);
+  if (args.length === 7) return callTargetMethodWithSevenArgs(targetObject, method, args);
+  return callTargetMethodWithEightArgs(targetObject, method, args);
+};
+
+const callTargetMethodWithArgs = (
+  targetObject: Record<string, unknown>,
+  method: string,
+  args: readonly unknown[],
+): unknown => {
+  if (args.length === 0) return (targetObject[method] as TargetMethod0)();
+  if (args.length === 1) return (targetObject[method] as TargetMethod1)(args[0]);
+  if (args.length === 2) return (targetObject[method] as TargetMethod2)(args[0], args[1]);
+  if (args.length === 3) return (targetObject[method] as TargetMethod3)(args[0], args[1], args[2]);
+  if (args.length === 4) return (targetObject[method] as TargetMethod4)(args[0], args[1], args[2], args[3]);
+  return callTargetMethodWithFiveOrMoreArgs(targetObject, method, args);
+};
 
 export const isOperatorMethod = (method: string): boolean =>
   method.startsWith("__operator_") && method.endsWith("__");
@@ -226,47 +317,6 @@ const callStringMethod = (target: string, method: string, args: readonly unknown
   return undefined;
 };
 
-const callTargetMethodWithFourArgs = (
-  targetObject: Record<string, unknown>,
-  method: string,
-  args: readonly unknown[],
-): unknown =>
-  (targetObject[method] as (arg0: unknown, arg1: unknown, arg2: unknown, arg3: unknown) => unknown)(
-    args[0],
-    args[1],
-    args[2],
-    args[3],
-  );
-
-const callTargetMethodWithThreeOrFourArgs = (
-  targetObject: Record<string, unknown>,
-  method: string,
-  args: readonly unknown[],
-): unknown => {
-  if (args.length === 3) {
-    return (targetObject[method] as (arg0: unknown, arg1: unknown, arg2: unknown) => unknown)(
-      args[0],
-      args[1],
-      args[2],
-    );
-  }
-  if (args.length === 4) return callTargetMethodWithFourArgs(targetObject, method, args);
-  throw new Error(`Method ${method} received too many arguments`);
-};
-
-const callTargetMethodWithFixedArgs = (
-  targetObject: Record<string, unknown>,
-  method: string,
-  args: readonly unknown[],
-): unknown => {
-  if (args.length === 0) return (targetObject[method] as () => unknown)();
-  if (args.length === 1) return (targetObject[method] as (arg0: unknown) => unknown)(args[0]);
-  if (args.length === 2) {
-    return (targetObject[method] as (arg0: unknown, arg1: unknown) => unknown)(args[0], args[1]);
-  }
-  return callTargetMethodWithThreeOrFourArgs(targetObject, method, args);
-};
-
 const callTargetMethod = (target: unknown, method: string, args: readonly unknown[]): unknown => {
   const methodExists = hasMethodOnTarget(target, method);
   if (!methodExists) {
@@ -274,7 +324,7 @@ const callTargetMethod = (target: unknown, method: string, args: readonly unknow
   }
 
   const targetObject = target as Record<string, unknown>;
-  return callTargetMethodWithFixedArgs(targetObject, method, args);
+  return callTargetMethodWithArgs(targetObject, method, args);
 };
 
 export const callMethod = (target: unknown, method: string, args: readonly unknown[]): unknown => {

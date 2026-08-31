@@ -206,6 +206,7 @@ test("Navigator: callable object methods receive all arguments", () => {
   };
 
   assert.strictEqual(evaluate('.user.format("a", "b", "c", "d")', data), "a:b:c:d");
+  assert.strictEqual(evaluate('.user.format("a", "b", "c", "d", "e")', data), "a:b:c:d:e");
 });
 
 test("Navigator: callable array and string methods outside allowlists", () => {
