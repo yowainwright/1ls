@@ -1,8 +1,29 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { Lexer } from "../../src/lexer/index.ts";
-import { ExpressionParser } from "../../src/expression/index.ts";
-import { JsonNavigator } from "../../src/navigator/json/index.ts";
+import { Lexer } from "../../src/lexer/index";
+import { ExpressionParser } from "../../src/expression/index";
+import { JsonNavigator } from "../../src/navigator/json/index";
+import { OPERATORS } from "../../src/navigator/json/constants";
+import {
+  callMethod,
+  createParameterContext,
+  evaluateObjectOperation,
+  executeOperator,
+  extractOperator,
+  getArrayElement,
+  getImplicitParameter,
+  getPropertyFromObject,
+  isCallableMethod,
+  isOperatorMethod,
+  sliceArray,
+} from "../../src/navigator/json/utils";
+import {
+  collectAllValues,
+  collectPaths,
+  deepContains,
+  getValueAtPath,
+  setValueAtPath,
+} from "../../src/navigator/builtins/utils";
 
 function evaluate(expression: string, data: unknown): unknown {
   const lexer = new Lexer(expression);
@@ -17,6 +38,69 @@ test("Navigator: simple property access", () => {
   const data = { name: "John", age: 30 };
   assert.strictEqual(evaluate(".name", data), "John");
   assert.strictEqual(evaluate(".age", data), 30);
+});
+
+test("Navigator utils: operators handle numeric, string, boolean, and missing operations", () => {
+  assert.strictEqual(OPERATORS["+"](1, 2), 3);
+  assert.strictEqual(OPERATORS["&&"](true, "ok"), "ok");
+  assert.strictEqual(OPERATORS["||"]("", "fallback"), "fallback");
+  assert.strictEqual(executeOperator("b", ">", "a"), true);
+  assert.strictEqual(executeOperator("a", "<", "b"), true);
+  assert.strictEqual(executeOperator("b", ">=", "b"), true);
+  assert.strictEqual(executeOperator("a", "<=", "a"), true);
+  assert.strictEqual(executeOperator({}, ">", {}), false);
+  assert.throws(() => executeOperator(1, "missing", 2), /Unknown operator/);
+});
+
+test("Navigator utils: parameter and property helpers cover edge cases", () => {
+  const context = createParameterContext(["item", "index"], ["Ada", 0]);
+  assert.deepStrictEqual(context, { item: "Ada", index: 0 });
+  assert.strictEqual(getImplicitParameter(context), "Ada");
+  assert.strictEqual(getPropertyFromObject(null, "name"), undefined);
+  assert.strictEqual(getPropertyFromObject({ name: "Ada" }, "name"), "Ada");
+  assert.strictEqual(getArrayElement("not array", 0), undefined);
+  assert.strictEqual(getArrayElement(["a", "b"], -1), "b");
+  assert.deepStrictEqual(sliceArray("not array", 0, 1), undefined);
+  assert.deepStrictEqual(sliceArray([1, 2, 3], -2, undefined), [2, 3]);
+});
+
+test("Navigator utils: object operations and callable methods cover fallbacks", () => {
+  assert.strictEqual(evaluateObjectOperation(null, "keys"), undefined);
+  assert.deepStrictEqual(evaluateObjectOperation(["a", "b"], "length"), 2);
+  assert.strictEqual(isOperatorMethod("__operator_+__"), true);
+  assert.strictEqual(isOperatorMethod("map"), false);
+  assert.strictEqual(extractOperator("__operator_>=__"), ">=");
+  assert.strictEqual(isCallableMethod({ run: () => "ok" }, "run"), true);
+  assert.strictEqual(isCallableMethod({ value: "no" }, "value"), false);
+  assert.strictEqual(callMethod("hello", "startsWith", ["he"]), true);
+  assert.strictEqual(callMethod("hello", "endsWith", ["lo"]), true);
+  assert.throws(() => callMethod({}, "missing", []), /Method missing does not exist/);
+});
+
+test("Navigator builtins utils: deep object helpers cover mutation-free paths", () => {
+  const data = { users: [{ name: "Ada" }], meta: { active: true } };
+  assert.strictEqual(deepContains(data, { users: [{ name: "Ada" }] }), true);
+  assert.strictEqual(deepContains(data, { users: [{ name: "Grace" }] }), false);
+  assert.strictEqual(getValueAtPath(data, ["users", 0, "name"]), "Ada");
+  assert.strictEqual(getValueAtPath(data, ["users", "bad"]), undefined);
+  assert.deepStrictEqual(setValueAtPath(data, ["meta", "active"], false), {
+    users: [{ name: "Ada" }],
+    meta: { active: false },
+  });
+  assert.deepStrictEqual(setValueAtPath(null, [1, "name"], "Ada"), [undefined, { name: "Ada" }]);
+});
+
+test("Navigator builtins utils: collection helpers return recursive values and paths", () => {
+  const data = { user: { name: "Ada" }, tags: ["math", "code"] };
+  assert.deepStrictEqual(collectAllValues(data), [data, data.user, "Ada", data.tags, "math", "code"]);
+  assert.deepStrictEqual(collectPaths(data, []), [
+    [],
+    ["user"],
+    ["user", "name"],
+    ["tags"],
+    ["tags", 0],
+    ["tags", 1],
+  ]);
 });
 
 test("Navigator: nested property access", () => {
@@ -87,6 +171,51 @@ test("Navigator: string methods", () => {
   assert.strictEqual(evaluate(".name.toUpperCase()", data), "JOHN DOE");
   assert.strictEqual(evaluate('.name.includes("John")', data), true);
   assert.strictEqual(evaluate('.name.includes("Jane")', data), false);
+});
+
+test("Navigator: callable object methods", () => {
+  const data = {
+    user: {
+      label: (value: unknown) => `name:${value}`,
+    },
+  };
+
+  assert.strictEqual(evaluate('.user.label("Ada")', data), "name:Ada");
+});
+
+test("Navigator: callable object methods keep target binding", () => {
+  const data = {
+    user: {
+      prefix: "name",
+      label(this: { prefix: string }, value: unknown): string {
+        return `${this.prefix}:${value}`;
+      },
+    },
+  };
+
+  assert.strictEqual(evaluate('.user.label("Ada")', data), "name:Ada");
+});
+
+test("Navigator: callable object methods receive all arguments", () => {
+  const data = {
+    user: {
+      format(...values: unknown[]): string {
+        return values.join(":");
+      },
+    },
+  };
+
+  assert.strictEqual(evaluate('.user.format("a", "b", "c", "d")', data), "a:b:c:d");
+  assert.strictEqual(evaluate('.user.format("a", "b", "c", "d", "e")', data), "a:b:c:d:e");
+  assert.strictEqual(
+    evaluate('.user.format("a", "b", "c", "d", "e", "f", "g", "h", "i")', data),
+    "a:b:c:d:e:f:g:h:i",
+  );
+});
+
+test("Navigator: callable array and string methods outside allowlists", () => {
+  assert.strictEqual(evaluate(".at(-1)", [1, 2, 3]), 3);
+  assert.strictEqual(evaluate(".substring(1, 4)", "hello"), "ell");
 });
 
 test("Navigator: arithmetic operators", () => {
@@ -430,7 +559,7 @@ test("Navigator: compact removes falsy values", () => {
 });
 
 test("Navigator: deepMerge recursively merges objects", async () => {
-  const { executeBuiltin } = await import("../../src/navigator/builtins/index.ts");
+  const { executeBuiltin } = await import("../../src/navigator/builtins/index");
   const base = { a: 1, nested: { x: 1, y: 2 } };
   const override = { b: 2, nested: { y: 3, z: 4 } };
   assert.deepStrictEqual(executeBuiltin("deepMerge", base, [override]), {
@@ -534,7 +663,7 @@ test("Navigator: nth gets element at index", () => {
 });
 
 test("Navigator: contains checks for subset", async () => {
-  const { executeBuiltin } = await import("../../src/navigator/builtins/index.ts");
+  const { executeBuiltin } = await import("../../src/navigator/builtins/index");
   assert.strictEqual(executeBuiltin("contains", [1, 2, 3], [[2]]), true);
   assert.strictEqual(executeBuiltin("contains", [1, 2, 3], [[5]]), false);
   assert.strictEqual(executeBuiltin("contains", { a: 1, b: 2 }, [{ a: 1 }]), true);
@@ -552,7 +681,7 @@ test("Navigator: add concatenates arrays or sums numbers", () => {
 });
 
 test("Navigator: getpath retrieves nested values", async () => {
-  const { executeBuiltin } = await import("../../src/navigator/builtins/index.ts");
+  const { executeBuiltin } = await import("../../src/navigator/builtins/index");
   const data = { a: { b: { c: 1 } } };
   assert.strictEqual(executeBuiltin("getpath", data, [["a", "b", "c"]]), 1);
   assert.deepStrictEqual(executeBuiltin("getpath", data, [["a", "b"]]), { c: 1 });
@@ -602,7 +731,7 @@ test("Navigator: not negates boolean", () => {
 });
 
 test("Navigator: select returns value if predicate passes", async () => {
-  const { executeBuiltin, EMPTY_SYMBOL } = await import("../../src/navigator/builtins/index.ts");
+  const { executeBuiltin, EMPTY_SYMBOL } = await import("../../src/navigator/builtins/index");
   const gt3 = (x: number) => x > 3;
   const lt3 = (x: number) => x < 3;
   assert.strictEqual(executeBuiltin("select", 5, [gt3]), 5);

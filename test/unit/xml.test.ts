@@ -5,7 +5,7 @@ import {
   parseXMLValue,
   parseXMLAttributes,
   parseXMLElement,
-} from "../../src/formats/xml.ts";
+} from "../../src/formats/xml";
 
 describe("XML Value Parser", () => {
   test("parses string values", () => {

@@ -22,58 +22,54 @@ export interface EvaluationResult {
 class ParseError extends Data.TaggedError("ParseError")<{ cause: unknown }> {}
 class EvaluationError extends Data.TaggedError("EvaluationError")<{ cause: unknown }> {}
 
-function parseInput(input: string, format: Format): Effect.Effect<unknown, ParseError> {
-  const trimmed = input.trim();
-  if (!trimmed) return Effect.succeed(undefined);
-  return Effect.try({
-    try: () => {
-      switch (format) {
-        case "json":
-          return JSON.parse(trimmed);
-        case "yaml":
-          return parseYAML(trimmed);
-        case "csv":
-          return parseCSV(trimmed);
-        case "toml":
-          return parseTOML(trimmed);
-        case "text":
-          return trimmed.split("\n");
-        default:
-          return JSON.parse(trimmed);
-      }
-    },
+const parseTrimmedInput = (input: string, format: Format): unknown => {
+  if (format === "json") return JSON.parse(input);
+  if (format === "yaml") return parseYAML(input);
+  if (format === "csv") return parseCSV(input);
+  if (format === "toml") return parseTOML(input);
+  if (format === "text") return input.split("\n");
+  return JSON.parse(input);
+};
+
+const parseInput = (input: string, format: Format): Effect.Effect<unknown, ParseError> =>
+  Effect.try({
+    try: () => parseTrimmedInput(input, format),
     catch: (cause) => new ParseError({ cause }),
   });
-}
+
+const hasEvaluationInput = (input: string, expression: string): boolean => {
+  const hasInput = Boolean(input.trim());
+  const hasExpression = Boolean(expression.trim());
+  return hasInput && hasExpression;
+};
+
+const formatOutput = (result: unknown): string => JSON.stringify(result, null, 2) ?? String(result);
+
+const toEvaluationError = (cause: unknown): EvaluationResult => {
+  const message = cause instanceof Error ? cause.message : String(cause);
+  return { output: "", error: message.slice(0, MAX_ERROR_LENGTH) };
+};
 
 export function runEvaluation(
   input: string,
   expression: string,
   format: Format,
 ): Effect.Effect<EvaluationResult> {
-  if (!input.trim() || !expression.trim()) {
-    return Effect.succeed({ output: "", error: null });
-  }
+  if (!hasEvaluationInput(input, expression)) return Effect.succeed({ output: "", error: null });
 
   return Effect.gen(function* () {
-    const parsedInput = yield* parseInput(input, format);
+    const parsedInput = yield* parseInput(input.trim(), format);
     const result = yield* Effect.try({
       try: () => evaluate(parsedInput, expression),
       catch: (cause) => new EvaluationError({ cause }),
     });
-    const output = JSON.stringify(result, null, 2) ?? String(result);
+    const output = formatOutput(result);
     if (output.length > MAX_OUTPUT_LENGTH) {
       return { output: "", error: "Output too large to display" } satisfies EvaluationResult;
     }
     return { output, error: null } satisfies EvaluationResult;
   }).pipe(
-    Effect.catchAll((e) => {
-      const message = e.cause instanceof Error ? e.cause.message : String(e.cause);
-      return Effect.succeed<EvaluationResult>({
-        output: "",
-        error: message.slice(0, MAX_ERROR_LENGTH),
-      });
-    }),
+    Effect.catchAll((error) => Effect.succeed<EvaluationResult>(toEvaluationError(error.cause))),
   );
 }
 
@@ -109,15 +105,17 @@ export function hasConsistentCommaCount(lines: string[]): boolean {
 
 export const detectJSON: FormatDetector = (content) => {
   if (!looksLikeJSON(content)) return null;
-  if (isValidJSON(content))
+  if (isValidJSON(content)) {
     return { format: "json", confidence: 1.0, reason: "Valid JSON structure" };
+  }
   return null;
 };
 
 export const detectTOML: FormatDetector = (content) => {
   const hasSections = /^\[[^\]]+\]/m.test(content);
   const hasAssignment = /^[a-zA-Z_][a-zA-Z0-9_]*\s*=/m.test(content);
-  if (!hasSections || !hasAssignment) return null;
+  const hasTomlShape = hasSections && hasAssignment;
+  if (!hasTomlShape) return null;
   return { format: "toml", confidence: 0.9, reason: "TOML sections detected" };
 };
 
@@ -133,20 +131,33 @@ export const detectYAML: FormatDetector = (content) => {
   const hasKeyValue = /^[a-zA-Z_][a-zA-Z0-9_]*:\s/m.test(content);
   const lineCount = content.split("\n").filter((l) => l.trim()).length;
 
-  const rootKeys = content
+  const rootLines = content
     .split("\n")
-    .filter((l) => l.trim() && !l.startsWith(" ") && !l.startsWith("\t"))
-    .map((l) => l.match(/^([a-zA-Z_][a-zA-Z0-9_]*):/)?.[1])
+    .filter((line) => line.trim())
+    .filter((line) => {
+      const hasLeadingSpace = line.startsWith(" ");
+      const hasLeadingTab = line.startsWith("\t");
+      if (hasLeadingSpace) return false;
+      if (hasLeadingTab) return false;
+      return true;
+    });
+  const rootKeys = rootLines
+    .map((line) => line.match(/^([a-zA-Z_][a-zA-Z0-9_]*):/)?.[1])
     .filter(Boolean);
   const uniqueRootKeys = new Set(rootKeys);
   const hasDuplicateRootKeys = rootKeys.length > uniqueRootKeys.size;
+  const hasNestedYaml = hasNestedIndent && hasKeyValue;
+  const hasMultipleRootKeys = uniqueRootKeys.size > 1;
+  const hasRootKeyValues = hasKeyValue && lineCount > 1 && hasMultipleRootKeys;
 
   if (hasDuplicateRootKeys) return null;
   if (hasListItems) return { format: "yaml", confidence: 0.9, reason: "YAML list items detected" };
-  if (hasNestedIndent && hasKeyValue)
+  if (hasNestedYaml) {
     return { format: "yaml", confidence: 0.85, reason: "YAML nested structure detected" };
-  if (hasKeyValue && lineCount > 1 && uniqueRootKeys.size > 1)
+  }
+  if (hasRootKeyValues) {
     return { format: "yaml", confidence: 0.8, reason: "YAML key-value pairs detected" };
+  }
 
   return null;
 };
@@ -168,29 +179,26 @@ export function detectFormat(content: string): DetectionResult {
   const trimmed = content.trim();
   if (!trimmed) return EMPTY_RESULT;
 
-  const firstMatch = DETECTORS.map((detect) => detect(trimmed)).find((result) => result !== null);
+  const results = DETECTORS.map((detect) => detect(trimmed));
+  const firstMatch = results.find((result) => result !== null);
   return firstMatch ?? TEXT_FALLBACK;
 }
 
-export function minifyExpression(expression: string): string {
-  return shortenExpression(expression);
-}
-
-export function expandExpression(expression: string): string {
-  return expandShortcuts(expression);
-}
+export { shortenExpression as minifyExpression, expandShortcuts as expandExpression };
 
 // --- Machine actors, actions, guards ---
 
 export type InitialState = Pick<PlaygroundContext, "format" | "input" | "expression"> | null;
 
-export async function loadInitialStateActor({
+export function loadInitialStateActor({
   input: { isSandbox },
 }: {
   input: { isSandbox: boolean };
 }): Promise<InitialState> {
-  if (!isSandbox) return null;
-  return getStateFromUrl() ?? Effect.runPromise(loadState());
+  if (!isSandbox) return Promise.resolve(null);
+  const urlState = getStateFromUrl();
+  if (urlState) return Promise.resolve(urlState);
+  return Effect.runPromise(loadState());
 }
 
 export function persistPlaygroundState({ context }: { context: PlaygroundContext }): void {
@@ -205,9 +213,10 @@ export function computeFormatChange(
   format: Format,
 ): Partial<PlaygroundContext> {
   const starter = SANDBOX_STARTER[format];
-  return context.isSandbox
-    ? { format, input: starter.data, expression: starter.expression }
-    : { format, input: FORMAT_CONFIGS[format].placeholder, expression: FORMAT_CONFIGS[format].suggestions[0]?.expression ?? "." };
+  if (context.isSandbox) return { format, input: starter.data, expression: starter.expression };
+  const config = FORMAT_CONFIGS[format];
+  const expression = config.suggestions[0]?.expression ?? ".";
+  return { format, input: config.placeholder, expression };
 }
 
 export function isSandboxGuard({ context }: { context: PlaygroundContext }): boolean {

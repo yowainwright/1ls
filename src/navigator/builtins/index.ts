@@ -1,5 +1,5 @@
-import type { BuiltinFn, KeyExtractor, Predicate } from "./types.ts";
-import { EMPTY_SYMBOL, BUILTIN_FUNCTIONS } from "./constants.ts";
+import type { BuiltinFn, KeyExtractor, Predicate } from "./types";
+import { EMPTY_SYMBOL, BUILTIN_FUNCTIONS } from "./constants";
 import {
   isArray,
   isObject,
@@ -13,10 +13,151 @@ import {
   setValueAtPath,
   collectAllValues,
   collectPaths,
-} from "./utils.ts";
+} from "./utils";
 
-export { EMPTY_SYMBOL, BUILTIN_FUNCTIONS } from "./constants.ts";
-export type { BuiltinFn, KeyExtractor, Predicate } from "./types.ts";
+export { EMPTY_SYMBOL, BUILTIN_FUNCTIONS } from "./constants";
+export type { BuiltinFn, KeyExtractor, Predicate } from "./types";
+
+const hasValue = (values: unknown[], value: unknown): boolean => {
+  for (const existingValue of values) {
+    if (existingValue === value) return true;
+  }
+
+  return false;
+};
+
+const appendValue = (values: unknown[], value: unknown): void => {
+  values[values.length] = value;
+};
+
+const uniqueValues = (data: unknown[]): unknown[] => {
+  const values: unknown[] = [];
+
+  for (const item of data) {
+    if (!hasValue(values, item)) appendValue(values, item);
+  }
+
+  return values;
+};
+
+const flattenValue = (item: unknown): unknown[] => (isArray(item) ? flattenValues(item) : [item]);
+
+const flattenValues = (data: unknown[]): unknown[] => data.flatMap(flattenValue);
+
+const compareNumberValues = (left: number, right: number): number => {
+  if (left < right) return -1;
+  if (left > right) return 1;
+  return 0;
+};
+
+const compareStringValues = (left: string, right: string): number => {
+  if (left < right) return -1;
+  if (left > right) return 1;
+  return 0;
+};
+
+const compareSortValues = (left: unknown, right: unknown): number => {
+  const isNumberPair = typeof left === "number" && typeof right === "number";
+  if (isNumberPair) return compareNumberValues(left as number, right as number);
+
+  const isStringPair = typeof left === "string" && typeof right === "string";
+  if (isStringPair) return compareStringValues(left as string, right as string);
+
+  return 0;
+};
+
+const insertSortedValue = (
+  values: unknown[],
+  value: unknown,
+  compare: (left: unknown, right: unknown) => number,
+): unknown[] => {
+  let insertIndex = 0;
+
+  while (insertIndex < values.length) {
+    const comparison = compare(value, values[insertIndex]);
+    if (comparison < 0) break;
+    insertIndex++;
+  }
+
+  return values.slice(0, insertIndex).concat(value, values.slice(insertIndex));
+};
+
+const sortValues = (
+  values: unknown[],
+  compare: (left: unknown, right: unknown) => number,
+): unknown[] => {
+  let sortedValues: unknown[] = [];
+
+  for (const value of values) {
+    sortedValues = insertSortedValue(sortedValues, value, compare);
+  }
+
+  return sortedValues;
+};
+
+const mergeObjectValues = (
+  data: Record<string, unknown>,
+  args: unknown[],
+): Record<string, unknown> => {
+  const result: Record<string, unknown> = { ...data };
+
+  for (const arg of args) {
+    if (!isObject(arg)) continue;
+    Object.assign(result, arg);
+  }
+
+  return result;
+};
+
+const deepMergeObjectValues = (
+  data: Record<string, unknown>,
+  args: unknown[],
+): Record<string, unknown> => {
+  let result = data;
+
+  for (const arg of args) {
+    if (isObject(arg)) result = deepMerge(result, arg);
+  }
+
+  return result;
+};
+
+const fromPairs = (data: unknown[]): Record<string, unknown> => {
+  const result: Record<string, unknown> = {};
+
+  for (const pair of data) {
+    if (!isArray(pair)) continue;
+    const key = pair[0];
+    if (typeof key === "string") result[key] = pair[1];
+  }
+
+  return result;
+};
+
+const toPairs = (data: Record<string, unknown>): unknown[] => {
+  const keys = Object.keys(data);
+  const pairs: unknown[] = [];
+
+  for (let index = 0; index < keys.length; index++) {
+    const key = keys[index];
+    pairs[index] = [key, data[key]];
+  }
+
+  return pairs;
+};
+
+const sumNumbers = (data: unknown[]): number => {
+  let sum = 0;
+
+  for (const value of data) {
+    sum += value as number;
+  }
+
+  return sum;
+};
+
+const flattenOneLevel = (data: unknown[]): unknown[] =>
+  data.flatMap((item) => (isArray(item) ? item : [item]));
 
 export const BUILTINS: Record<string, BuiltinFn> = {
   [BUILTIN_FUNCTIONS.HEAD]: (data) => (isArray(data) ? data[0] : undefined),
@@ -24,36 +165,43 @@ export const BUILTINS: Record<string, BuiltinFn> = {
   [BUILTIN_FUNCTIONS.TAIL]: (data) => (isArray(data) ? data.slice(1) : []),
   [BUILTIN_FUNCTIONS.TAKE]: (data, [n]) => (isArray(data) ? data.slice(0, n as number) : []),
   [BUILTIN_FUNCTIONS.DROP]: (data, [n]) => (isArray(data) ? data.slice(n as number) : []),
-  [BUILTIN_FUNCTIONS.UNIQ]: (data) => (isArray(data) ? [...new Set(data)] : []),
-  [BUILTIN_FUNCTIONS.FLATTEN]: (data) => (isArray(data) ? data.flat(Infinity) : []),
-  [BUILTIN_FUNCTIONS.REVERSE]: (data) => (isArray(data) ? [...data].reverse() : []),
+  [BUILTIN_FUNCTIONS.UNIQ]: (data) => (isArray(data) ? uniqueValues(data) : []),
+  [BUILTIN_FUNCTIONS.FLATTEN]: (data) => (isArray(data) ? flattenValues(data) : []),
+  [BUILTIN_FUNCTIONS.REVERSE]: (data) => (isArray(data) ? data.slice().reverse() : []),
   [BUILTIN_FUNCTIONS.GROUPBY]: (data, [fn]) => {
     if (!isArray(data)) return {};
     const keyFn = fn as KeyExtractor;
-    return data.reduce<Record<string, unknown[]>>((acc, item) => {
-      const key = String(keyFn(item));
-      const existing = acc[key] || [];
-      return { ...acc, [key]: [...existing, item] };
-    }, {});
+    const groups: Record<string, unknown[]> = {};
+
+    for (let index = 0; index < data.length; index++) {
+      const item = data[index];
+      const key = String(keyFn(item, index, data));
+      const group = groups[key] ?? [];
+      groups[key] = group.concat(item);
+    }
+
+    return groups;
   },
   [BUILTIN_FUNCTIONS.SORTBY]: (data, [fn]) => {
     if (!isArray(data)) return [];
     const keyFn = fn as KeyExtractor;
-    return [...data].sort((a, b) => {
-      const aVal = keyFn(a) as string | number;
-      const bVal = keyFn(b) as string | number;
-      const aLessThanB = aVal < bVal;
-      const aGreaterThanB = aVal > bVal;
-      if (aLessThanB) return -1;
-      if (aGreaterThanB) return 1;
-      return 0;
+    return sortValues(data, (a, b) => {
+      const aVal = keyFn(a, 0, data);
+      const bVal = keyFn(b, 0, data);
+      return compareSortValues(aVal, bVal);
     });
   },
   [BUILTIN_FUNCTIONS.CHUNK]: (data, [size]) => {
     if (!isArray(data)) return [];
     const n = size as number;
     const numChunks = Math.ceil(data.length / n);
-    return Array.from({ length: numChunks }, (_, i) => data.slice(i * n, (i + 1) * n));
+    const chunks: unknown[] = [];
+
+    for (let index = 0; index < numChunks; index++) {
+      chunks[index] = data.slice(index * n, (index + 1) * n);
+    }
+
+    return chunks;
   },
   [BUILTIN_FUNCTIONS.COMPACT]: (data) => (isArray(data) ? data.filter(Boolean) : []),
   [BUILTIN_FUNCTIONS.PLUCK]: (data, [key]) => {
@@ -77,38 +225,40 @@ export const BUILTINS: Record<string, BuiltinFn> = {
     if (!isObject(data)) return {};
     const isSingleArrayArg = args.length === 1 && isArray(args[0]);
     const keysToOmit = isSingleArrayArg ? (args[0] as string[]) : (args as string[]);
-    const keySet = new Set(keysToOmit);
-    return Object.fromEntries(Object.entries(data).filter(([k]) => !keySet.has(k)));
+    const result: Record<string, unknown> = {};
+
+    for (const key of Object.keys(data)) {
+      if (!hasValue(keysToOmit, key)) result[key] = data[key];
+    }
+
+    return result;
   },
-  [BUILTIN_FUNCTIONS.KEYS]: (data) => (isObject(data) ? Object.keys(data) : []),
+  [BUILTIN_FUNCTIONS.KEYS]: (data) => {
+    if (!isObject(data)) return [] as string[];
+    return Object.keys(data);
+  },
   [BUILTIN_FUNCTIONS.VALUES]: (data) => (isObject(data) ? Object.values(data) : []),
   [BUILTIN_FUNCTIONS.MERGE]: (data, args) => {
     if (!isObject(data)) return {};
-    return args.reduce<Record<string, unknown>>((acc, obj) => {
-      const objRecord = obj as Record<string, unknown>;
-      return { ...acc, ...objRecord };
-    }, data);
+    return mergeObjectValues(data, args);
   },
   [BUILTIN_FUNCTIONS.DEEPMERGE]: (data, args) => {
     if (!isObject(data)) return {};
-    return args.reduce<Record<string, unknown>>((acc, obj) => {
-      const shouldMerge = isObject(obj);
-      return shouldMerge ? deepMerge(acc, obj) : acc;
-    }, data);
+    return deepMergeObjectValues(data, args);
   },
   [BUILTIN_FUNCTIONS.FROMPAIRS]: (data) => {
     if (!isArray(data)) return {};
-    return Object.fromEntries(data as [string, unknown][]);
+    return fromPairs(data);
   },
-  [BUILTIN_FUNCTIONS.TOPAIRS]: (data) => (isObject(data) ? Object.entries(data) : []),
+  [BUILTIN_FUNCTIONS.TOPAIRS]: (data) => (isObject(data) ? toPairs(data) : []),
   [BUILTIN_FUNCTIONS.SUM]: (data) => {
     if (!isArray(data)) return 0;
-    return data.reduce<number>((acc, val) => acc + (val as number), 0);
+    return sumNumbers(data);
   },
   [BUILTIN_FUNCTIONS.MEAN]: (data) => {
     const isEmptyOrNotArray = !isArray(data) || data.length === 0;
     if (isEmptyOrNotArray) return 0;
-    const sum = data.reduce<number>((acc, val) => acc + (val as number), 0);
+    const sum = sumNumbers(data);
     return sum / data.length;
   },
   [BUILTIN_FUNCTIONS.MIN]: (data) => {
@@ -177,8 +327,8 @@ export const BUILTINS: Record<string, BuiltinFn> = {
     const firstIsString = isString(data[0]);
     const firstIsArray = isArray(data[0]);
     if (firstIsString) return data.join("");
-    if (firstIsArray) return data.flat();
-    return data.reduce<number>((acc, val) => acc + (val as number), 0);
+    if (firstIsArray) return flattenOneLevel(data);
+    return sumNumbers(data);
   },
   [BUILTIN_FUNCTIONS.PATH]: (data) => collectPaths(data, []),
   [BUILTIN_FUNCTIONS.GETPATH]: (data, [path]) => getValueAtPath(data, path as (string | number)[]),
@@ -186,7 +336,7 @@ export const BUILTINS: Record<string, BuiltinFn> = {
     setValueAtPath(data, path as (string | number)[], value),
   [BUILTIN_FUNCTIONS.RECURSE]: collectAllValues,
   [BUILTIN_FUNCTIONS.SPLIT]: (data, [sep]) => {
-    if (!isString(data)) return [];
+    if (!isString(data)) return [] as string[];
     const separator = sep as string;
     return data.split(separator);
   },
@@ -238,7 +388,7 @@ export const BUILTINS: Record<string, BuiltinFn> = {
   [BUILTIN_FUNCTIONS.NOT]: (data) => !data,
   [BUILTIN_FUNCTIONS.SELECT]: (data, [fn]) => {
     const predicate = fn as Predicate;
-    const passes = predicate(data);
+    const passes = predicate(data, 0, [data]);
     return passes ? data : EMPTY_SYMBOL;
   },
   [BUILTIN_FUNCTIONS.EMPTY]: () => EMPTY_SYMBOL,

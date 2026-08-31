@@ -1,5 +1,5 @@
-import type { ShortcutMapping } from "../shortcuts/index.ts";
-import { SHORTCUTS as SHARED_SHORTCUTS } from "../constants.ts";
+import type { ShortcutMapping } from "../shortcuts/index";
+import { SHORTCUTS as SHARED_SHORTCUTS } from "../constants";
 
 export const REGEX_SPECIAL_CHARS = /[.*+?^${}()|[\]\\]/g;
 

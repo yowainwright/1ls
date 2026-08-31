@@ -29,8 +29,32 @@ const createHighlighter = createBundledHighlighter<Language, typeof THEME>({
   themes: {
     dracula: () => import("shiki/themes/dracula.mjs"),
   },
-  engine: () => createJavaScriptRegexEngine(),
+  engine: createJavaScriptRegexEngine,
 });
+
+const escapeHtml = (code: string): string =>
+  code.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+const createFallbackHtml = (code: string): string => `<pre><code>${escapeHtml(code)}</code></pre>`;
+
+const createCodeHtml = (highlighter: CodeHighlighter, code: string, language: string): string =>
+  highlighter.codeToHtml(code, {
+    lang: language,
+    theme: THEME,
+    transformers: [
+      transformerNotationDiff(),
+      transformerNotationHighlight(),
+      transformerNotationFocus(),
+    ],
+  });
+
+const getCodeHtml = (highlighter: CodeHighlighter, code: string, language: string): string => {
+  try {
+    return createCodeHtml(highlighter, code, language);
+  } catch {
+    return createFallbackHtml(code);
+  }
+};
 
 function CodeblockContent({
   code,
@@ -42,20 +66,7 @@ function CodeblockContent({
   lineNumbers: boolean;
 }) {
   const highlighter = use(getHighlighter());
-  let html: string;
-  try {
-    html = highlighter.codeToHtml(code, {
-      lang: language,
-      theme: THEME,
-      transformers: [
-        transformerNotationDiff(),
-        transformerNotationHighlight(),
-        transformerNotationFocus(),
-      ],
-    });
-  } catch {
-    html = `<pre><code>${code.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")}</code></pre>`;
-  }
+  const html = getCodeHtml(highlighter, code, language);
 
   return (
     <div
@@ -89,16 +100,21 @@ export function Codeblock({
 }: CodeblockProps) {
   const trimmedCode = code.trim();
   const lineNumbers = showLineNumbers && trimmedCode.split("\n").length > 1;
+  const showTitle = Boolean(title);
 
   return (
     <div className={cn(CODEBLOCK_CLASSES.wrapper, className)}>
-      {title && (
+      {showTitle && (
         <div className="flex items-center gap-2 px-4 py-2 border-b border-white/10 bg-white/5">
           <span className="text-sm font-medium text-muted-foreground">{title}</span>
         </div>
       )}
 
-      {showLanguage && <Badge variant="outline" className={CODEBLOCK_CLASSES.languageBadge}>{language}</Badge>}
+      {showLanguage && (
+        <Badge variant="outline" className={CODEBLOCK_CLASSES.languageBadge}>
+          {language}
+        </Badge>
+      )}
 
       {showCopy && <CopyButton code={trimmedCode} />}
 

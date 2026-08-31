@@ -7,12 +7,28 @@ import { text } from "node:stream/consumers";
 
 const CLI_PATH = join(import.meta.dirname, "../../dist/index.js");
 const HAS_CLI = existsSync(CLI_PATH);
+const ANSI_PATTERN = /\x1b\[[0-9;]*m/;
+
+interface CommandResult {
+  stdout: string;
+  stderr: string;
+  exitCode: number;
+}
+
+interface RunWithStdinOptions {
+  env?: NodeJS.ProcessEnv;
+}
+
+const hasAnsi = (value: string): boolean => ANSI_PATTERN.test(value);
 
 async function runWithStdin(
   input: string,
   args: string[] = [],
-): Promise<{ stdout: string; stderr: string; exitCode: number }> {
+  options: RunWithStdinOptions = {},
+): Promise<CommandResult> {
+  const env = { ...process.env, ...options.env };
   const proc = spawn(process.execPath, [CLI_PATH, ...args], {
+    env,
     stdio: ["pipe", "pipe", "pipe"],
   });
 
@@ -115,6 +131,16 @@ describeStdin("CLI Stdin Pipe Integration", () => {
       const result = await runWithStdin('{"value":null}', ["-t", ".value"]);
       assert.strictEqual(result.exitCode, 0);
       assert.ok(result.stdout.includes("[object]"));
+    });
+
+    test("NO_COLOR disables pretty output colors when empty", async () => {
+      const result = await runWithStdin('{"name":"Ada"}', ["--pretty"], {
+        env: { NO_COLOR: "" },
+      });
+
+      assert.strictEqual(result.exitCode, 0);
+      assert.strictEqual(hasAnsi(result.stdout), false);
+      assert.ok(result.stdout.includes('"name": "Ada"'));
     });
   });
 

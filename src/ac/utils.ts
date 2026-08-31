@@ -7,8 +7,8 @@ import {
   OBJECT_SUGGESTIONS,
   QUOTE_PATTERN,
   STRING_SUGGESTIONS,
-} from "./constants.ts";
-import type { FuzzyMatch, PartialMethod, Suggestion } from "./types.ts";
+} from "./constants";
+import type { FuzzyMatch, PartialMethod, Suggestion } from "./types";
 
 export const detectDataType = (value: unknown): string => {
   if (value === null) return "null";

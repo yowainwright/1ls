@@ -1,9 +1,9 @@
-import { SHORTCUTS, BUILTIN_SHORTCUTS } from "../shortcuts/constants.ts";
-import { BUILTIN_FUNCTIONS } from "../navigator/builtins/constants.ts";
-import { VALID_INPUT_FORMATS, VALID_OUTPUT_FORMATS } from "../constants.ts";
-import { CLI_FLAGS, JSON_PATH_PATTERNS } from "./constants.ts";
-import type { CliFlag, JsonPathPattern } from "./constants.ts";
-import type { ShortcutMapping } from "../shortcuts/types.ts";
+import { SHORTCUTS, BUILTIN_SHORTCUTS } from "../shortcuts/constants";
+import { BUILTIN_FUNCTIONS } from "../navigator/builtins/constants";
+import { VALID_INPUT_FORMATS, VALID_OUTPUT_FORMATS } from "../constants";
+import { CLI_FLAGS, JSON_PATH_PATTERNS } from "./constants";
+import type { CliFlag, JsonPathPattern } from "./constants";
+import type { ShortcutMapping } from "../shortcuts/types";
 
 export function getFlags(): string[] {
   return CLI_FLAGS.flatMap((f) => (f.short ? [f.long, f.short] : [f.long]));

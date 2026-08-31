@@ -1,4 +1,4 @@
-import type { StackFrame, AnchorStore } from "./types.ts";
+import type { StackFrame, AnchorStore } from "./types";
 import {
   getIndent,
   stripComment,
@@ -14,9 +14,9 @@ import {
   findPreviousKey,
   collectMultilineContent,
   formatMultilineValue,
-} from "./utils.ts";
+} from "./utils";
 
-export { parseYAMLValue, findPreviousKey } from "./utils.ts";
+export { parseYAMLValue, findPreviousKey } from "./utils";
 
 const resolveAliasString = (value: string, anchors: AnchorStore): unknown => {
   const alias = value.substring(1);
@@ -36,29 +36,51 @@ const resolveMergeAlias = (value: string, anchors: AnchorStore): Record<string, 
   return merged as Record<string, unknown>;
 };
 
-const resolveAliases = (obj: unknown, anchors: AnchorStore): unknown => {
-  const isAliasString = typeof obj === "string" && obj.startsWith("*");
-  if (isAliasString) return resolveAliasString(obj as string, anchors);
+const isAliasString = (value: unknown): value is string => {
+  if (typeof value !== "string") return false;
+  return value.startsWith("*");
+};
 
-  if (Array.isArray(obj)) {
-    return obj.map((item) => resolveAliases(item, anchors));
+const isMergeAliasEntry = (key: string, value: unknown): value is string => {
+  const isMergeKey = key === "<<";
+  if (!isMergeKey) return false;
+  return isAliasString(value);
+};
+
+const resolveAliasEntry = (
+  result: Record<string, unknown>,
+  key: string,
+  value: unknown,
+  anchors: AnchorStore,
+): void => {
+  if (!isMergeAliasEntry(key, value)) {
+    result[key] = resolveAliases(value, anchors);
+    return;
   }
+
+  const merged = resolveMergeAlias(value, anchors);
+  if (!merged) return;
+  Object.assign(result, merged);
+};
+
+const resolveObjectAliases = (obj: Record<string, unknown>, anchors: AnchorStore): unknown => {
+  const result: Record<string, unknown> = {};
+
+  for (const [key, value] of Object.entries(obj)) {
+    resolveAliasEntry(result, key, value, anchors);
+  }
+
+  return result;
+};
+
+const resolveAliases = (obj: unknown, anchors: AnchorStore): unknown => {
+  if (isAliasString(obj)) return resolveAliasString(obj, anchors);
+  if (Array.isArray(obj)) return obj.map((item) => resolveAliases(item, anchors));
 
   const isObject = typeof obj === "object" && obj !== null;
   if (!isObject) return obj;
 
-  return Object.entries(obj).reduce<Record<string, unknown>>((result, [key, value]) => {
-    const isMergeKey = key === "<<";
-    const isAliasValue = typeof value === "string" && value.startsWith("*");
-    const isMergeAlias = isMergeKey && isAliasValue;
-
-    if (!isMergeAlias) {
-      return { ...result, [key]: resolveAliases(value, anchors) };
-    }
-
-    const merged = resolveMergeAlias(value as string, anchors);
-    return merged ? { ...result, ...merged } : result;
-  }, {});
+  return resolveObjectAliases(obj as Record<string, unknown>, anchors);
 };
 
 const findFirstContentLine = (lines: string[]): string | undefined =>
@@ -90,10 +112,20 @@ const matchesArrayIndent = (frame: StackFrame, indent: number): boolean => {
   return isCurrentIndent || isRootIndent;
 };
 
-const popFramesWhile = (stack: StackFrame[], predicate: (frame: StackFrame) => boolean): void => {
-  while (stack.length > 1 && predicate(getTopFrame(stack))) {
-    stack.length = stack.length - 1;
+const removeTopStackFrame = (stack: StackFrame[]): StackFrame[] =>
+  stack.slice(0, stack.length - 1);
+
+const popFramesWhile = (
+  stack: StackFrame[],
+  predicate: (frame: StackFrame) => boolean,
+): StackFrame[] => {
+  let frames = stack;
+
+  while (frames.length > 1 && predicate(getTopFrame(frames))) {
+    frames = removeTopStackFrame(frames);
   }
+
+  return frames;
 };
 
 interface ListItemInput {
@@ -104,12 +136,32 @@ interface ListItemInput {
   anchors: AnchorStore;
 }
 
-const appendToArray = (targetArray: unknown[], value: unknown): void => {
+const appendToArray = (targetArray: unknown[], value: unknown): number => {
   targetArray[targetArray.length] = value;
+  return targetArray.length - 1;
 };
 
 const appendToStack = (stack: StackFrame[], frame: StackFrame): void => {
   stack[stack.length] = frame;
+};
+
+const createStackFrame = (
+  container: Record<string, unknown> | unknown[],
+  indent: number,
+  parentKey: string | number | null,
+): StackFrame => ({
+  container,
+  indent,
+  pendingKey: null,
+  parentKey,
+});
+
+const setObjectValue = (
+  object: Record<string, unknown>,
+  key: string,
+  value: unknown,
+): void => {
+  object[key] = value;
 };
 
 const processObjectListItem = (input: ListItemInput): void => {
@@ -118,10 +170,11 @@ const processObjectListItem = (input: ListItemInput): void => {
   const rawVal = input.content.substring(colonIdx + 1).trim();
   const { cleanKey, anchorName } = extractAnchorFromKey(rawKey);
   const parsedValue = rawVal ? parseYAMLValue(rawVal) : null;
-  const obj: Record<string, unknown> = { [cleanKey]: parsedValue };
-  appendToArray(input.targetArray, obj);
+  const obj: Record<string, unknown> = {};
+  setObjectValue(obj, cleanKey, parsedValue);
+  const parentKey = appendToArray(input.targetArray, obj);
   if (anchorName) input.anchors[anchorName] = obj;
-  appendToStack(input.stack, { container: obj, indent: input.indent + 2 });
+  appendToStack(input.stack, createStackFrame(obj, input.indent + 2, parentKey));
 };
 
 const processListItem = (input: ListItemInput): void => {
@@ -135,8 +188,8 @@ const processListItem = (input: ListItemInput): void => {
   }
 
   const emptyObj: Record<string, unknown> = {};
-  appendToArray(targetArray, emptyObj);
-  appendToStack(stack, { container: emptyObj, indent: indent + 2 });
+  const parentKey = appendToArray(targetArray, emptyObj);
+  appendToStack(stack, createStackFrame(emptyObj, indent + 2, parentKey));
 };
 
 interface YAMLLineInput {
@@ -148,38 +201,74 @@ interface YAMLLineInput {
   anchors: AnchorStore;
 }
 
-const attachNewArray = (input: YAMLLineInput, current: StackFrame, targetArray: unknown[]): void => {
+const attachNewArray = (
+  input: YAMLLineInput,
+  current: StackFrame,
+  targetArray: unknown[],
+): string | null => {
   if (current.pendingKey) {
-    (current.container as Record<string, unknown>)[current.pendingKey] = targetArray;
-    current.pendingKey = undefined;
-    return;
+    const pendingKey = consumePendingKey(current);
+    setObjectValue(current.container as Record<string, unknown>, pendingKey, targetArray);
+    return pendingKey;
   }
 
-  if (Array.isArray(current.container)) return;
+  if (Array.isArray(current.container)) return null;
   const prevKey = findPreviousKey(input.lines, input.lineIndex);
-  if (prevKey) (current.container as Record<string, unknown>)[prevKey] = targetArray;
+  if (prevKey) setObjectValue(current.container as Record<string, unknown>, prevKey, targetArray);
+  return prevKey;
 };
 
-const handleListItem = (input: YAMLLineInput): void => {
+const consumePendingKey = (frame: StackFrame): string => {
+  const pendingKey = frame.pendingKey as string;
+  frame.pendingKey = null;
+  return pendingKey;
+};
+
+const processMatchingArrayListItem = (
+  input: YAMLLineInput,
+  content: string,
+  stack: StackFrame[],
+  current: StackFrame,
+): void => {
+  if (current.indent === -1) current.indent = input.indent;
+  processListItem({
+    content,
+    targetArray: current.container as unknown[],
+    stack,
+    indent: input.indent,
+    anchors: input.anchors,
+  });
+};
+
+const processNewArrayListItem = (
+  input: YAMLLineInput,
+  content: string,
+  stack: StackFrame[],
+  current: StackFrame,
+): void => {
+  const targetArray: unknown[] = [];
+  const parentKey = attachNewArray(input, current, targetArray);
+  appendToStack(stack, createStackFrame(targetArray, input.indent, parentKey));
+  processListItem({ content, targetArray, stack, indent: input.indent, anchors: input.anchors });
+};
+
+const handleListItem = (input: YAMLLineInput): StackFrame[] => {
   const content = getListItemContent(input.trimmed);
-  popFramesWhile(
+  const stack = popFramesWhile(
     input.stack,
     (frame) => shouldPopFrame(frame, input.indent),
   );
-  const current = getTopFrame(input.stack);
+  const current = getTopFrame(stack);
   const isArrayContainer = Array.isArray(current.container);
   const isMatchingArray = isArrayContainer && matchesArrayIndent(current, input.indent);
 
   if (isMatchingArray) {
-    if (current.indent === -1) current.indent = input.indent;
-    processListItem({ ...input, content, targetArray: current.container as unknown[] });
-    return;
+    processMatchingArrayListItem(input, content, stack, current);
+    return stack;
   }
 
-  const targetArray: unknown[] = [];
-  attachNewArray(input, current, targetArray);
-  appendToStack(input.stack, { container: targetArray, indent: input.indent });
-  processListItem({ ...input, content, targetArray });
+  processNewArrayListItem(input, content, stack, current);
+  return stack;
 };
 
 interface YAMLValueInput extends YAMLLineInput {
@@ -204,9 +293,9 @@ const handleMultilineValue = (input: YAMLValueInput): number => {
 
 const handleNestedEmptyValue = (input: YAMLValueInput, nextIndent: number): void => {
   const newObj: Record<string, unknown> = {};
-  input.container[input.key] = newObj;
+  setObjectValue(input.container, input.key, newObj);
   if (input.anchorName) input.anchors[input.anchorName] = newObj;
-  appendToStack(input.stack, { container: newObj, indent: nextIndent });
+  appendToStack(input.stack, createStackFrame(newObj, nextIndent, input.key));
 };
 
 const readNextYAMLLine = (
@@ -242,39 +331,180 @@ const handleEmptyValue = (input: YAMLValueInput): void => {
     return;
   }
 
-  input.container[input.key] = null;
+  setObjectValue(input.container, input.key, null);
   if (input.anchorName) input.anchors[input.anchorName] = null;
 };
 
-const handleScalarValue = (input: YAMLValueInput): number => {
+interface YAMLLineResult {
+  lineIndex: number;
+  stack: StackFrame[];
+}
+
+const createYAMLLineResult = (lineIndex: number, stack: StackFrame[]): YAMLLineResult => ({
+  lineIndex,
+  stack,
+});
+
+interface ScalarValueInput {
+  container: Record<string, unknown>;
+  key: string;
+  value: string;
+  anchorName: string | null;
+  anchors: AnchorStore;
+}
+
+const setScalarValue = (input: ScalarValueInput): Record<string, unknown> => {
   const parsedValue = parseYAMLValue(input.value);
-  input.container[input.key] = parsedValue;
+  setObjectValue(input.container, input.key, parsedValue);
   if (input.anchorName) input.anchors[input.anchorName] = parsedValue;
-  return input.lineIndex;
+  return input.container;
 };
 
-const handleKeyValueLine = (input: YAMLLineInput): number => {
-  const parsed = parseKeyValue(input.trimmed);
-  if (!parsed) return input.lineIndex;
+const replaceTopFrameContainer = (
+  stack: StackFrame[],
+  container: Record<string, unknown>,
+): void => {
+  const index = stack.length - 1;
+  const current = stack[index];
+  stack[index] = {
+    container,
+    indent: current.indent,
+    pendingKey: current.pendingKey,
+    parentKey: current.parentKey,
+  };
+};
 
-  const { anchorName, cleanValue } = extractAnchorFromValue(parsed.value);
+const setContainerChild = (
+  container: Record<string, unknown> | unknown[],
+  key: string | number,
+  value: unknown,
+): Record<string, unknown> | unknown[] => {
+  if (Array.isArray(container)) {
+    container[key as number] = value;
+    return container;
+  }
 
+  container[key as string] = value;
+  return container;
+};
+
+const propagateTopFrameContainer = (stack: StackFrame[]): void => {
+  let childIndex = stack.length - 1;
+
+  while (childIndex > 0) {
+    const child = stack[childIndex];
+    if (child.parentKey === null) return;
+
+    const parentIndex = childIndex - 1;
+    const parent = stack[parentIndex];
+    const parentContainer = setContainerChild(parent.container, child.parentKey, child.container);
+    stack[parentIndex] = {
+      container: parentContainer,
+      indent: parent.indent,
+      pendingKey: parent.pendingKey,
+      parentKey: parent.parentKey,
+    };
+    childIndex = parentIndex;
+  }
+};
+
+const popKeyValueFrames = (input: YAMLLineInput): StackFrame[] =>
   popFramesWhile(
     input.stack,
     (f) => f.indent > input.indent || (f.indent === input.indent && Array.isArray(f.container)),
   );
 
-  const container = getTopFrame(input.stack).container;
-  if (Array.isArray(container)) return input.lineIndex;
+const handleScalarKeyValueLine = (
+  input: YAMLLineInput,
+  stack: StackFrame[],
+  scalar: ScalarValueInput,
+): YAMLLineResult => {
+  const updatedContainer = setScalarValue(scalar);
+  replaceTopFrameContainer(stack, updatedContainer);
+  propagateTopFrameContainer(stack);
+  return createYAMLLineResult(input.lineIndex, stack);
+};
 
-  const valueInput = { ...input, container, key: parsed.key, value: cleanValue, anchorName };
-  const isMultiline = isMultilineIndicator(cleanValue);
-  if (isMultiline) return handleMultilineValue(valueInput);
+interface CreateValueInputArgs {
+  input: YAMLLineInput;
+  stack: StackFrame[];
+  container: Record<string, unknown>;
+  key: string;
+  value: string;
+  anchorName: string | null;
+}
 
-  if (cleanValue) return handleScalarValue(valueInput);
+interface KeyValueParts {
+  key: string;
+  cleanValue: string;
+  anchorName: string | null;
+}
+
+interface ObjectKeyValueInput {
+  input: YAMLLineInput;
+  stack: StackFrame[];
+  container: Record<string, unknown>;
+  parts: KeyValueParts;
+}
+
+const createValueInput = (args: CreateValueInputArgs): YAMLValueInput => ({
+  trimmed: args.input.trimmed,
+  indent: args.input.indent,
+  lines: args.input.lines,
+  lineIndex: args.input.lineIndex,
+  stack: args.stack,
+  anchors: args.input.anchors,
+  container: args.container,
+  key: args.key,
+  value: args.value,
+  anchorName: args.anchorName,
+});
+
+const createScalarInput = (args: ObjectKeyValueInput): ScalarValueInput => ({
+  container: args.container,
+  key: args.parts.key,
+  value: args.parts.cleanValue,
+  anchorName: args.parts.anchorName,
+  anchors: args.input.anchors,
+});
+
+const handleObjectKeyValueLine = (args: ObjectKeyValueInput): YAMLLineResult => {
+  const isMultiline = isMultilineIndicator(args.parts.cleanValue);
+  const isScalarValue = Boolean(args.parts.cleanValue) && !isMultiline;
+  if (isScalarValue) {
+    const scalar = createScalarInput(args);
+    return handleScalarKeyValueLine(args.input, args.stack, scalar);
+  }
+
+  const valueInput = createValueInput({
+    input: args.input,
+    stack: args.stack,
+    container: args.container,
+    key: args.parts.key,
+    value: args.parts.cleanValue,
+    anchorName: args.parts.anchorName,
+  });
+  if (isMultiline) return createYAMLLineResult(handleMultilineValue(valueInput), args.stack);
 
   handleEmptyValue(valueInput);
-  return input.lineIndex;
+  return createYAMLLineResult(args.input.lineIndex, args.stack);
+};
+
+const createKeyValueParts = (key: string, value: string): KeyValueParts => {
+  const { anchorName, cleanValue } = extractAnchorFromValue(value);
+  return { key, cleanValue, anchorName };
+};
+
+const handleKeyValueLine = (input: YAMLLineInput): YAMLLineResult => {
+  const parsed = parseKeyValue(input.trimmed);
+  if (!parsed) return createYAMLLineResult(input.lineIndex, input.stack);
+
+  const stack = popKeyValueFrames(input);
+  const container = getTopFrame(stack).container;
+  if (Array.isArray(container)) return createYAMLLineResult(input.lineIndex, stack);
+
+  const parts = createKeyValueParts(parsed.key, parsed.value);
+  return handleObjectKeyValueLine({ input, stack, container, parts });
 };
 
 interface YAMLParseLoop {
@@ -283,30 +513,62 @@ interface YAMLParseLoop {
   stack: StackFrame[];
 }
 
+const hasAnchors = (anchors: AnchorStore): boolean => {
+  const names = Object.keys(anchors);
+  return names.length > 0;
+};
+
+const createYAMLLineInput = (
+  context: YAMLParseLoop,
+  lineIndex: number,
+  line: string,
+): YAMLLineInput => ({
+  trimmed: line.trim(),
+  indent: getIndent(line),
+  lines: context.lines,
+  lineIndex,
+  stack: context.stack,
+  anchors: context.anchors,
+});
+
 const parseYAMLLine = (context: YAMLParseLoop, lineIndex: number): number => {
   const line = stripComment(context.lines[lineIndex]);
   const trimmed = line.trim();
   const shouldSkip = !trimmed || isDocumentMarker(trimmed);
   if (shouldSkip) return lineIndex + 1;
-  const indent = getIndent(line);
-  const input = { trimmed, indent, lines: context.lines, lineIndex, stack: context.stack, anchors: context.anchors };
+  const input = createYAMLLineInput(context, lineIndex, line);
   if (isListItemLine(trimmed)) {
-    handleListItem(input);
+    context.stack = handleListItem(input);
     return lineIndex + 1;
   }
-  return handleKeyValueLine(input) + 1;
+  const result = handleKeyValueLine(input);
+  context.stack = result.stack;
+  return result.lineIndex + 1;
+};
+
+const createYAMLParseLoop = (lines: string[]): YAMLParseLoop => {
+  const anchors: AnchorStore = {};
+  const rootContainer = createRootContainer(lines);
+  return {
+    lines,
+    anchors,
+    stack: [createStackFrame(rootContainer, -1, null)],
+  };
+};
+
+const parseYAMLLines = (context: YAMLParseLoop): void => {
+  let i = 0;
+  while (i < context.lines.length) {
+    i = parseYAMLLine(context, i);
+  }
 };
 
 export const parseYAML = (input: string): unknown => {
   const lines = input.trim().split("\n");
-  const anchors: AnchorStore = {};
-  const rootContainer = createRootContainer(lines);
-  const stack: StackFrame[] = [{ container: rootContainer, indent: -1 }];
+  const context = createYAMLParseLoop(lines);
+  parseYAMLLines(context);
 
-  let i = 0;
-  while (i < lines.length) {
-    i = parseYAMLLine({ lines, anchors, stack }, i);
-  }
-
-  return resolveAliases(rootContainer, anchors);
+  const stackRoot = context.stack[0].container;
+  const parsed = hasAnchors(context.anchors) ? resolveAliases(stackRoot, context.anchors) : stackRoot;
+  return parsed;
 };

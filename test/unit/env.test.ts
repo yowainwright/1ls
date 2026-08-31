@@ -1,6 +1,6 @@
 import { describe, test } from "node:test";
 import assert from "node:assert/strict";
-import { parseENV, parseENVValue } from "../../src/formats/env.ts";
+import { parseENV, parseENVValue } from "../../src/formats/env";
 
 describe("parseENVValue", () => {
   test("parses quoted strings", () => {

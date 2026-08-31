@@ -31,19 +31,11 @@ chmod +x "$PRE_COMMIT"
 echo "✓ Installed pre-commit hook"
 
 # Setup post-checkout hook
-if [ -f "$POST_CHECKOUT" ]; then
-  echo "post-checkout hook already exists, skipping..."
-else
-  cat > "$POST_CHECKOUT" << 'EOF'
+cat > "$POST_CHECKOUT" << 'EOF'
 #!/bin/sh
-# Check if current branch has a remote tracking branch
-if git rev-parse --abbrev-ref @{upstream} >/dev/null 2>&1; then
-  git pull
-fi
-pnpm install
+exit 0
 EOF
-  chmod +x "$POST_CHECKOUT"
-  echo "✓ Created post-checkout hook"
-fi
+chmod +x "$POST_CHECKOUT"
+echo "✓ Installed post-checkout hook"
 
 echo "Git hooks setup complete!"

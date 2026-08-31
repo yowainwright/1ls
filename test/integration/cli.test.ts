@@ -127,6 +127,32 @@ describe("1ls Integration - File Reading", () => {
 
 });
 
+describe("1ls Integration - File Commands", () => {
+  test("lists files", async () => {
+    const result = await runCLI(["--compact", "--list", FIXTURES_PATH]);
+
+    assert.strictEqual(result.exitCode, 0);
+    const files = JSON.parse(result.stdout);
+    const names = files.map((file: { name: string }) => file.name);
+    assert.ok(names.includes("data.json"));
+  });
+
+  test("greps files", async () => {
+    const result = await runCLI([
+      "--grep",
+      "Alice",
+      "--find",
+      FIXTURES_PATH,
+      "--recursive",
+      "--line-numbers",
+    ]);
+
+    assert.strictEqual(result.exitCode, 0);
+    assert.ok(result.stdout.includes("Alice"));
+    assert.ok(result.stdout.includes("data.json"));
+  });
+});
+
 describe("1ls Integration - Expression Processing", () => {
   test("filters and maps data", async () => {
     const result = await runCLI([

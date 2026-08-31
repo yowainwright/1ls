@@ -1,5 +1,5 @@
-import type { DataFormat } from "./types.ts";
-import { DETECTION } from "./constants.ts";
+import type { DataFormat } from "./types";
+import { DETECTION } from "./constants";
 
 export function parseLines(input: string): string[] {
   return input
@@ -20,7 +20,15 @@ const isValidJSONLine = (line: string): boolean => {
   }
 };
 
-const countMatches = (str: string, pattern: RegExp): number => (str.match(pattern) || []).length;
+const countCharacter = (str: string, character: string): number => {
+  let count = 0;
+
+  for (let index = 0; index < str.length; index++) {
+    if (str[index] === character) count++;
+  }
+
+  return count;
+};
 
 function detectMultiline(trimmed: string): DataFormat {
   const lines = trimmed.split("\n");
@@ -31,8 +39,8 @@ function detectMultiline(trimmed: string): DataFormat {
   if (isNDJSON) return "ndjson";
 
   const firstLine = lines[0];
-  const commaCount = countMatches(firstLine, /,/g);
-  const tabCount = countMatches(firstLine, /\t/g);
+  const commaCount = countCharacter(firstLine, ",");
+  const tabCount = countCharacter(firstLine, "\t");
 
   const isTSV = tabCount > 0 && tabCount >= commaCount;
   if (isTSV) return "tsv";

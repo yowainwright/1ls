@@ -1,5 +1,5 @@
-import { JSON5 } from "./constants.ts";
-import type { ParseState } from "./types.ts";
+import { JSON5 } from "./constants";
+import type { ParseState } from "./types";
 
 const JSON5_QUOTE_CHARS = new Set(['"', "'"]);
 

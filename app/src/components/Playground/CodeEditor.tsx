@@ -14,6 +14,13 @@ function escapeHtml(text: string): string {
   return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 
+function getHighlightLanguage(language: string): string {
+  const isPlainText = language === "csv";
+  if (isPlainText) return "txt";
+  if (language === "text") return "txt";
+  return language;
+}
+
 const highlighterMachine = setup({
   types: {} as { context: { highlighter: CodeHighlighter | null } },
   actors: { loader: fromPromise((): Promise<CodeHighlighter> => getHighlighter()) },
@@ -40,9 +47,11 @@ const highlighterMachine = setup({
 const highlighterActor = createActor(highlighterMachine).start();
 
 function doHighlight(highlighter: CodeHighlighter | null, code: string, language: string): string {
-  if (!highlighter || !code) return escapeHtml(code);
-  const lang = language === "csv" || language === "text" ? "txt" : language;
-  const validLang = LANGUAGES.includes(lang as (typeof LANGUAGES)[number]) ? lang : "txt";
+  if (!highlighter) return escapeHtml(code);
+  if (!code) return escapeHtml(code);
+  const lang = getHighlightLanguage(language);
+  const isSupportedLanguage = LANGUAGES.includes(lang as (typeof LANGUAGES)[number]);
+  const validLang = isSupportedLanguage ? lang : "txt";
   return Effect.runSync(
     Effect.try(() => highlighter.codeToHtml(code, { lang: validLang, theme: THEME })).pipe(
       Effect.map((html) => html.match(/<code[^>]*>([\s\S]*?)<\/code>/)?.[1] ?? escapeHtml(code)),
@@ -63,41 +72,32 @@ export interface CodeEditorProps {
   className?: string;
 }
 
-export function CodeEditor({
-  value,
-  onValueChange,
-  language,
-  label,
-  placeholder,
-  style,
-  footer,
-  showCopy = false,
-  className,
-}: CodeEditorProps) {
+export function CodeEditor(props: CodeEditorProps) {
+  const showCopy = props.showCopy ?? false;
   const highlighter = useSelector(highlighterActor, (s) => s.context.highlighter);
 
   const highlightFn = useCallback(
-    (code: string) => doHighlight(highlighter, code, language),
-    [highlighter, language],
+    (code: string) => doHighlight(highlighter, code, props.language),
+    [highlighter, props.language],
   );
 
   return (
-    <CodeCard className={cn("rounded-xl shadow-md relative", className)}>
+    <CodeCard className={cn("rounded-xl shadow-md relative", props.className)}>
       <div className="flex items-center justify-between border-b border-white/10 bg-white/5 px-4 py-2">
-        <span className="text-sm font-medium text-muted-foreground">{label}</span>
+        <span className="text-sm font-medium text-muted-foreground">{props.label}</span>
       </div>
-      {showCopy && <CopyButton code={value} className="top-12 right-3" />}
+      {showCopy && <CopyButton code={props.value} className="top-12 right-3" />}
       <Editor
-        value={value}
-        onValueChange={onValueChange}
+        value={props.value}
+        onValueChange={props.onValueChange}
         highlight={highlightFn}
         padding={16}
-        placeholder={placeholder}
+        placeholder={props.placeholder}
         className="font-mono text-sm [&_.shiki]:!bg-transparent [&_.line]:block"
-        style={{ backgroundColor: "transparent", ...style }}
+        style={{ backgroundColor: "transparent", ...props.style }}
         textareaClassName="focus:outline-none"
       />
-      {footer && <div className="border-t border-border/10 px-4 py-3">{footer}</div>}
+      {props.footer && <div className="border-t border-border/10 px-4 py-3">{props.footer}</div>}
     </CodeCard>
   );
 }

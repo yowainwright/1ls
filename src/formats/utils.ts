@@ -2,23 +2,25 @@ export const TRUTHY_VALUES = ["true", "yes", "on"] as const;
 export const FALSY_VALUES = ["false", "no", "off"] as const;
 export const NULL_VALUES = ["null", "~", ""] as const;
 
-const TRUTHY_VALUE_SET = new Set<string>(TRUTHY_VALUES);
-const FALSY_VALUE_SET = new Set<string>(FALSY_VALUES);
-const NULL_VALUE_SET = new Set<string>(NULL_VALUES);
-
 export const isTruthyValue = (value: string): value is (typeof TRUTHY_VALUES)[number] => {
   const normalizedValue = value.toLowerCase();
-  return TRUTHY_VALUE_SET.has(normalizedValue);
+  if (normalizedValue === TRUTHY_VALUES[0]) return true;
+  if (normalizedValue === TRUTHY_VALUES[1]) return true;
+  return normalizedValue === TRUTHY_VALUES[2];
 };
 
 export const isFalsyValue = (value: string): value is (typeof FALSY_VALUES)[number] => {
   const normalizedValue = value.toLowerCase();
-  return FALSY_VALUE_SET.has(normalizedValue);
+  if (normalizedValue === FALSY_VALUES[0]) return true;
+  if (normalizedValue === FALSY_VALUES[1]) return true;
+  return normalizedValue === FALSY_VALUES[2];
 };
 
 export const isNullValue = (value: string): value is (typeof NULL_VALUES)[number] => {
   const normalizedValue = value.toLowerCase();
-  return NULL_VALUE_SET.has(normalizedValue);
+  if (normalizedValue === NULL_VALUES[0]) return true;
+  if (normalizedValue === NULL_VALUES[1]) return true;
+  return normalizedValue === NULL_VALUES[2];
 };
 
 export const parseBooleanValue = (value: string): boolean | undefined => {

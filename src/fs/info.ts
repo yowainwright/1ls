@@ -1,7 +1,7 @@
 import { statSync } from "node:fs";
 import type { Stats } from "node:fs";
 import { extname, basename } from "node:path";
-import type { FileInfo } from "./types.ts";
+import type { FileInfo } from "./types";
 
 export const createFileInfo = (
   path: string,

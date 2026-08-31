@@ -1,8 +1,8 @@
-import type { DataFormat } from "./types.ts";
-import { parseInputSync } from "./sync.ts";
+import type { DataFormat } from "./types";
+import { parseInputSync } from "./sync";
 
-export { detectFormat, parseLines } from "./detect.ts";
-export { parseInputSync } from "./sync.ts";
+export { detectFormat, parseLines } from "./detect";
+export { parseInputSync } from "./sync";
 
 export async function parseInput(input: string, format?: DataFormat): Promise<unknown> {
   await Promise.resolve();

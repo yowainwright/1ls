@@ -1,4 +1,4 @@
-import { generateBashCompletions, generateZshCompletions } from "../src/completions/index.ts";
+import { generateBashCompletions, generateZshCompletions } from "../src/completions/index";
 import { writeFileSync } from "fs";
 import { join } from "path";
 

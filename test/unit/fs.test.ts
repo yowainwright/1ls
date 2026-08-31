@@ -22,7 +22,7 @@ import {
   logVerboseError,
   extractMatchesFromLine,
   searchFileContent,
-} from "../../src/fs/index.ts";
+} from "../../src/fs/index";
 
 describe("file utilities", () => {
   let testDir: string;

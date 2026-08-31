@@ -5,11 +5,11 @@ import type {
   RecursiveDescentNode,
   OptionalAccessNode,
   NullCoalescingNode,
-} from "../../types.ts";
-import type { EvaluationContext } from "../types.ts";
-import type { NavigatorOptions } from "./types.ts";
-import { BUILTIN_FUNCTIONS } from "../builtins/constants.ts";
-import { isBuiltin, executeBuiltin } from "../builtins/index.ts";
+} from "../../types";
+import type { EvaluationContext, EvaluatedFunction } from "../types";
+import type { NavigatorOptions } from "./types";
+import { BUILTIN_FUNCTIONS } from "../builtins/constants";
+import { isBuiltin, executeBuiltin } from "../builtins/index";
 import {
   isOperatorMethod,
   extractOperator,
@@ -21,21 +21,36 @@ import {
   sliceArray,
   evaluateObjectOperation,
   callMethod,
-} from "./utils.ts";
+} from "./utils";
 
 type AccessNode = Extract<ASTNode, { type: "IndexAccess" | "SliceAccess" | "ArraySpread" }>;
 
-const ACCESS_NODE_TYPES = new Set<AccessNode["type"]>([
-  "IndexAccess",
-  "SliceAccess",
-  "ArraySpread",
-]);
+const isAccessNode = (ast: ASTNode): ast is AccessNode => {
+  if (ast.type === "IndexAccess") return true;
+  if (ast.type === "SliceAccess") return true;
+  return ast.type === "ArraySpread";
+};
 
-const isAccessNode = (ast: ASTNode): ast is AccessNode =>
-  ACCESS_NODE_TYPES.has(ast.type as AccessNode["type"]);
+const appendValue = (values: unknown[], value: unknown): void => {
+  values[values.length] = value;
+};
 
-export { OPERATORS } from "./constants.ts";
-export type { NavigatorOptions } from "./types.ts";
+const appendValues = (target: unknown[], values: unknown[]): void => {
+  for (const value of values) {
+    appendValue(target, value);
+  }
+};
+
+const getNodeObject = (ast: { object: ASTNode | null }): ASTNode | null => {
+  return ast.object;
+};
+
+const getRootExpression = (ast: { expression: ASTNode | null }): ASTNode | null => {
+  return ast.expression;
+};
+
+export { OPERATORS } from "./constants";
+export type { NavigatorOptions } from "./types";
 export {
   isOperatorMethod,
   extractOperator,
@@ -50,22 +65,26 @@ export {
   evaluateObjectOperation,
   isCallableMethod,
   callMethod,
-} from "./utils.ts";
+} from "./utils";
 
 export class JsonNavigator {
   private options: NavigatorOptions;
 
   constructor(options: NavigatorOptions = {}) {
-    this.options = options;
+    this.options = { strict: Boolean(options.strict) };
   }
 
   evaluate(ast: ASTNode, data: unknown): unknown {
-    if (ast.type === "Root") return ast.expression ? this.evaluate(ast.expression, data) : data;
+    if (ast.type === "Root") {
+      const expression = getRootExpression(ast);
+      return expression ? this.evaluate(expression, data) : data;
+    }
     if (ast.type === "PropertyAccess") return this.evaluatePropertyAccess(ast, data);
     if (isAccessNode(ast)) return this.evaluateAccess(ast, data);
     if (ast.type === "MethodCall") return this.evaluateMethodCall(ast, data);
     if (ast.type === "ObjectOperation") {
-      const target = ast.object ? this.evaluate(ast.object, data) : data;
+      const object = getNodeObject(ast);
+      const target = object ? this.evaluate(object, data) : data;
       return evaluateObjectOperation(target, ast.operation);
     }
     return this.evaluateValue(ast, data);
@@ -76,14 +95,17 @@ export class JsonNavigator {
     data: unknown,
   ): unknown {
     if (ast.type === "IndexAccess") {
-      const target = ast.object ? this.evaluate(ast.object, data) : data;
+      const object = getNodeObject(ast);
+      const target = object ? this.evaluate(object, data) : data;
       return getArrayElement(target, ast.index);
     }
     if (ast.type === "SliceAccess") {
-      const target = ast.object ? this.evaluate(ast.object, data) : data;
+      const object = getNodeObject(ast);
+      const target = object ? this.evaluate(object, data) : data;
       return sliceArray(target, ast.start, ast.end);
     }
-    return ast.object ? this.evaluate(ast.object, data) : data;
+    const object = getNodeObject(ast);
+    return object ? this.evaluate(object, data) : data;
   }
 
   private evaluateValue(ast: ASTNode, data: unknown): unknown {
@@ -96,10 +118,11 @@ export class JsonNavigator {
   }
 
   private evaluatePropertyAccess(
-    ast: { property: string; object?: ASTNode },
+    ast: { property: string; object: ASTNode | null },
     data: unknown,
   ): unknown {
-    const baseValue = ast.object ? this.evaluate(ast.object, data) : data;
+    const object = getNodeObject(ast);
+    const baseValue = object ? this.evaluate(object, data) : data;
     const result = getPropertyFromObject(baseValue, ast.property);
 
     const shouldRejectUndefined = this.options.strict && result === undefined;
@@ -121,10 +144,11 @@ export class JsonNavigator {
     }
 
     if (ast.method === BUILTIN_FUNCTIONS.COMPOSE) {
-      return this.evaluatePipe([...ast.args].reverse(), data);
+      return this.evaluatePipe(ast.args.slice().reverse(), data);
     }
 
-    const target = ast.object ? this.evaluate(ast.object, data) : data;
+    const object = getNodeObject(ast);
+    const target = object ? this.evaluate(object, data) : data;
 
     if (isBuiltin(ast.method)) return this.evaluateBuiltinCall(ast, target, data);
 
@@ -135,7 +159,7 @@ export class JsonNavigator {
   }
 
   private evaluateBuiltinCall(ast: MethodCallNode, target: unknown, data: unknown): unknown {
-    const evaluatedArgs = ast.args.map((arg) => this.evaluateArg(arg, data));
+    const evaluatedArgs = this.evaluateArgs(ast.args, data);
     return executeBuiltin(ast.method, target, evaluatedArgs);
   }
 
@@ -146,32 +170,67 @@ export class JsonNavigator {
   }
 
   private evaluateRegularCall(ast: MethodCallNode, target: unknown, data: unknown): unknown {
-    const evaluatedArgs = ast.args.map((arg) => this.evaluateArg(arg, data));
+    const evaluatedArgs = this.evaluateArgs(ast.args, data);
     return callMethod(target, ast.method, evaluatedArgs);
   }
 
+  private evaluateArgs(args: ASTNode[], data: unknown): unknown[] {
+    const values: unknown[] = [];
+
+    for (const arg of args) {
+      appendValue(values, this.evaluateArg(arg, data));
+    }
+
+    return values;
+  }
+
   private evaluatePipe(args: ASTNode[], data: unknown): unknown {
-    return args.reduce((result, arg) => this.evaluate(arg, result), data);
+    let result = data;
+
+    for (const arg of args) {
+      result = this.evaluate(arg, result);
+    }
+
+    return result;
   }
 
   private evaluateRecursiveDescent(ast: RecursiveDescentNode, data: unknown): unknown[] {
-    const baseData = ast.object ? this.evaluate(ast.object, data) : data;
+    const object = getNodeObject(ast);
+    const baseData = object ? this.evaluate(object, data) : data;
     return this.collectAllValues(baseData);
   }
 
   private collectAllValues(data: unknown): unknown[] {
     if (Array.isArray(data)) {
-      const childValues = data.flatMap((item) => this.collectAllValues(item));
-      return [data, ...childValues];
+      return this.collectArrayValues(data);
     }
 
     const isObject = data !== null && typeof data === "object";
     if (!isObject) return [data];
 
-    const childValues = Object.values(data as Record<string, unknown>).flatMap((value) =>
-      this.collectAllValues(value),
-    );
-    return [data, ...childValues];
+    return this.collectObjectValues(data as Record<string, unknown>);
+  }
+
+  private collectArrayValues(data: unknown[]): unknown[] {
+    const values: unknown[] = [data];
+
+    for (const item of data) {
+      const childValues = this.collectAllValues(item);
+      appendValues(values, childValues);
+    }
+
+    return values;
+  }
+
+  private collectObjectValues(data: Record<string, unknown>): unknown[] {
+    const values: unknown[] = [data];
+
+    for (const key of Object.keys(data)) {
+      const childValues = this.collectAllValues(data[key]);
+      appendValues(values, childValues);
+    }
+
+    return values;
   }
 
   private evaluateOptionalAccess(ast: OptionalAccessNode, data: unknown): unknown {
@@ -188,8 +247,9 @@ export class JsonNavigator {
     return isNullish ? this.evaluate(ast.right, data) : leftValue;
   }
 
-  private createFunction(node: ArrowFunctionNode): (...args: unknown[]) => unknown {
-    return (...args: unknown[]) => {
+  private createFunction(node: ArrowFunctionNode): EvaluatedFunction {
+    return (value: unknown, index: unknown, array: unknown) => {
+      const args = [value, index, array];
       const context = createParameterContext(node.params, args);
       return this.evaluateFunctionBody(node.body, context);
     };
@@ -200,22 +260,23 @@ export class JsonNavigator {
     if (ast.type === "MethodCall") return this.evaluateMethodCallInFunction(ast, context);
     if (ast.type === "Literal") return ast.value;
     if (ast.type === "Root") {
-      return ast.expression ? this.evaluateFunctionBody(ast.expression, context) : context;
+      const expression = getRootExpression(ast);
+      return expression ? this.evaluateFunctionBody(expression, context) : context;
     }
     return this.evaluate(ast, getImplicitParameter(context));
   }
 
   private evaluatePropertyAccessInFunction(
-    ast: { property: string; object?: ASTNode },
+    ast: { property: string; object: ASTNode | null },
     context: EvaluationContext,
   ): unknown {
-    const hasObject = ast.object !== undefined;
-    if (hasObject) {
-      const baseObj = this.evaluateFunctionBody(ast.object!, context);
+    const object = getNodeObject(ast);
+    if (object) {
+      const baseObj = this.evaluateFunctionBody(object, context);
       return getPropertyFromObject(baseObj, ast.property);
     }
 
-    const isParameter = Object.prototype.hasOwnProperty.call(context, ast.property);
+    const isParameter = ast.property in context;
     if (isParameter) {
       return context[ast.property];
     }
@@ -225,9 +286,8 @@ export class JsonNavigator {
   }
 
   private evaluateMethodCallInFunction(ast: MethodCallNode, context: EvaluationContext): unknown {
-    const target = ast.object
-      ? this.evaluateFunctionBody(ast.object, context)
-      : getImplicitParameter(context);
+    const object = getNodeObject(ast);
+    const target = object ? this.evaluateFunctionBody(object, context) : getImplicitParameter(context);
 
     const isOperator = isOperatorMethod(ast.method);
     if (isOperator) {
@@ -236,8 +296,18 @@ export class JsonNavigator {
       return executeOperator(target, operator, evaluatedArg);
     }
 
-    const methodArgs = ast.args.map((arg) => this.evaluateFunctionBody(arg, context));
+    const methodArgs = this.evaluateFunctionArgs(ast.args, context);
 
     return callMethod(target, ast.method, methodArgs);
+  }
+
+  private evaluateFunctionArgs(args: ASTNode[], context: EvaluationContext): unknown[] {
+    const values: unknown[] = [];
+
+    for (const arg of args) {
+      appendValue(values, this.evaluateFunctionBody(arg, context));
+    }
+
+    return values;
   }
 }

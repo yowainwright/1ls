@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { isDeepStrictEqual } from "node:util";
-import { executeBuiltin } from "../../src/navigator/builtins/index.ts";
+import { executeBuiltin } from "../../src/navigator/builtins/index";
 
 test("head returns first element", () => {
   assert.strictEqual(executeBuiltin("head", [1, 2, 3], []), 1);

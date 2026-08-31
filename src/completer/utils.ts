@@ -1,11 +1,11 @@
-import type { PartialMethod } from "./types.ts";
+import type { PartialMethod } from "./types";
 import {
   QUOTE_PATTERN,
   DOT_PATTERN,
   SCORE_PREFIX_MATCH,
   SCORE_CONTAINS_MATCH,
   SCORE_FUZZY_MATCH,
-} from "./constants.ts";
+} from "./constants";
 
 export const fuzzyMatch = (query: string, target: string): boolean => {
   const lowerQuery = query.toLowerCase();

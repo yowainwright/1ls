@@ -1,8 +1,8 @@
-import type { ShortcutMapping } from "./types.ts";
-import { REGEX_SPECIAL_CHARS, IMPLICIT_PROP, BUILTIN_SHORTCUTS, SHORTCUTS } from "./constants.ts";
+import type { ShortcutMapping } from "./types";
+import { REGEX_SPECIAL_CHARS, IMPLICIT_PROP, BUILTIN_SHORTCUTS, SHORTCUTS } from "./constants";
 
-export type { ShortcutMapping } from "./types.ts";
-export { BUILTIN_SHORTCUTS, SHORTCUTS } from "./constants.ts";
+export type { ShortcutMapping } from "./types";
+export { BUILTIN_SHORTCUTS, SHORTCUTS } from "./constants";
 
 export const escapeRegExp = (str: string): string => str.replace(REGEX_SPECIAL_CHARS, "\\$&");
 
@@ -26,7 +26,11 @@ const BUILTIN_SHORTEN_PATTERNS = BUILTIN_SHORTCUTS.map((s) => ({
   replacement: `${s.short}(`,
 })).sort((a, b) => b.regex.source.length - a.regex.source.length);
 
-const QUOTE_CHARS = new Set(['"', "'", "`"]);
+const isQuoteChar = (char: string): boolean => {
+  if (char === '"') return true;
+  if (char === "'") return true;
+  return char === "`";
+};
 
 interface CodeTransformState {
   result: string;
@@ -73,7 +77,7 @@ const transformCodeChar = (
 ): CodeTransformState => {
   if (state.quote) return appendQuotedChar(state, char);
 
-  const isQuote = QUOTE_CHARS.has(char);
+  const isQuote = isQuoteChar(char);
   if (isQuote) return startQuotedSegment(state, char, transform);
 
   return { ...state, codeSegment: state.codeSegment + char };
@@ -89,35 +93,49 @@ const transformCodeSegments = (
     quote: null,
     isEscaped: false,
   };
-  const state = [...expression].reduce(
-    (current, char) => transformCodeChar(current, char, transform),
-    initialState,
-  );
+  let state = initialState;
+
+  for (const char of expression) {
+    state = transformCodeChar(state, char, transform);
+  }
+
   return flushCodeSegment(state, transform).result;
 };
 
-const expandImplicitProps = (expression: string): string => {
+const expandImplicitMethodSegment = (segment: string): string => {
   const methodPattern = new RegExp(IMPLICIT_PROP.METHOD_WITH_ARGS.source, "g");
+  let result = "";
+  let lastIndex = 0;
 
-  return transformCodeSegments(expression, (segment) =>
-    segment.replace(methodPattern, (match, method, args) => {
-      const hasArrowFunction = args.includes("=>");
-      if (hasArrowFunction) return match;
+  for (const match of segment.matchAll(methodPattern)) {
+    result += segment.slice(lastIndex, match.index);
+    result += expandImplicitMethodMatch(match);
+    lastIndex = match.index + match[0].length;
+  }
 
-      const hasImplicitProp =
-        IMPLICIT_PROP.PROPERTY_AT_START.test(args) ||
-        IMPLICIT_PROP.PROPERTY_AFTER_OPERATOR.test(args);
+  return result + segment.slice(lastIndex);
+};
 
-      if (!hasImplicitProp) return match;
+const expandImplicitMethodMatch = (match: RegExpMatchArray): string => {
+  const args = match[2];
+  const hasArrowFunction = args.includes("=>");
+  if (hasArrowFunction) return match[0];
 
-      const param = IMPLICIT_PROP.PARAM;
-      const expandedArgs = args
-        .replace(IMPLICIT_PROP.EXPAND_AT_START, `$1${param}.$2`)
-        .replace(IMPLICIT_PROP.EXPAND_AFTER_OPERATOR, `$1${param}.$2`);
+  const hasImplicitProp =
+    IMPLICIT_PROP.PROPERTY_AT_START.test(args) || IMPLICIT_PROP.PROPERTY_AFTER_OPERATOR.test(args);
 
-      return `.${method}(${param} => ${expandedArgs})`;
-    }),
-  );
+  if (!hasImplicitProp) return match[0];
+
+  const param = IMPLICIT_PROP.PARAM;
+  const expandedArgs = args
+    .replace(IMPLICIT_PROP.EXPAND_AT_START, `$1${param}.$2`)
+    .replace(IMPLICIT_PROP.EXPAND_AFTER_OPERATOR, `$1${param}.$2`);
+
+  return `.${match[1]}(${param} => ${expandedArgs})`;
+};
+
+const expandImplicitProps = (expression: string): string => {
+  return transformCodeSegments(expression, expandImplicitMethodSegment);
 };
 
 export const expandShortcuts = (expression: string): string => {
@@ -138,23 +156,37 @@ export const expandShortcuts = (expression: string): string => {
   return expandImplicitProps(withExpandedBuiltins);
 };
 
-const createParamDotPattern = (param: string): RegExp =>
-  new RegExp(IMPLICIT_PROP.PARAM_DOT_TEMPLATE.replace("PARAM", param), "g");
+const shortenImplicitBody = (body: string, param: string): string => {
+  const prefix = `${param}.`;
+  return body.split(prefix).join(".");
+};
+
+const shortenImplicitMethodSegment = (segment: string): string => {
+  const arrowPattern = new RegExp(IMPLICIT_PROP.ARROW_FUNC.source, "g");
+  let result = "";
+  let lastIndex = 0;
+
+  for (const match of segment.matchAll(arrowPattern)) {
+    result += segment.slice(lastIndex, match.index);
+    result += shortenImplicitMethodMatch(match);
+    lastIndex = match.index + match[0].length;
+  }
+
+  return result + segment.slice(lastIndex);
+};
+
+const shortenImplicitMethodMatch = (match: RegExpMatchArray): string => {
+  const body = match[3];
+  const shortenedBody = shortenImplicitBody(body, match[2]);
+  const bodyUnchanged = shortenedBody === body;
+
+  if (bodyUnchanged) return match[0];
+
+  return `.${match[1]}(${shortenedBody})`;
+};
 
 const shortenToImplicitProps = (expression: string): string => {
-  const arrowPattern = new RegExp(IMPLICIT_PROP.ARROW_FUNC.source, "g");
-
-  return transformCodeSegments(expression, (segment) =>
-    segment.replace(arrowPattern, (match, method, param, body) => {
-      const paramPattern = createParamDotPattern(param);
-      const shortenedBody = body.replace(paramPattern, ".");
-      const bodyUnchanged = shortenedBody === body;
-
-      if (bodyUnchanged) return match;
-
-      return `.${method}(${shortenedBody})`;
-    }),
-  );
+  return transformCodeSegments(expression, shortenImplicitMethodSegment);
 };
 
 export const shortenExpression = (expression: string): string => {
@@ -175,14 +207,31 @@ export const shortenExpression = (expression: string): string => {
   );
 };
 
-const groupShortcutsByType = (): Record<ShortcutMapping["type"], ShortcutMapping[]> =>
-  SHORTCUTS.reduce(
-    (groups, shortcut) => ({
-      ...groups,
-      [shortcut.type]: [...groups[shortcut.type], shortcut],
-    }),
-    { array: [], object: [], string: [], any: [], builtin: [] },
-  );
+const createShortcutGroups = (): Record<ShortcutMapping["type"], ShortcutMapping[]> => ({
+  array: [],
+  object: [],
+  string: [],
+  any: [],
+  builtin: [],
+});
+
+const appendShortcut = (
+  groups: Record<ShortcutMapping["type"], ShortcutMapping[]>,
+  shortcut: ShortcutMapping,
+): void => {
+  const group = groups[shortcut.type];
+  group[group.length] = shortcut;
+};
+
+const groupShortcutsByType = (): Record<ShortcutMapping["type"], ShortcutMapping[]> => {
+  const groups = createShortcutGroups();
+
+  for (const shortcut of SHORTCUTS) {
+    appendShortcut(groups, shortcut);
+  }
+
+  return groups;
+};
 
 const formatSection = (title: string, shortcuts: ShortcutMapping[]): string => {
   const maxShortLen = Math.max(...shortcuts.map((s) => s.short.length));

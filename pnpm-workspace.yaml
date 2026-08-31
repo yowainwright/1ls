@@ -1,5 +1,8 @@
 packages:
   - app
+  - packages/*
+
+verifyDepsBeforeRun: false
 
 onlyBuiltDependencies:
   - esbuild

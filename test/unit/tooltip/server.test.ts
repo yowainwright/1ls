@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, test } from "node:test";
 import assert from "node:assert/strict";
 import { existsSync, mkdirSync, readFileSync, unlinkSync } from "fs";
 import { join } from "path";
-import { handleMessage, parseMessage, configureDaemon } from "../../../src/tooltip/server.ts";
+import { handleMessage, parseMessage, configureDaemon } from "../../../src/tooltip/server";
 
 const TEST_ROOT = join(process.cwd(), ".cache", "tests");
 const RESPONSE_PATH = join(TEST_ROOT, "1ls-response");

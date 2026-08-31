@@ -1,24 +1,24 @@
-import { Lexer } from "../lexer/index.ts";
-import { ExpressionParser } from "../expression/index.ts";
-import { JsonNavigator } from "../navigator/json/index.ts";
+import { Lexer } from "../lexer/index";
+import { ExpressionParser } from "../expression/index";
+import { JsonNavigator } from "../navigator/json/index";
 import {
   evaluateAndFormatExpression,
   evaluateExpression,
   formatResult,
   processContent,
   processData,
-} from "../executor.ts";
-import { detectFormat } from "../formats/detect.ts";
-import { parseInputSync } from "../formats/sync.ts";
-import { parseYAML } from "../formats/yaml/index.ts";
-import { parseCSV } from "../formats/csv.ts";
-import { parseTOML } from "../formats/toml.ts";
+} from "../executor";
+import { detectFormat } from "../formats/detect";
+import { parseInputSync } from "../formats/sync";
+import { parseYAML } from "../formats/yaml/index";
+import { parseCSV } from "../formats/csv";
+import { parseTOML } from "../formats/toml";
 import {
   escapeRegExp,
   expandShortcuts,
   shortenExpression,
-} from "../shortcuts/index.ts";
-import type { CliOptions } from "../types.ts";
+} from "../shortcuts/index";
+import type { RuntimeOptions } from "../types";
 
 export { Lexer, ExpressionParser, JsonNavigator };
 export { parseYAML, parseCSV, parseTOML };
@@ -34,10 +34,10 @@ export {
   processData,
 };
 
-export function processInput(input: string, options: CliOptions = {}): string {
+export function processInput(input: string, options: RuntimeOptions = {}): string {
   return processContent(input, options);
 }
 
-export function evaluate(data: unknown, expression: string, options: CliOptions = {}): unknown {
+export function evaluate(data: unknown, expression: string, options: RuntimeOptions = {}): unknown {
   return evaluateExpression(expression, data, options);
 }

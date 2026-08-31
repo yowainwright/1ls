@@ -2,33 +2,15 @@ import { describe, test } from "node:test";
 import assert from "node:assert/strict";
 import {
   COLORS,
-  Formatter,
   colorize,
   dim,
   error,
   info,
+  setColorEnabled,
   success,
   warning,
-} from "../../src/formatter/index.ts";
-
-const withNoColor = <T>(value: string | undefined, callback: () => T): T => {
-  const previousValue = process.env.NO_COLOR;
-  if (value === undefined) {
-    delete process.env.NO_COLOR;
-  } else {
-    process.env.NO_COLOR = value;
-  }
-
-  try {
-    return callback();
-  } finally {
-    if (previousValue === undefined) {
-      delete process.env.NO_COLOR;
-    } else {
-      process.env.NO_COLOR = previousValue;
-    }
-  }
-};
+} from "../../src/dx";
+import { Formatter } from "../../src/fmt";
 
 const stripAnsi = (value: string): string => value.replace(/\x1b\[[0-9;]*m/g, "");
 
@@ -100,8 +82,30 @@ describe("Formatter", () => {
 });
 
 describe("formatter colors", () => {
+  test("defaults to plain output for direct formatter consumers", () => {
+    assert.strictEqual(colorize('{"name": "Ada"}'), '{"name": "Ada"}');
+    assert.strictEqual(new Formatter({ pretty: true }).format({ name: "Ada" }), '{\n  "name": "Ada"\n}');
+  });
+
+  test("can disable colors without requiring a Node-only process global", () => {
+    setColorEnabled(false);
+
+    try {
+      assert.strictEqual(colorize('{"name": "Ada"}'), '{"name": "Ada"}');
+      assert.strictEqual(error("failed"), "failed");
+      assert.strictEqual(success("done"), "done");
+      assert.strictEqual(warning("careful"), "careful");
+      assert.strictEqual(info("details"), "details");
+      assert.strictEqual(dim("quiet"), "quiet");
+    } finally {
+      setColorEnabled(true);
+    }
+  });
+
   test("colorizes JSON tokens and status messages", () => {
-    withNoColor(undefined, () => {
+    setColorEnabled(true);
+
+    try {
       const json = colorize('{"name": "Ada", "age": -1.5, "active": true, "none": null}');
 
       assert.ok(json.includes(`${COLORS.cyan}"name"${COLORS.reset}`));
@@ -117,17 +121,8 @@ describe("formatter colors", () => {
       assert.strictEqual(warning("careful"), `${COLORS.yellow}careful${COLORS.reset}`);
       assert.strictEqual(info("details"), `${COLORS.cyan}details${COLORS.reset}`);
       assert.strictEqual(dim("quiet"), `${COLORS.dim}quiet${COLORS.reset}`);
-    });
-  });
-
-  test("leaves output uncolored when NO_COLOR is set", () => {
-    withNoColor("1", () => {
-      assert.strictEqual(colorize('{"name":"Ada"}'), '{"name":"Ada"}');
-      assert.strictEqual(error("failed"), "failed");
-      assert.strictEqual(success("done"), "done");
-      assert.strictEqual(warning("careful"), "careful");
-      assert.strictEqual(info("details"), "details");
-      assert.strictEqual(dim("quiet"), "quiet");
-    });
+    } finally {
+      setColorEnabled(true);
+    }
   });
 });

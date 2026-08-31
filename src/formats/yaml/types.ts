@@ -1,7 +1,8 @@
 export interface StackFrame {
   container: Record<string, unknown> | unknown[];
   indent: number;
-  pendingKey?: string;
+  pendingKey: string | null;
+  parentKey: string | number | null;
 }
 
 export interface AnchorStore {

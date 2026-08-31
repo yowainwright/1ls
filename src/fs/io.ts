@@ -1,7 +1,7 @@
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname } from "node:path";
-import { parseInputSync } from "../formats/sync.ts";
-import type { DataFormat } from "../formats/types.ts";
+import { parseInputSync } from "../formats/sync";
+import type { DataFormat } from "../formats/types";
 
 export function readFile(path: string): unknown;
 export function readFile(path: string, parseJson: true): unknown;

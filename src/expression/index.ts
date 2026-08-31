@@ -7,9 +7,9 @@ import type {
   ObjectOperationNode,
   ArrowFunctionNode,
   RootNode,
-} from "../types.ts";
-import { TokenType as TT } from "../types.ts";
-import { VALID_OBJECT_OPERATIONS } from "./constants.ts";
+} from "../types";
+import { TokenType as TT } from "../types";
+import { VALID_OBJECT_OPERATIONS } from "./constants";
 import {
   createLiteralNode,
   tryParseLiteralIdentifier,
@@ -26,7 +26,7 @@ import {
   createOptionalAccessNode,
   createNullCoalescingNode,
   isValidObjectOperation,
-} from "./utils.ts";
+} from "./utils";
 
 export {
   createErrorMessage,
@@ -42,9 +42,9 @@ export {
   createOptionalAccessNode,
   createNullCoalescingNode,
   isValidObjectOperation,
-} from "./utils.ts";
+} from "./utils";
 
-export { VALID_OBJECT_OPERATIONS } from "./constants.ts";
+export { VALID_OBJECT_OPERATIONS } from "./constants";
 
 const OPERATOR_PRECEDENCE: Readonly<Record<string, number>> = {
   "||": 1,

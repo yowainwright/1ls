@@ -6,7 +6,7 @@ import {
   getFullMethod,
   getShortMethod,
   isShortcut,
-} from "../../src/shortcuts/index.ts";
+} from "../../src/shortcuts/index";
 
 test("Shortcuts: expand single shortcut", () => {
   assert.strictEqual(expandShortcuts(".mp"), ".map");
@@ -114,7 +114,7 @@ test("Shortcuts: handle string methods correctly", () => {
 });
 
 test("Shortcuts: getShortcutHelp returns formatted help text", async () => {
-  const { getShortcutHelp } = await import("../../src/shortcuts/index.ts");
+  const { getShortcutHelp } = await import("../../src/shortcuts/index");
   const help = getShortcutHelp();
 
   assert.strictEqual(typeof help, "string");

@@ -1,13 +1,13 @@
-import { Lexer } from "../lexer/index.ts";
-import { ExpressionParser } from "../expression/index.ts";
-import { JsonNavigator } from "../navigator/json/index.ts";
-import { expandShortcuts } from "../shortcuts/index.ts";
-import { ALL_SUGGESTIONS, MAX_SUGGESTIONS } from "./constants.ts";
-import { detectDataType, extractPartialMethod, fuzzySearch, getSuggestionsForType } from "./utils.ts";
-import type { CompletionOptions, CompletionResult, Suggestion } from "./types.ts";
+import { Lexer } from "../lexer/index";
+import { ExpressionParser } from "../expression/index";
+import { JsonNavigator } from "../navigator/json/index";
+import { expandShortcuts } from "../shortcuts/index";
+import { ALL_SUGGESTIONS, MAX_SUGGESTIONS } from "./constants";
+import { detectDataType, extractPartialMethod, fuzzySearch, getSuggestionsForType } from "./utils";
+import type { CompletionOptions, CompletionResult, Suggestion } from "./types";
 
-export * from "./constants.ts";
-export * from "./types.ts";
+export * from "./constants";
+export * from "./types";
 export { detectDataType, extractPartialMethod, fuzzySearch, getSuggestionsForType };
 
 const EMPTY_RESULT: CompletionResult = {

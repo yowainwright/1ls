@@ -1,13 +1,13 @@
 import { describe, test } from "node:test";
 import assert from "node:assert/strict";
-import { DEFAULT_OPTIONS } from "../../src/cli/constants.ts";
+import { DEFAULT_OPTIONS } from "../../src/cli/constants";
 import {
   evaluateExpression,
   evaluateAndFormatExpression,
   formatResult,
   processContent,
   processData,
-} from "../../src/executor.ts";
+} from "../../src/executor";
 
 describe("executor", () => {
   test("evaluates expressions with the shared runtime", () => {

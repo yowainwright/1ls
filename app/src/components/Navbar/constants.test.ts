@@ -7,9 +7,10 @@ describe("NAV_LINKS", () => {
     assert.strictEqual(NAV_LINKS.length, 3);
 
     const hrefs = NAV_LINKS.map((link) => link.href);
-    assert.ok(hrefs.includes("/"));
-    assert.ok(hrefs.includes("/docs"));
-    assert.ok(hrefs.includes("/playground"));
+    const hrefSet = new Set(hrefs);
+    assert.ok(hrefSet.has("/"));
+    assert.ok(hrefSet.has("/docs"));
+    assert.ok(hrefSet.has("/playground"));
   });
 
   it("all links have required properties", () => {

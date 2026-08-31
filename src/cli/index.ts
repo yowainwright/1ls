@@ -1,18 +1,16 @@
-#!/usr/bin/env node
+import { showHelp } from "./help";
+import { readFile, listFiles, grep } from "../fs/index";
+import { Formatter } from "../fmt";
+import { warning, info, setColorEnabled } from "../dx";
+import { expandShortcuts, shortenExpression, getShortcutHelp } from "../shortcuts/index";
+import { detectFormat } from "../formats/detect";
+import type { CliOptions } from "./types";
+import { VERSION } from "../version";
+import { processData } from "../executor";
+import { NO_COLOR_ENV_KEY } from "./constants";
+import { parseArgs, processInput, readStdin, resolveReadFileInvocation } from "./utils";
 
-import { parseArgs } from "./parser.ts";
-import { showHelp } from "./help.ts";
-import { processInput, readStdin } from "./stream.ts";
-import { readFile, listFiles, grep } from "../fs/index.ts";
-import { Formatter, warning, info } from "../formatter/index.ts";
-import { expandShortcuts, shortenExpression, getShortcutHelp } from "../shortcuts/index.ts";
-import { detectFormat } from "../formats/index.ts";
-import type { CliOptions } from "../types.ts";
-import { VERSION } from "../version.ts";
-import { processData } from "../executor.ts";
-import { resolveReadFileInvocation } from "./read-file.ts";
-
-export const getDaemon = () => import("../tooltip/index.ts");
+export const getDaemon = () => import("../tooltip/index");
 
 export function handleGrepOperation(options: CliOptions): void {
   const results = grep(options.grep!, options.find!, {
@@ -96,16 +94,6 @@ const handleHelpFlags = (options: CliOptions): boolean => {
   return false;
 };
 
-const handleDaemon = async (options: CliOptions): Promise<boolean> => {
-  if (options.daemon) {
-    const { startDaemon } = await getDaemon();
-    await startDaemon();
-    return true;
-  }
-
-  return false;
-};
-
 const handleExpressionTools = (options: CliOptions): boolean => {
   if (options.shorten) {
     console.log(shortenExpression(options.shorten));
@@ -118,6 +106,14 @@ const handleExpressionTools = (options: CliOptions): boolean => {
   }
 
   return false;
+};
+
+const handleDaemon = async (options: CliOptions): Promise<boolean> => {
+  if (!options.daemon) return false;
+
+  const { startDaemon } = await getDaemon();
+  await startDaemon();
+  return true;
 };
 
 const handleDetect = async (options: CliOptions): Promise<boolean> => {
@@ -168,6 +164,8 @@ const handleGrep = (options: CliOptions): boolean => {
 };
 
 export async function main(args: string[]): Promise<void> {
+  const shouldUseColor = !(NO_COLOR_ENV_KEY in process.env);
+  setColorEnabled(shouldUseColor);
   const options = parseArgs(args);
   if (handleHelpFlags(options)) return;
   if (await handleDaemon(options)) return;
@@ -182,8 +180,8 @@ export async function main(args: string[]): Promise<void> {
 }
 
 if (import.meta.main) {
-  main(process.argv.slice(2)).catch((err: unknown) => {
-    const message = err instanceof Error ? err.message : String(err);
+  main(process.argv.slice(2)).catch((error: unknown) => {
+    const message = error instanceof Error ? error.message : String(error);
     console.error("Error:", message);
     process.exit(1);
   });

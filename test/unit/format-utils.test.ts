@@ -9,7 +9,7 @@ import {
   isTruthyValue,
   isFalsyValue,
   isNullValue,
-} from "../../src/formats/utils.ts";
+} from "../../src/formats/utils";
 
 describe("parseBooleanValue", () => {
   test("parses truthy values", () => {

@@ -7,11 +7,40 @@ import { CodeCard } from "@/components/Codeblock";
 import { SectionHeader } from "@/components/SectionHeader";
 import { EASE_CURVE } from "@/lib/styles";
 import { FULL_QUERY, DEMO_STEPS, BASE_STEP_DURATION, TOOLTIP_DEMO_CONSTANTS } from "./constants";
-import type { TooltipDemoProps, DemoContext, TerminalBodyProps, HintRowProps, FeatureDescriptionProps } from "./types";
+import type { RefObject } from "react";
+import type {
+  TooltipDemoProps,
+  DemoContext,
+  TerminalBodyProps,
+  HintRowProps,
+  FeatureDescriptionProps,
+} from "./types";
 import { getSearchTerm, filterHints } from "./utils";
 export { getSearchTerm, filterHints } from "./utils";
 
 const { styles, text } = TOOLTIP_DEMO_CONSTANTS;
+
+const getTickContext = (context: DemoContext): DemoContext => {
+  const now = Date.now();
+  const elapsed = Math.min(now - context.lastTime, 100);
+  const progress = context.progress + elapsed;
+  const currentStep = DEMO_STEPS[context.stepIndex];
+  const prevIndex = context.stepIndex - 1;
+  const prevCharEnd = context.stepIndex > 0 ? DEMO_STEPS[prevIndex].charEnd : 0;
+  const stepLength = currentStep.charEnd - prevCharEnd;
+  const typingProgress = Math.min(progress / BASE_STEP_DURATION, 1);
+  const typedChars = prevCharEnd + Math.floor(typingProgress * stepLength);
+  if (progress < BASE_STEP_DURATION) return { ...context, typedChars, progress, lastTime: now };
+  return { ...context, typedChars: currentStep.charEnd, progress: BASE_STEP_DURATION, lastTime: now };
+};
+
+const getPausedContext = (context: DemoContext): DemoContext => {
+  const nextIndex = (context.stepIndex + 1) % DEMO_STEPS.length;
+  const typedChars = nextIndex === 0 ? 0 : context.typedChars;
+  return { stepIndex: nextIndex, typedChars, progress: 0, lastTime: Date.now() };
+};
+
+const hasStepCompleted = ({ progress }: DemoContext): boolean => progress >= BASE_STEP_DURATION;
 
 const tooltipDemoMachine = setup({
   types: { context: {} as DemoContext, events: {} as { type: "TICK" } },
@@ -30,32 +59,18 @@ const tooltipDemoMachine = setup({
       invoke: { src: "ticker" },
       on: {
         TICK: {
-          actions: assign(({ context }) => {
-            const now = Date.now();
-            const elapsed = Math.min(now - context.lastTime, 100); // cap large gaps (tab blur etc)
-            const progress = context.progress + elapsed;
-            const currentStep = DEMO_STEPS[context.stepIndex];
-            const prevCharEnd = context.stepIndex > 0 ? DEMO_STEPS[context.stepIndex - 1].charEnd : 0;
-            const typingProgress = Math.min(progress / BASE_STEP_DURATION, 1);
-            const newTypedChars = prevCharEnd + Math.floor(typingProgress * (currentStep.charEnd - prevCharEnd));
-            return progress < BASE_STEP_DURATION
-              ? { ...context, typedChars: newTypedChars, progress, lastTime: now }
-              : { ...context, typedChars: currentStep.charEnd, progress: BASE_STEP_DURATION, lastTime: now };
-          }),
+          actions: assign(({ context }) => getTickContext(context)),
         },
       },
       always: {
-        guard: ({ context }) => context.progress >= BASE_STEP_DURATION,
+        guard: ({ context }) => hasStepCompleted(context),
         target: "paused",
       },
     },
     paused: {
       after: {
         1500: {
-          actions: assign(({ context }) => {
-            const nextIndex = (context.stepIndex + 1) % DEMO_STEPS.length;
-            return { stepIndex: nextIndex, typedChars: nextIndex === 0 ? 0 : context.typedChars, progress: 0, lastTime: Date.now() };
-          }),
+          actions: assign(({ context }) => getPausedContext(context)),
           target: "running",
         },
       },
@@ -63,22 +78,25 @@ const tooltipDemoMachine = setup({
   },
 });
 
-
-export function TooltipDemo({ className = "" }: TooltipDemoProps) {
+const useTooltipDemoState = () => {
   const [snapshot] = useMachine(tooltipDemoMachine);
   const { stepIndex, typedChars } = snapshot.context;
-
   const currentStep = DEMO_STEPS[stepIndex];
   const displayedQuery = FULL_QUERY.slice(0, typedChars);
   const isTypingComplete = typedChars >= currentStep.charEnd;
-
-  const searchTerm = useMemo(
-    () => typedChars < currentStep.triggerAt ? "" : getSearchTerm(displayedQuery, currentStep.triggerAt),
-    [displayedQuery, typedChars, currentStep.triggerAt],
-  );
-
+  const searchTerm = useMemo(() => {
+    const isBeforeTrigger = typedChars < currentStep.triggerAt;
+    if (isBeforeTrigger) return "";
+    return getSearchTerm(displayedQuery, currentStep.triggerAt);
+  }, [displayedQuery, typedChars, currentStep.triggerAt]);
   const filteredHints = useMemo(() => filterHints(currentStep.hints, searchTerm), [currentStep.hints, searchTerm]);
   const showTooltip = typedChars >= currentStep.triggerAt && filteredHints.length > 0;
+
+  return { currentStep, displayedQuery, filteredHints, isTypingComplete, searchTerm, showTooltip, stepIndex };
+};
+
+export function TooltipDemo({ className = "" }: TooltipDemoProps) {
+  const demo = useTooltipDemoState();
 
   return (
     <section className={`${styles.section} ${className}`}>
@@ -95,19 +113,19 @@ export function TooltipDemo({ className = "" }: TooltipDemoProps) {
             <CodeCard variant="dark">
               <TerminalHeader />
               <TerminalBody
-                displayedQuery={displayedQuery}
-                hints={filteredHints}
-                stepIndex={stepIndex}
-                result={currentStep.result}
-                isTypingComplete={isTypingComplete}
-                showTooltip={showTooltip}
-                searchTerm={searchTerm}
+                displayedQuery={demo.displayedQuery}
+                hints={demo.filteredHints}
+                stepIndex={demo.stepIndex}
+                result={demo.currentStep.result}
+                isTypingComplete={demo.isTypingComplete}
+                showTooltip={demo.showTooltip}
+                searchTerm={demo.searchTerm}
               />
             </CodeCard>
             <FeatureDescription
-              title={currentStep.description.title}
-              text={currentStep.description.text}
-              stepIndex={stepIndex}
+              title={demo.currentStep.description.title}
+              text={demo.currentStep.description.text}
+              stepIndex={demo.stepIndex}
             />
           </div>
         </motion.div>
@@ -135,54 +153,112 @@ function TerminalBody({ displayedQuery, hints, stepIndex, result, isTypingComple
     setTooltipLeft(el.offsetWidth);
     const observer = new ResizeObserver(() => setTooltipLeft(el.offsetWidth));
     observer.observe(el);
-    return () => observer.disconnect();
+    return () => {
+      observer.disconnect();
+    };
   }, [displayedQuery]);
 
   return (
     <div className={styles.terminalBody}>
-      <div className={styles.terminalRow}>
-        <span className={styles.terminalPrompt}>❯</span>
-        <div className={styles.terminalInput}>
-          <span ref={textRef} className={styles.terminalText}>{displayedQuery}</span>
-          <motion.span
-            className={styles.terminalCursor}
-            animate={{ opacity: [1, 0] }}
-            transition={{ duration: 0.6, repeat: Infinity }}
-          />
-          <AnimatePresence>
-            {showTooltip && (
-              <motion.div
-                key={`tooltip-${stepIndex}`}
-                className={styles.tooltip}
-                style={{ left: Math.max(0, tooltipLeft - 10) }}
-                initial={{ opacity: 0, y: -4 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -4 }}
-                transition={{ duration: 0.15 }}
-              >
-                {hints.map((hint, index) => (
-                  <HintRow key={hint.signature} hint={hint} isSelected={index === 0} searchTerm={searchTerm} />
-                ))}
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
-      </div>
-      <AnimatePresence>
-        {showResult && (
-          <motion.div
-            key={`result-${stepIndex}`}
-            className={styles.tooltipResult}
-            initial={{ opacity: 0, y: 4 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
-          >
-            <pre className={styles.tooltipResultPre}>{result}</pre>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      <TerminalInput
+        displayedQuery={displayedQuery}
+        hints={hints}
+        searchTerm={searchTerm}
+        showTooltip={showTooltip}
+        stepIndex={stepIndex}
+        textRef={textRef}
+        tooltipLeft={tooltipLeft}
+      />
+      <TerminalResult result={result} showResult={Boolean(showResult)} stepIndex={stepIndex} />
     </div>
+  );
+}
+
+function TerminalInput({
+  displayedQuery,
+  hints,
+  searchTerm,
+  showTooltip,
+  stepIndex,
+  textRef,
+  tooltipLeft,
+}: Pick<TerminalBodyProps, "displayedQuery" | "hints" | "searchTerm" | "showTooltip" | "stepIndex"> & {
+  textRef: RefObject<HTMLSpanElement | null>;
+  tooltipLeft: number;
+}) {
+  return (
+    <div className={styles.terminalRow}>
+      <span className={styles.terminalPrompt}>❯</span>
+      <div className={styles.terminalInput}>
+        <span ref={textRef} className={styles.terminalText}>
+          {displayedQuery}
+        </span>
+        <motion.span
+          className={styles.terminalCursor}
+          animate={{ opacity: [1, 0] }}
+          transition={{ duration: 0.6, repeat: Infinity }}
+        />
+        <TooltipHints
+          hints={hints}
+          searchTerm={searchTerm}
+          showTooltip={showTooltip}
+          stepIndex={stepIndex}
+          tooltipLeft={tooltipLeft}
+        />
+      </div>
+    </div>
+  );
+}
+
+function TooltipHints({
+  hints,
+  searchTerm,
+  showTooltip,
+  stepIndex,
+  tooltipLeft,
+}: Pick<TerminalBodyProps, "hints" | "searchTerm" | "showTooltip" | "stepIndex"> & {
+  tooltipLeft: number;
+}) {
+  const left = Math.max(0, tooltipLeft - 10);
+  if (!showTooltip) return null;
+  return (
+    <AnimatePresence>
+      <motion.div
+        key={`tooltip-${stepIndex}`}
+        className={styles.tooltip}
+        style={{ left }}
+        initial={{ opacity: 0, y: -4 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -4 }}
+        transition={{ duration: 0.15 }}
+      >
+        {hints.map((hint, index) => (
+          <HintRow key={hint.signature} hint={hint} isSelected={index === 0} searchTerm={searchTerm} />
+        ))}
+      </motion.div>
+    </AnimatePresence>
+  );
+}
+
+function TerminalResult({
+  result,
+  showResult,
+  stepIndex,
+}: Pick<TerminalBodyProps, "result" | "stepIndex"> & { showResult: boolean }) {
+  if (!showResult) return null;
+  return (
+    <AnimatePresence>
+      <motion.div
+        key={`result-${stepIndex}`}
+        className={styles.tooltipResult}
+        initial={{ opacity: 0, y: 4 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.2 }}
+      >
+        <pre className={styles.tooltipResultPre}>{result}</pre>
+      </motion.div>
+    </AnimatePresence>
   );
 }
 
@@ -204,15 +280,23 @@ function highlightMatches(text: string, searchTerm: string): React.ReactNode {
 }
 
 function HintRow({ hint, isSelected, searchTerm }: HintRowProps) {
+  const rowClassName = `${styles.hintRow} ${isSelected ? styles.hintRowSelected : ""}`;
+  const chevronClassName = `${styles.hintChevron} ${isSelected ? styles.hintChevronSelected : styles.hintChevronUnselected}`;
+  const signatureClassName = isSelected ? styles.hintSignatureSelected : styles.hintSignatureUnselected;
+
   return (
-    <div className={`${styles.hintRow} ${isSelected ? styles.hintRowSelected : ""}`}>
-      <ChevronRight className={`${styles.hintChevron} ${isSelected ? styles.hintChevronSelected : styles.hintChevronUnselected}`} />
-      <span className={isSelected ? styles.hintSignatureSelected : styles.hintSignatureUnselected}>
+    <div className={rowClassName}>
+      <ChevronRight className={chevronClassName} />
+      <span className={signatureClassName}>
         {highlightMatches(hint.signature, searchTerm)}
       </span>
       <span className={styles.hintDescription}>{hint.description}</span>
-      {hint.isBuiltin && <span className={styles.hintBuiltinBadge}>{TOOLTIP_DEMO_CONSTANTS.text.hintBuiltin}</span>}
-      {hint.isData && <span className={styles.hintDataBadge}>{TOOLTIP_DEMO_CONSTANTS.text.hintData}</span>}
+      {hint.isBuiltin && (
+        <span className={styles.hintBuiltinBadge}>{TOOLTIP_DEMO_CONSTANTS.text.hintBuiltin}</span>
+      )}
+      {hint.isData && (
+        <span className={styles.hintDataBadge}>{TOOLTIP_DEMO_CONSTANTS.text.hintData}</span>
+      )}
     </div>
   );
 }

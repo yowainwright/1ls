@@ -1,16 +1,14 @@
-import type { DataFormat } from "./types.ts";
-import { detectFormat, parseLines } from "./detect.ts";
-import { parseCSV, parseTSV } from "./csv.ts";
-import { parseENV } from "./env.ts";
-import { parseINI } from "./ini.ts";
-import { parseJSON5 } from "./json5.ts";
-import { parseNDJSON } from "./ndjson.ts";
-import { parseProtobuf } from "./protobuf.ts";
-import { parseTOML } from "./toml.ts";
-import { parseXML } from "./xml.ts";
-import { parseYAML } from "./yaml/index.ts";
-
-type Parser = (input: string) => unknown;
+import type { DataFormat } from "./types";
+import { detectFormat, parseLines } from "./detect";
+import { parseCSV, parseTSV } from "./csv";
+import { parseENV } from "./env";
+import { parseINI } from "./ini";
+import { parseJSON5 } from "./json5";
+import { parseNDJSON } from "./ndjson";
+import { parseProtobuf } from "./protobuf";
+import { parseTOML } from "./toml";
+import { parseXML } from "./xml";
+import { parseYAML } from "./yaml/index";
 
 const parseJsonWithPreview = (input: string): unknown => {
   try {
@@ -30,24 +28,44 @@ const parseTextInput = (input: string): unknown => {
   return input;
 };
 
-const INPUT_PARSERS: Partial<Record<DataFormat, Parser>> = {
-  json: parseJsonWithPreview,
-  json5: parseJSON5,
-  yaml: parseYAML,
-  toml: parseTOML,
-  xml: parseXML,
-  ini: parseINI,
-  csv: parseCSV,
-  tsv: parseTSV,
-  protobuf: parseProtobuf,
-  env: parseENV,
-  ndjson: parseNDJSON,
-  lines: parseLines,
+const parseStructuredInput = (input: string, format: DataFormat): unknown => {
+  if (format === "json") return parseJsonWithPreview(input);
+  if (format === "json5") return parseJSON5(input);
+  if (format === "yaml") return parseYAML(input);
+  if (format === "toml") return parseTOML(input);
+  if (format === "xml") return parseXML(input);
+  if (format === "ini") return parseINI(input);
+  return undefined;
+};
+
+const parseDelimitedInput = (input: string, format: DataFormat): unknown => {
+  if (format === "csv") return parseCSV(input);
+  if (format === "tsv") return parseTSV(input);
+  return undefined;
+};
+
+const parseLineInput = (input: string, format: DataFormat): unknown => {
+  if (format === "protobuf") return parseProtobuf(input);
+  if (format === "env") return parseENV(input);
+  if (format === "ndjson") return parseNDJSON(input);
+  if (format === "lines") return parseLines(input);
+  return undefined;
+};
+
+const parseFormattedInput = (input: string, format: DataFormat): unknown => {
+  const structuredValue = parseStructuredInput(input, format);
+  if (structuredValue !== undefined) return structuredValue;
+
+  const delimitedValue = parseDelimitedInput(input, format);
+  if (delimitedValue !== undefined) return delimitedValue;
+
+  const lineValue = parseLineInput(input, format);
+  if (lineValue !== undefined) return lineValue;
+
+  return parseTextInput(input);
 };
 
 export function parseInputSync(input: string, format?: DataFormat): unknown {
   const actualFormat = format ?? detectFormat(input);
-  const parser = INPUT_PARSERS[actualFormat];
-  if (!parser) return parseTextInput(input);
-  return parser(input);
+  return parseFormattedInput(input, actualFormat);
 }

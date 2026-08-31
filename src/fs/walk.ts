@@ -1,8 +1,8 @@
 import { readdirSync } from "node:fs";
 import { join } from "node:path";
-import type { FileInfo, ListOptions } from "./types.ts";
-import { getFileInfo } from "./info.ts";
-import { shouldIncludeHiddenFile, shouldIncludeFile, isWithinDepthLimit } from "./filters.ts";
+import type { FileInfo, ListOptions } from "./types";
+import { getFileInfo } from "./info";
+import { shouldIncludeHiddenFile, shouldIncludeFile, isWithinDepthLimit } from "./filters";
 
 export const processDirectoryEntry = (
   currentDir: string,

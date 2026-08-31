@@ -30,6 +30,14 @@ describeBrowser("Browser Bundle Integration", () => {
     assert.notStrictEqual(JsonNavigator, undefined);
   });
 
+  test("pretty formatting works from browser bundle", async () => {
+    const module = await import(BROWSER_BUNDLE);
+    const output = module.processContent('{"name":"Ada"}', { pretty: true });
+    const plainOutput = output.replace(/\x1b\[[0-9;]*m/g, "");
+
+    assert.ok(plainOutput.includes('"name": "Ada"'));
+  });
+
   describe("evaluate function", () => {
     test("handles complex nested data", async () => {
       const module = await import(BROWSER_BUNDLE);

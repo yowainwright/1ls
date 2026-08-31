@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { Lexer } from "../../src/lexer/index.ts";
-import { ExpressionParser } from "../../src/expression/index.ts";
+import { Lexer } from "../../src/lexer/index";
+import { ExpressionParser } from "../../src/expression/index";
 
 test("Expression: identity (pass-through)", () => {
   const lexer = new Lexer(".");

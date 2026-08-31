@@ -1,4 +1,4 @@
-import { parseBooleanValue, parseNullValue, tryParseNumber } from "./utils.ts";
+import { parseBooleanValue, parseNullValue, tryParseNumber } from "./utils";
 
 interface CSVLineState {
   fields: string[];
@@ -84,9 +84,9 @@ export function parseCSV(input: string, delimiter = ","): unknown[] {
   const rows = lines
     .slice(1)
     .map((line) => createCSVRow(headers, line, delimiter))
-    .filter((row): row is Record<string, unknown> => row !== null);
+    .filter((row): boolean => row !== null);
 
-  return rows;
+  return rows as Record<string, unknown>[];
 }
 
 export function parseTSV(input: string): unknown[] {
