@@ -226,18 +226,23 @@ const callStringMethod = (target: string, method: string, args: readonly unknown
   return undefined;
 };
 
-const callTargetMethod = (target: unknown, method: string, args: readonly unknown[]): unknown => {
-  const methodExists = hasMethodOnTarget(target, method);
-  if (!methodExists) {
-    throw new Error(`Method ${method} does not exist on ${typeof target}`);
-  }
+const callTargetMethodWithFourArgs = (
+  targetObject: Record<string, unknown>,
+  method: string,
+  args: readonly unknown[],
+): unknown =>
+  (targetObject[method] as (arg0: unknown, arg1: unknown, arg2: unknown, arg3: unknown) => unknown)(
+    args[0],
+    args[1],
+    args[2],
+    args[3],
+  );
 
-  const targetObject = target as Record<string, unknown>;
-  if (args.length === 0) return (targetObject[method] as () => unknown)();
-  if (args.length === 1) return (targetObject[method] as (arg0: unknown) => unknown)(args[0]);
-  if (args.length === 2) {
-    return (targetObject[method] as (arg0: unknown, arg1: unknown) => unknown)(args[0], args[1]);
-  }
+const callTargetMethodWithThreeOrFourArgs = (
+  targetObject: Record<string, unknown>,
+  method: string,
+  args: readonly unknown[],
+): unknown => {
   if (args.length === 3) {
     return (targetObject[method] as (arg0: unknown, arg1: unknown, arg2: unknown) => unknown)(
       args[0],
@@ -245,15 +250,31 @@ const callTargetMethod = (target: unknown, method: string, args: readonly unknow
       args[2],
     );
   }
-  if (args.length === 4) {
-    return (targetObject[method] as (arg0: unknown, arg1: unknown, arg2: unknown, arg3: unknown) => unknown)(
-      args[0],
-      args[1],
-      args[2],
-      args[3],
-    );
-  }
+  if (args.length === 4) return callTargetMethodWithFourArgs(targetObject, method, args);
   throw new Error(`Method ${method} received too many arguments`);
+};
+
+const callTargetMethodWithFixedArgs = (
+  targetObject: Record<string, unknown>,
+  method: string,
+  args: readonly unknown[],
+): unknown => {
+  if (args.length === 0) return (targetObject[method] as () => unknown)();
+  if (args.length === 1) return (targetObject[method] as (arg0: unknown) => unknown)(args[0]);
+  if (args.length === 2) {
+    return (targetObject[method] as (arg0: unknown, arg1: unknown) => unknown)(args[0], args[1]);
+  }
+  return callTargetMethodWithThreeOrFourArgs(targetObject, method, args);
+};
+
+const callTargetMethod = (target: unknown, method: string, args: readonly unknown[]): unknown => {
+  const methodExists = hasMethodOnTarget(target, method);
+  if (!methodExists) {
+    throw new Error(`Method ${method} does not exist on ${typeof target}`);
+  }
+
+  const targetObject = target as Record<string, unknown>;
+  return callTargetMethodWithFixedArgs(targetObject, method, args);
 };
 
 export const callMethod = (target: unknown, method: string, args: readonly unknown[]): unknown => {
