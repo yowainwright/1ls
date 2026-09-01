@@ -16,6 +16,7 @@ WORKDIR /app
 COPY package.json pnpm-lock.yaml tsconfig.json ./
 COPY src ./src
 COPY scripts ./scripts
+RUN npm install -g @nubjs/nub@0.7.5
 RUN jq 'del(.workspaces)' package.json > package.tmp.json && \
     mv package.tmp.json package.json && \
     corepack enable && pnpm install --ignore-scripts --no-frozen-lockfile && pnpm run build

@@ -6,6 +6,7 @@ COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY app/package.json ./app/package.json
 
 RUN apt-get update && apt-get install -y clang && rm -rf /var/lib/apt/lists/*
+RUN npm install -g @nubjs/nub@0.7.5
 RUN corepack enable && pnpm install --frozen-lockfile
 
 COPY src ./src
