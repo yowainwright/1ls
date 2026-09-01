@@ -1,6 +1,5 @@
 import type { EvaluationContext } from "../types";
 import type { EvaluatedFunction } from "../types";
-import { invokeMethod } from "@1ls/dynamic-invoke";
 import { OPERATORS } from "./constants";
 
 type JsonValue = null | string | number | boolean | JsonValue[] | { [key: string]: JsonValue };
@@ -227,13 +226,25 @@ const callStringMethod = (target: string, method: string, args: readonly unknown
   return undefined;
 };
 
+const invokeTargetMethod = (target: Record<string, any>, method: string, args: readonly unknown[]) => {
+  if (args.length === 0) return target[method]();
+  if (args.length === 1) return target[method](args[0]);
+  if (args.length === 2) return target[method](args[0], args[1]);
+  if (args.length === 3) return target[method](args[0], args[1], args[2]);
+  if (args.length === 4) return target[method](args[0], args[1], args[2], args[3]);
+  if (args.length === 5) return target[method](args[0], args[1], args[2], args[3], args[4]);
+  if (args.length === 6) return target[method](args[0], args[1], args[2], args[3], args[4], args[5]);
+  if (args.length === 7) return target[method](args[0], args[1], args[2], args[3], args[4], args[5], args[6]);
+  return target[method](args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8]);
+};
+
 const callTargetMethod = (target: unknown, method: string, args: readonly unknown[]): unknown => {
   const methodExists = hasMethodOnTarget(target, method);
   if (!methodExists) {
     throw new Error(`Method ${method} does not exist on ${typeof target}`);
   }
 
-  return invokeMethod(target, method, args);
+  return invokeTargetMethod(target as Record<string, unknown>, method, args);
 };
 
 export const callMethod = (target: unknown, method: string, args: readonly unknown[]): unknown => {

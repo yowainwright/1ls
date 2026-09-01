@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "pnpm run build:browser && pnpm run build:site",
-    "build:browser": "esbuild ../src/browser/index.ts --bundle --platform=browser --format=esm --outfile=../dist/browser/index.js",
+    "build:browser": "pnpm --dir .. run build:browser",
     "build:client": "vite build",
     "build:site": "pnpm run build:client && pnpm run build:ssr && pnpm run prerender",
     "build:ssr": "vite build --ssr src/entry-server.ts --outDir dist-ssr",
@@ -15,12 +15,12 @@
     "lint:fix": "oxlint src/ --fix",
     "format": "oxfmt src/",
     "format:fix": "oxfmt src/ --write",
-    "generate:routes": "node --disable-warning=ExperimentalWarning --experimental-transform-types scripts/generate-routes.ts",
+    "generate:routes": "nub scripts/generate-routes.ts",
     "typecheck": "pnpm run generate:routes && tsc -b --pretty false",
-    "prerender": "node scripts/prerender.ts",
+    "prerender": "nub scripts/prerender.ts",
     "preview": "vite preview",
     "deploy": "pnpm run build && gh-pages -d dist",
-    "test": "pnpm run build:browser && rm -rf tmp/test-build && esbuild \"src/**/*.test.ts\" \"src/**/*.test.tsx\" --bundle --platform=node --format=esm --target=node24 --packages=external --sourcemap=inline --sources-content=true --outdir=tmp/test-build --outbase=. --alias:@=./src --alias:1ls/browser=../dist/browser/index.js && node --disable-warning=ExperimentalWarning --experimental-loader ../node-ts-loader.mjs --experimental-transform-types --import ./src/test/setup.ts --test \"tmp/test-build/src/**/*.test.js\" \"scripts/**/*.test.ts\" \"vite.config.test.ts\""
+    "test": "pnpm run build:browser && rm -rf tmp/test-build && esbuild \"src/**/*.test.ts\" \"src/**/*.test.tsx\" --bundle --platform=node --format=esm --target=node26 --packages=external --sourcemap=inline --sources-content=true --outdir=tmp/test-build --outbase=. --alias:@=./src --alias:1ls/browser=../dist/browser/index.js && nub --import ./src/test/setup.ts --test \"tmp/test-build/src/**/*.test.js\" \"scripts/**/*.test.ts\" \"vite.config.test.ts\""
   },
   "dependencies": {
     "1ls": "file:..",

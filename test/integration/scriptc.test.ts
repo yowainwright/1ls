@@ -5,7 +5,7 @@ import { existsSync, mkdirSync, unlinkSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { text } from "node:stream/consumers";
 
-const SCRIPTC_BIN = join(import.meta.dirname, "../../node_modules/.bin/scriptc");
+const SCRIPTC_BIN = join(import.meta.dirname, "../../node_modules/scriptc/dist/bootstrap.js");
 const SCRIPTC_ENTRY = join(import.meta.dirname, "../../src/scriptc/index.ts");
 const BINARY_PATH = join(import.meta.dirname, "../../bin/1ls-scriptc-test");
 const FIXTURES_PATH = join(import.meta.dirname, "../fixtures");
@@ -51,6 +51,7 @@ describe("scriptc native binary", () => {
     mkdirSync(dirname(BINARY_PATH), { recursive: true });
     mkdirSync(TEST_TMP, { recursive: true });
     const result = await runCommand([
+      process.execPath,
       SCRIPTC_BIN,
       "build",
       SCRIPTC_ENTRY,

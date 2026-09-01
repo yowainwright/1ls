@@ -1,4 +1,4 @@
-FROM node:24-bookworm-slim
+FROM node:26-bookworm-slim
 
 RUN apt-get update && apt-get install -y \
     curl \
@@ -16,7 +16,7 @@ WORKDIR /app
 COPY package.json pnpm-lock.yaml tsconfig.json ./
 COPY src ./src
 COPY scripts ./scripts
-RUN jq 'del(.workspaces) | del(.scripts.prepare)' package.json > package.tmp.json && \
+RUN jq 'del(.workspaces)' package.json > package.tmp.json && \
     mv package.tmp.json package.json && \
     corepack enable && pnpm install --ignore-scripts --no-frozen-lockfile && pnpm run build
 

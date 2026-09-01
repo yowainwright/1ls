@@ -529,7 +529,7 @@ done
 
 ## Performance
 
-1ls uses Node for development builds and scriptc for native release binaries:
+1ls uses Node 26 and nub for development scripts, Rolldown for npm JavaScript bundles, and scriptc for native release binaries:
 - Fast JSON parsing and stringification
 - Minimal overhead for expression evaluation
 - Efficient streaming for large files
@@ -543,6 +543,7 @@ git clone https://github.com/yowainwright/1ls.git
 cd 1ls
 
 # Install dependencies
+mise install
 pnpm install
 
 # Run tests
@@ -553,6 +554,9 @@ pnpm run build
 
 # Build native binary
 pnpm run build:binary
+
+# Generate native release manifest
+pnpm run release:manifest
 ```
 
 ## Contributing

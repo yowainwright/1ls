@@ -1,4 +1,4 @@
-import { describe, test, beforeEach, afterEach } from "node:test";
+import { describe, test } from "node:test";
 import assert from "node:assert/strict";
 import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, existsSync, rmSync } from "fs";
 import { dirname, join } from "path";
@@ -41,6 +41,27 @@ function makeRoutesFixture(base: string): void {
 }
 
 let routesDir = "";
+const renderRoute: RenderRoute = (route) => Promise.resolve(`<main>${route}</main>`);
+
+const collectRouteSet = () => new Set(collectRoutes(routesDir));
+
+const assertRoutesInclude = (expectedRoutes: string[]) => {
+  const routes = collectRouteSet();
+  expectedRoutes.forEach((route) => assert.equal(routes.has(route), true));
+};
+
+const testCollectRoutes = (name: string, assertion: () => void) => {
+  test(name, () => {
+    routesDir = makeTestDir("routes-");
+    makeRoutesFixture(routesDir);
+
+    try {
+      assertion();
+    } finally {
+      rmSync(routesDir, { recursive: true, force: true });
+    }
+  });
+};
 
 describe("isSkipped", () => {
   test("skips private dirs starting with -", () => {
@@ -77,81 +98,61 @@ describe("toRoutePath", () => {
   });
 });
 
-describe("collectRoutes", () => {
-  beforeEach(() => {
-    routesDir = makeTestDir("routes-");
-    makeRoutesFixture(routesDir);
+describe("collectRoutes included paths", () => {
+  testCollectRoutes("includes root route", () => assertRoutesInclude(["/"]));
+  testCollectRoutes("includes top-level routes", () => assertRoutesInclude(["/playground", "/docs"]));
+  testCollectRoutes("includes nested routes", () => {
+    assertRoutesInclude(["/docs/guides/installation", "/docs/guides", "/docs/api/builtins"]);
   });
+});
 
-  afterEach(() => {
-    rmSync(routesDir, { recursive: true, force: true });
-  });
-
-  test("includes root route", () => {
-    assert.ok(collectRoutes(routesDir).includes("/"));
-  });
-
-  test("includes top-level routes", () => {
-    const routes = collectRoutes(routesDir);
-    assert.ok(routes.includes("/playground"));
-    assert.ok(routes.includes("/docs"));
-  });
-
-  test("includes nested routes", () => {
-    const routes = collectRoutes(routesDir);
-    assert.ok(routes.includes("/docs/guides/installation"));
-    assert.ok(routes.includes("/docs/guides"));
-    assert.ok(routes.includes("/docs/api/builtins"));
-  });
-
-  test("all routes start with /", () => {
+describe("collectRoutes excluded paths", () => {
+  testCollectRoutes("all routes start with /", () => {
     const routes = collectRoutes(routesDir);
     assert.strictEqual(routes.every((r) => r.startsWith("/")), true);
   });
 
-  test("excludes private component dirs", () => {
+  testCollectRoutes("excludes private component dirs", () => {
     const routes = collectRoutes(routesDir);
     assert.strictEqual(routes.every((r) => !r.includes("-components")), true);
   });
 
-  test("excludes layout and special files", () => {
+  testCollectRoutes("excludes layout and special files", () => {
     const routes = collectRoutes(routesDir);
     assert.strictEqual(routes.every((r) => !r.includes("__root")), true);
     assert.strictEqual(routes.every((r) => !r.includes("/route")), true);
   });
 });
 
-describe("writeRoutes", () => {
-  const renderRoute: RenderRoute = async (route) => `<main>${route}</main>`;
+test("writeRoutes creates index.html for each route", async () => {
+  const tmpDir = makeTestDir("write-routes-");
+  const html = '<html><body><div id="root"></div></body></html>';
 
-  test("creates index.html for each route", async () => {
-    const tmpDir = makeTestDir("write-routes-");
-    const html = '<html><body><div id="root"></div></body></html>';
+  await writeRoutes(["/", "/docs", "/playground"], tmpDir, html, renderRoute);
 
-    await writeRoutes(["/", "/docs", "/playground"], tmpDir, html, renderRoute);
+  assert.strictEqual(existsSync(join(tmpDir, "index.html")), true);
+  assert.strictEqual(existsSync(join(tmpDir, "docs", "index.html")), true);
+  assert.strictEqual(existsSync(join(tmpDir, "playground", "index.html")), true);
+});
 
-    assert.strictEqual(existsSync(join(tmpDir, "index.html")), true);
-    assert.strictEqual(existsSync(join(tmpDir, "docs", "index.html")), true);
-    assert.strictEqual(existsSync(join(tmpDir, "playground", "index.html")), true);
-  });
+test("writeRoutes writes rendered route content", async () => {
+  const tmpDir = makeTestDir("rendered-route-");
+  const html = '<html><body><div id="root"></div></body></html>';
 
-  test("writes rendered route content", async () => {
-    const tmpDir = makeTestDir("rendered-route-");
-    const html = '<html><body><div id="root"></div></body></html>';
+  await writeRoutes(["/docs"], tmpDir, html, renderRoute);
 
-    await writeRoutes(["/docs"], tmpDir, html, renderRoute);
+  const content = readFileSync(join(tmpDir, "docs", "index.html"), "utf-8");
+  assert.ok(content.includes('<div id="root"><main>/docs</main></div>'));
+});
 
-    assert.ok(readFileSync(join(tmpDir, "docs", "index.html"), "utf-8").includes('<div id="root"><main>/docs</main></div>',));
-  });
+test("writeRoutes creates nested directories as needed", async () => {
+  const tmpDir = makeTestDir("nested-routes-");
+  const html = '<html><body><div id="root"></div></body></html>';
 
-  test("creates nested directories as needed", async () => {
-    const tmpDir = makeTestDir("nested-routes-");
-    const html = '<html><body><div id="root"></div></body></html>';
+  await writeRoutes(["/docs/guides/installation"], tmpDir, html, renderRoute);
 
-    await writeRoutes(["/docs/guides/installation"], tmpDir, html, renderRoute);
-
-    assert.strictEqual(existsSync(join(tmpDir, "docs", "guides", "installation", "index.html")), true);
-  });
+  const htmlPath = join(tmpDir, "docs", "guides", "installation", "index.html");
+  assert.strictEqual(existsSync(htmlPath), true);
 });
 
 describe("injectRouteMarkup", () => {

@@ -19,24 +19,25 @@
     "1ls": "./dist/index.js"
   },
   "engines": {
-    "node": ">=24"
+    "node": ">=26"
   },
   "files": [
     "dist"
   ],
   "scripts": {
-    "dev": "esbuild ./src/browser/index.ts --bundle --platform=browser --format=esm --outfile=dist/browser/index.js && pnpm --filter 1ls-app dev",
+    "dev": "pnpm run build:browser && pnpm --filter 1ls-app dev",
     "dev:cli": "pnpm run build && node ./dist/index.js",
-    "generate:completions": "node --disable-warning=ExperimentalWarning --experimental-loader ./node-ts-loader.mjs --experimental-transform-types ./scripts/generate-completions.ts",
+    "generate:completions": "nub ./scripts/generate-completions.ts",
     "install:skills": "bash scripts/install-skills.sh",
-    "build": "node ./scripts/sync-version.ts && rm -rf dist bin && esbuild ./src/cli/index.ts --bundle --platform=node --format=esm --target=node24 --outfile=dist/index.js --minify && esbuild ./src/browser/index.ts --bundle --platform=browser --format=esm --target=es2022 --outfile=dist/browser/index.js --minify && tsc --emitDeclarationOnly --outDir dist && cp -r src/completions dist/",
-    "build:binary": "node ./scripts/sync-version.ts && mkdir -p bin tmp/scriptc && TMPDIR=\"$PWD/tmp/scriptc\" scriptc build ./src/scriptc/index.ts --dynamic --no-keep-c -o bin/1ls",
-    "scriptc:coverage": "mkdir -p tmp/scriptc && TMPDIR=\"$PWD/tmp/scriptc\" scriptc coverage ./src/scriptc/index.ts --dynamic",
+    "build": "nub ./scripts/sync-version.ts && rm -rf dist bin && rolldown -c scripts/rolldown.config.ts && tsc --emitDeclarationOnly --outDir dist && cp -r src/completions dist/",
+    "build:browser": "BUILD_TARGET=browser rolldown -c scripts/rolldown.config.ts",
+    "build:binary": "nub ./scripts/sync-version.ts && mkdir -p bin tmp/scriptc && TMPDIR=\"$PWD/tmp/scriptc\" nub --node ./node_modules/scriptc/dist/bootstrap.js build ./src/scriptc/index.ts --dynamic --no-keep-c -o bin/1ls",
+    "scriptc:coverage": "mkdir -p tmp/scriptc && TMPDIR=\"$PWD/tmp/scriptc\" nub --node ./node_modules/scriptc/dist/bootstrap.js coverage ./src/scriptc/index.ts --dynamic",
     "clean": "rm -rf dist bin",
     "prepublishOnly": "pnpm run build && pnpm run lint && pnpm test",
-    "test": "pnpm run build && node --disable-warning=ExperimentalWarning --experimental-loader ./node-ts-loader.mjs --experimental-transform-types --test \"test/unit/**/*.test.ts\" \"test/integration/**/*.test.ts\"",
-    "test:coverage": "pnpm run build && c8 --reporter=text --reporter=lcov --include=src/**/*.ts node --disable-warning=ExperimentalWarning --experimental-loader ./node-ts-loader.mjs --experimental-transform-types --test \"test/unit/**/*.test.ts\" \"test/integration/**/*.test.ts\"",
-    "test:integration": "pnpm run build && node --disable-warning=ExperimentalWarning --experimental-loader ./node-ts-loader.mjs --experimental-transform-types --test \"test/integration/**/*.test.ts\"",
+    "test": "pnpm run build && nub --test \"test/unit/**/*.test.ts\" \"test/integration/**/*.test.ts\"",
+    "test:coverage": "pnpm run build && c8 --reporter=text --reporter=lcov --include=src/**/*.ts nub --test \"test/unit/**/*.test.ts\" \"test/integration/**/*.test.ts\"",
+    "test:integration": "pnpm run build && nub --test \"test/integration/**/*.test.ts\"",
     "test:bench": "docker build -f test/benchmarks/Dockerfile -t 1ls-bench . && docker run --rm 1ls-bench",
     "test:bench:update": "bash test/benchmarks/update.sh",
     "lint": "oxlint src/ --deny-warnings && pnpm --filter 1ls-app lint",
@@ -46,9 +47,10 @@
     "format": "oxfmt src/",
     "format:fix": "oxfmt src/ --write",
     "typecheck": "tsc --noEmit",
-    "daemon": "node --disable-warning=ExperimentalWarning --experimental-loader ./node-ts-loader.mjs --experimental-transform-types ./src/tooltip/index.ts",
+    "daemon": "nub ./src/tooltip/index.ts",
+    "release:manifest": "nub ./scripts/release.ts",
     "release": "release-it",
-    "prepare": "bash scripts/setup-hooks.sh"
+    "hooks:setup": "bash scripts/setup-hooks.sh"
   },
   "keywords": [
     "json",
@@ -68,7 +70,6 @@
   },
   "homepage": "https://github.com/yowainwright/1ls",
   "devDependencies": {
-    "@1ls/dynamic-invoke": "workspace:*",
     "@total-typescript/ts-reset": "^0.6.1",
     "@types/node": "^25.3.5",
     "c8": "^12.0.0",
@@ -77,6 +78,7 @@
     "oxfmt": "^0.36.0",
     "oxlint": "^1.65.0",
     "release-it": "^19.2.4",
+    "rolldown": "1.2.6",
     "scriptc": "^0.0.35",
     "turbo": "^2.9.14",
     "typescript": "5.9.3"
