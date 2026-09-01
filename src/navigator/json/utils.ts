@@ -226,28 +226,8 @@ const callStringMethod = (target: string, method: string, args: readonly unknown
   return undefined;
 };
 
-const MAX_TARGET_METHOD_ARGS = 9;
-
-const invokeTargetMethodUpToFour = (target: Record<string, any>, method: string, args: readonly unknown[]) => {
-  if (args.length === 0) return target[method]();
-  if (args.length === 1) return target[method](args[0]);
-  if (args.length === 2) return target[method](args[0], args[1]);
-  if (args.length === 3) return target[method](args[0], args[1], args[2]);
-  return target[method](args[0], args[1], args[2], args[3]);
-};
-
-const invokeTargetMethodFromFive = (target: Record<string, any>, method: string, args: readonly unknown[]) => {
-  if (args.length === 5) return target[method](args[0], args[1], args[2], args[3], args[4]);
-  if (args.length === 6) return target[method](args[0], args[1], args[2], args[3], args[4], args[5]);
-  if (args.length === 7) return target[method](args[0], args[1], args[2], args[3], args[4], args[5], args[6]);
-  if (args.length === 8) return target[method](args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7]);
-  if (args.length === 9) return target[method](args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8]);
-  throw new Error(`Method ${method} received ${args.length} arguments, but only ${MAX_TARGET_METHOD_ARGS} are supported`);
-};
-
 const invokeTargetMethod = (target: Record<string, any>, method: string, args: readonly unknown[]) => {
-  if (args.length <= 4) return invokeTargetMethodUpToFour(target, method, args);
-  return invokeTargetMethodFromFive(target, method, args);
+  return target[method](...args);
 };
 
 const callTargetMethod = (target: unknown, method: string, args: readonly unknown[]): unknown => {

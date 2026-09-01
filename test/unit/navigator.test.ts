@@ -213,7 +213,7 @@ test("Navigator: callable object methods receive all arguments", () => {
   );
 });
 
-test("Navigator: callable object methods support scriptc-safe arities", () => {
+test("Navigator: callable object methods support arbitrary arity", () => {
   const data = {
     user: {
       format(...values: unknown[]): string {
@@ -231,9 +231,9 @@ test("Navigator: callable object methods support scriptc-safe arities", () => {
     assert.strictEqual(evaluate(`.user.format(${args})`, data), expected);
   });
 
-  assert.throws(
-    () => evaluate('.user.format("0", "1", "2", "3", "4", "5", "6", "7", "8", "9")', data),
-    /only 9 are supported/,
+  assert.strictEqual(
+    evaluate('.user.format("0", "1", "2", "3", "4", "5", "6", "7", "8", "9")', data),
+    "0:1:2:3:4:5:6:7:8:9",
   );
 });
 
