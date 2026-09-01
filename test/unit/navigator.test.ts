@@ -213,6 +213,30 @@ test("Navigator: callable object methods receive all arguments", () => {
   );
 });
 
+test("Navigator: callable object methods support arbitrary arity", () => {
+  const data = {
+    user: {
+      format(...values: unknown[]): string {
+        return values.join(":");
+      },
+    },
+  };
+  const cases = Array.from({ length: 10 }, (_, argCount) => {
+    const args = Array.from({ length: argCount }, (_, index) => `"${index}"`).join(", ");
+    const expected = Array.from({ length: argCount }, (_, index) => String(index)).join(":");
+    return { args, expected };
+  });
+
+  cases.forEach(({ args, expected }) => {
+    assert.strictEqual(evaluate(`.user.format(${args})`, data), expected);
+  });
+
+  assert.strictEqual(
+    evaluate('.user.format("0", "1", "2", "3", "4", "5", "6", "7", "8", "9")', data),
+    "0:1:2:3:4:5:6:7:8:9",
+  );
+});
+
 test("Navigator: callable array and string methods outside allowlists", () => {
   assert.strictEqual(evaluate(".at(-1)", [1, 2, 3]), 3);
   assert.strictEqual(evaluate(".substring(1, 4)", "hello"), "ell");

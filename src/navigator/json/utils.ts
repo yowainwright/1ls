@@ -1,6 +1,5 @@
 import type { EvaluationContext } from "../types";
 import type { EvaluatedFunction } from "../types";
-import { invokeMethod } from "@1ls/dynamic-invoke";
 import { OPERATORS } from "./constants";
 
 type JsonValue = null | string | number | boolean | JsonValue[] | { [key: string]: JsonValue };
@@ -227,13 +226,17 @@ const callStringMethod = (target: string, method: string, args: readonly unknown
   return undefined;
 };
 
+const invokeTargetMethod = (target: Record<string, any>, method: string, args: readonly unknown[]) => {
+  return target[method](...args);
+};
+
 const callTargetMethod = (target: unknown, method: string, args: readonly unknown[]): unknown => {
   const methodExists = hasMethodOnTarget(target, method);
   if (!methodExists) {
     throw new Error(`Method ${method} does not exist on ${typeof target}`);
   }
 
-  return invokeMethod(target, method, args);
+  return invokeTargetMethod(target as Record<string, unknown>, method, args);
 };
 
 export const callMethod = (target: unknown, method: string, args: readonly unknown[]): unknown => {

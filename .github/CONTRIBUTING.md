@@ -5,7 +5,7 @@ Thanks for your interest in contributing to 1ls! This guide will help you get st
 ## Development Setup
 
 1. Fork and clone the repository
-2. Install Node 24+
+2. Install project tools: `mise install`
 3. Install dependencies: `pnpm install`
 
 ## Development Workflow

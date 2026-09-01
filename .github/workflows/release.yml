@@ -30,9 +30,10 @@ jobs:
         uses: pnpm/action-setup@v4
 
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: nubjs/setup-nub@47e5e7393d50f4e9544ddaf756aa277972afba2d
         with:
-          node-version: 24
+          nub-version: 0.7.5
+          node-version: 26
           cache: pnpm
 
       - name: Install clang
@@ -48,7 +49,7 @@ jobs:
       - name: Build scriptc binary
         run: |
           mkdir -p dist
-          ./node_modules/.bin/scriptc build ./src/scriptc/index.ts --dynamic --no-keep-c -o ./dist/${{ matrix.artifact }}
+          nub --node ./node_modules/scriptc/dist/bootstrap.js build ./src/scriptc/index.ts --dynamic --no-keep-c -o ./dist/${{ matrix.artifact }}
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
@@ -70,6 +71,19 @@ jobs:
         with:
           path: ./dist
 
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node
+        uses: nubjs/setup-nub@47e5e7393d50f4e9544ddaf756aa277972afba2d
+        with:
+          nub-version: 0.7.5
+          node-version: 26
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
       - name: Flatten artifacts
         run: |
           for artifact in 1ls-darwin-arm64 1ls-darwin-x64 1ls-linux-x64 1ls-linux-arm64; do
@@ -77,6 +91,12 @@ jobs:
             rm -rf "./dist/${artifact}"
             mv "./dist/${artifact}.tmp" "./dist/${artifact}"
           done
+
+      - name: Generate release manifest
+        env:
+          REF_NAME: ${{ github.ref_name }}
+        run: |
+          VERSION="${REF_NAME#v}" pnpm run release:manifest
 
       - name: Calculate checksums and update formula
         run: |
@@ -86,6 +106,7 @@ jobs:
           SHA_X64=$(shasum -a 256 ./dist/1ls-darwin-x64 | cut -d ' ' -f 1)
           SHA_LINUX_X64=$(shasum -a 256 ./dist/1ls-linux-x64 | cut -d ' ' -f 1)
           SHA_LINUX_ARM64=$(shasum -a 256 ./dist/1ls-linux-arm64 | cut -d ' ' -f 1)
+          MANIFEST_SHA=$(shasum -a 256 ./dist/release-manifest.json | cut -d ' ' -f 1)
 
           echo "=== Checksums ==="
           echo "VERSION: ${VERSION}"
@@ -93,6 +114,7 @@ jobs:
           echo "SHA_X64: ${SHA_X64}"
           echo "SHA_LINUX_X64: ${SHA_LINUX_X64}"
           echo "SHA_LINUX_ARM64: ${SHA_LINUX_ARM64}"
+          echo "MANIFEST_SHA: ${MANIFEST_SHA}"
 
           echo "=== Formula before sed ==="
           cat Formula/onels.rb
@@ -106,6 +128,43 @@ jobs:
           echo "=== Formula after sed ==="
           cat Formula/onels.rb
 
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            ./dist/1ls-darwin-arm64
+            ./dist/1ls-darwin-x64
+            ./dist/1ls-linux-x64
+            ./dist/1ls-linux-arm64
+            ./dist/release-manifest.json
+          generate_release_notes: true
+          body: |
+            ## Install
+
+            ### Homebrew (macOS/Linux)
+            ```bash
+            brew install yowainwright/tap/1ls
+            ```
+
+            ### pnpm
+            ```bash
+            pnpm add -g 1ls
+            ```
+
+            ### curl
+            ```bash
+            curl -fsSL https://raw.githubusercontent.com/yowainwright/1ls/main/scripts/install.sh | bash
+            ```
+
+            ### Binary Downloads
+            - `1ls-darwin-arm64` - macOS Apple Silicon
+            - `1ls-darwin-x64` - macOS Intel
+            - `1ls-linux-x64` - Linux x64
+            - `1ls-linux-arm64` - Linux ARM64
+            - `release-manifest.json` - asset checksums for automation
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Push formula to tap repo
         env:
           GH_TOKEN: ${{ secrets.PR_CREATE_TOKEN }}
@@ -113,8 +172,8 @@ jobs:
           set -x
           TAP_REPO="https://x-access-token:${GH_TOKEN}@github.com/yowainwright/homebrew-tap.git"
 
-          git clone "$TAP_REPO" ../tap
-          cd ../tap
+          git clone "$TAP_REPO" ../homebrew-tap
+          cd ../homebrew-tap
 
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
@@ -141,38 +200,3 @@ jobs:
           git status
           git commit -m "chore: update 1ls formula to ${{ github.ref_name }}" || echo "No changes to commit"
           git push -u origin main
-
-      - name: Create GitHub Release
-        uses: softprops/action-gh-release@v1
-        with:
-          files: |
-            ./dist/1ls-darwin-arm64
-            ./dist/1ls-darwin-x64
-            ./dist/1ls-linux-x64
-            ./dist/1ls-linux-arm64
-          generate_release_notes: true
-          body: |
-            ## Install
-
-            ### Homebrew (macOS/Linux)
-            ```bash
-            brew install yowainwright/tap/1ls
-            ```
-
-            ### pnpm
-            ```bash
-            pnpm add -g 1ls
-            ```
-
-            ### curl
-            ```bash
-            curl -fsSL https://raw.githubusercontent.com/yowainwright/1ls/main/scripts/install.sh | bash
-            ```
-
-            ### Binary Downloads
-            - `1ls-darwin-arm64` - macOS Apple Silicon
-            - `1ls-darwin-x64` - macOS Intel
-            - `1ls-linux-x64` - Linux x64
-            - `1ls-linux-arm64` - Linux ARM64
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

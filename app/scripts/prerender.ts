@@ -11,8 +11,15 @@ const NON_STATIC_MARKERS = ['<template id="B:', '<div hidden id="S:', "data-msg=
 
 export type RenderRoute = (route: string) => Promise<string>;
 
-export const isSkipped = (name: string): boolean =>
-  name.startsWith("-") || name.startsWith("__") || name === "route.tsx" || name === "route.ts";
+export const isSkipped = (name: string): boolean => {
+  const isPrivateRouteDir = name.startsWith("-");
+  const isTanStackSpecialFile = name.startsWith("__");
+  const isLayoutRouteFile = name === "route.tsx" || name === "route.ts";
+
+  if (isPrivateRouteDir) return true;
+  if (isTanStackSpecialFile) return true;
+  return isLayoutRouteFile;
+};
 
 export const toRoutePath = (name: string): string => name.replace(/\.(tsx|ts|jsx|js)$/, "");
 
@@ -28,7 +35,11 @@ export function collectRoutes(dir: string, base = ""): string[] {
     if (!/\.(tsx|ts|jsx|js)$/.test(entry)) return [];
 
     const name = toRoutePath(entry);
-    return name === "index" ? [base || "/"] : [`${base}/${name}`];
+    const indexRoute = base || "/";
+    if (name === "index") return [indexRoute];
+
+    const route = `${base}/${name}`;
+    return [route];
   });
 }
 
