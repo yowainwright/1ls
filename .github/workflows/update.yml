@@ -21,7 +21,7 @@ jobs:
         uses: pnpm/action-setup@v4
 
       - name: Use Node.js ${{ matrix.node-version }}
-        uses: nubjs/setup-nub@v0
+        uses: nubjs/setup-nub@47e5e7393d50f4e9544ddaf756aa277972afba2d
         with:
           nub-version: 0.7.5
           node-version: ${{ matrix.node-version }}

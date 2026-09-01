@@ -230,6 +230,11 @@ test("Navigator: callable object methods support scriptc-safe arities", () => {
   cases.forEach(({ args, expected }) => {
     assert.strictEqual(evaluate(`.user.format(${args})`, data), expected);
   });
+
+  assert.throws(
+    () => evaluate('.user.format("0", "1", "2", "3", "4", "5", "6", "7", "8", "9")', data),
+    /only 9 are supported/,
+  );
 });
 
 test("Navigator: callable array and string methods outside allowlists", () => {

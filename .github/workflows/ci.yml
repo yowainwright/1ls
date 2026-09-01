@@ -17,7 +17,7 @@ jobs:
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
 
-      - uses: nubjs/setup-nub@v0
+      - uses: nubjs/setup-nub@47e5e7393d50f4e9544ddaf756aa277972afba2d
         name: Install Node
         with:
           nub-version: 0.7.5
@@ -86,7 +86,7 @@ jobs:
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
 
-      - uses: nubjs/setup-nub@v0
+      - uses: nubjs/setup-nub@47e5e7393d50f4e9544ddaf756aa277972afba2d
         name: Install Node
         with:
           nub-version: 0.7.5
