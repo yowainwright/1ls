@@ -235,6 +235,7 @@ const invokeTargetMethod = (target: Record<string, any>, method: string, args: r
   if (args.length === 5) return target[method](args[0], args[1], args[2], args[3], args[4]);
   if (args.length === 6) return target[method](args[0], args[1], args[2], args[3], args[4], args[5]);
   if (args.length === 7) return target[method](args[0], args[1], args[2], args[3], args[4], args[5], args[6]);
+  if (args.length === 8) return target[method](args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7]);
   return target[method](args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8]);
 };
 
